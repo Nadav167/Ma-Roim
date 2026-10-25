@@ -173,6 +173,31 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 
 .loading { padding: 80px 24px; color: var(--muted); text-align: center; }
 
+/* ---------- account ---------- */
+.acct { height: 40px; padding-inline: 14px; flex: none; }
+.avatar { width: 26px; height: 26px; border-radius: 13px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+.menu { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; min-width: 220px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 8px; display: grid; gap: 2px; box-shadow: 0 16px 40px rgba(0,0,0,.45); }
+.menu .who { padding: 8px 10px 10px; color: var(--muted); font-size: 13px; border-bottom: 1px solid var(--line); margin-bottom: 4px; overflow-wrap: anywhere; }
+.menu button { text-align: start; border: 0; background: none; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.menu button:hover { background: var(--surface-2); }
+.acct-wrap { position: relative; flex: none; }
+.modal { position: fixed; inset: 0; z-index: 60; background: rgba(6,5,12,.7); backdrop-filter: blur(6px); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 16px; }
+.sheet h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.sheet p { margin: 0; color: var(--muted); }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.field input { height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); padding-inline: 14px; outline: none; }
+.field input:focus { border-color: var(--accent); }
+.sheet .btn { width: 100%; justify-content: center; }
+.switch { border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; padding: 0; }
+.msg { font-size: 14px; border-radius: 10px; padding: 10px 12px; }
+.msg.err { background: rgba(255, 99, 99, .12); color: #ff9c9c; }
+.msg.ok { background: rgba(79, 209, 165, .12); color: var(--ok); }
+.sheet-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+
 /* ---------- phone ---------- */
 @media (max-width: 720px) {
   :root { --poster: 118px; }
@@ -187,6 +212,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .top { flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
+  .acct .label { display: none; }
+  .acct { padding-inline: 8px; }
   .pad, .row { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .hero { margin-inline: max(16px, env(safe-area-inset-left, 0px)); min-height: 340px; }
   .hero-body { padding: 20px; }
@@ -220,12 +247,26 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       <button type="button" id="lang-en" aria-pressed="true">EN</button>
       <button type="button" id="lang-he" aria-pressed="false">עב</button>
     </div>
+    <div class="acct-wrap" id="acct-wrap"></div>
   </header>
   <main id="main"><div class="loading">Loading…</div></main>
 </div>
 
 <section class="detail" id="detail" hidden aria-modal="true" role="dialog"></section>
 <div class="toast" id="toast" hidden></div>
+<div class="modal" id="auth" hidden role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <form class="sheet" id="auth-form" novalidate>
+    <h2 id="auth-title"></h2>
+    <p id="auth-sub"></p>
+    <div class="field"><label for="auth-email" data-t="email"></label><input id="auth-email" type="email" autocomplete="email" required dir="ltr"></div>
+    <div class="field"><label for="auth-pass" data-t="password"></label><input id="auth-pass" type="password" autocomplete="current-password" minlength="6" required dir="ltr"></div>
+    <div class="msg" id="auth-msg" hidden></div>
+    <button class="btn primary" type="submit" id="auth-submit"></button>
+    <div class="sheet-foot"><span><span id="auth-alt-q"></span> <button class="switch" type="button" id="auth-switch"></button></span>
+      <button class="switch" type="button" id="auth-cancel" data-t="cancel"></button></div>
+  </form>
+</div>
+<script src="vendor/supabase.js"></script>
 
 <script>
 (() => {
@@ -244,7 +285,14 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       aiEx: ["A tense Israeli series like Fauda", "A feel-good 90s comedy for tonight", "Something like Breaking Bad, but shorter"],
       toastAdd: "Added to my list", toastRem: "Removed from my list", toastW: "Marked as watched", toastUW: "Marked as not watched",
       wiki: "Wikipedia", wikiHe: "Wikipedia (Hebrew)", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      word: 'What to <span>Watch</span>', titles: "titles", ongoing: "present" },
+      word: 'What to <span>Watch</span>', titles: "titles", ongoing: "present",
+      signIn: "Sign in", signUp: "Create account", signOut: "Sign out", email: "Email", password: "Password", cancel: "Cancel",
+      inTitle: "Sign in", inSub: "Your list and watched titles follow you to every device.", upTitle: "Create your account",
+      upSub: "Free. Save titles to your list and mark what you’ve watched.", noAcct: "No account?", haveAcct: "Already have one?",
+      checkEmail: "Almost done. We sent a confirmation link to your email. Open it, then sign in here.",
+      badLogin: "That email and password don’t match. Check them and try again.", shortPass: "Use at least 6 characters for the password.",
+      badEmail: "Enter a valid email address.", genericErr: "Something went wrong. Try again in a moment.",
+      welcome: "Signed in", bye: "Signed out", searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
       markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
@@ -259,7 +307,14 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       aiEx: ["סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "משהו כמו שובר שורות, אבל קצר יותר"],
       toastAdd: "נוסף לרשימה", toastRem: "הוסר מהרשימה", toastW: "סומן כנצפה", toastUW: "הסימון בוטל",
       wiki: "ויקיפדיה (אנגלית)", wikiHe: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      word: 'מה <span>לראות</span>', titles: "כותרים", ongoing: "היום" },
+      word: 'מה <span>לראות</span>', titles: "כותרים", ongoing: "היום",
+      signIn: "התחברות", signUp: "יצירת חשבון", signOut: "התנתקות", email: "אימייל", password: "סיסמה", cancel: "ביטול",
+      inTitle: "התחברות", inSub: "הרשימה והכותרים שצפיתם בהם יופיעו בכל מכשיר.", upTitle: "יצירת חשבון",
+      upSub: "בחינם. שמרו כותרים לרשימה וסמנו מה כבר ראיתם.", noAcct: "אין לכם חשבון?", haveAcct: "כבר יש לכם חשבון?",
+      checkEmail: "כמעט סיימנו. שלחנו קישור אישור לאימייל שלכם. פתחו אותו ואז התחברו כאן.",
+      badLogin: "האימייל והסיסמה לא תואמים. בדקו ונסו שוב.", shortPass: "הסיסמה צריכה להכיל לפחות 6 תווים.",
+      badEmail: "הזינו כתובת אימייל תקינה.", genericErr: "משהו השתבש. נסו שוב בעוד רגע.",
+      welcome: "התחברתם", bye: "התנתקתם", searching: "מחפש…", signInToSave: "התחברו כדי לשמור את הרשימה בכל מכשיר" },
   };
   const store = {
     get(k, d) { try { const v = localStorage.getItem("w2w:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -269,6 +324,22 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
+  const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
+  const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
+  let sb = null, user = null, authMode = "in", menuOpen = false;
+  try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
+  const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
+    g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
+    rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he,
+    b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
+  async function ensureItems(ids) {
+    const missing = ids.filter(id => !C.items[id]);
+    if (!sb || !missing.length) return;
+    for (let i = 0; i < missing.length; i += 150) {
+      const { data } = await sb.from("titles").select("*").in("id", missing.slice(i, i + 150));
+      (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
+    }
+  }
 
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -332,7 +403,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     const q = $("#q").value.trim();
     clearInterval(heroTimer);
     document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
-    if (q) { main.innerHTML = searchView(q); return; }
+    if (q) {
+      if (sb) { main.innerHTML = `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("searching")}</p></div>`; remoteSearch(q); }
+      else main.innerHTML = searchView(q);
+      return;
+    }
     if (view === "home") {
       main.innerHTML = hero() + C.shelves.map(shelf).join("") + footer();
       heroTimer = setInterval(() => { if (!document.hidden && $("#detail").hidden) { heroIdx = (heroIdx + 1) % C.hero.length; swapHero(); } }, 9000);
@@ -348,7 +423,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     } else if (view === "list") {
       const ids = [...list].filter(id => C.items[id]);
       main.innerHTML = head(t("listH"), "") + `<div class="pad">${ids.length ? `<div class="grid">${ids.map(card).join("")}</div>`
-        : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}</div>` + footer();
+        : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}
+        ${!user && sb ? `<div class="btns" style="margin-top:20px"><button class="btn primary" type="button" data-auth="up">${t("signInToSave")}</button></div>` : ""}</div>` + footer();
     } else if (view === "ai") {
       main.innerHTML = head(t("aiH"), t("aiP")) + `<div class="pad"><div class="btns">${t("aiEx").map(x => `<span class="chip" style="padding:8px 14px;font-size:14px">${esc(x)}</span>`).join("")}</div></div>` + footer();
     }
@@ -357,6 +433,23 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   function swapHero() { const h = $("#hero"); if (h) h.outerHTML = hero(); }
 
   const norm = s => (s || "").toLowerCase().normalize("NFKD").replace(/[֑-ׇ]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+  let searchSeq = 0;
+  async function remoteSearch(q) {
+    const seq = ++searchSeq;
+    try {
+      const { data, error } = await sb.rpc("search_titles", { q, lim: 60 });
+      if (error) throw error;
+      if (seq !== searchSeq || $("#q").value.trim() !== q) return;
+      (data || []).forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
+      $("#main").innerHTML = resultsView(q, (data || []).map(r => r.id));
+    } catch (e) {
+      if (seq === searchSeq) $("#main").innerHTML = searchView(q);
+    }
+  }
+  function resultsView(q, ids) {
+    return `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("results")(ids.length)}</p></div><div class="pad">`
+      + (ids.length ? `<div class="grid">${ids.map(card).join("")}</div>` : `<div class="empty"><strong>${t("noResults")}</strong><span>${t("noResultsHint")}</span></div>`) + `</div>`;
+  }
   function searchView(q) {
     const nq = norm(q), words = nq.split(" ");
     const hits = [];
@@ -424,6 +517,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
     $("#wordmark").innerHTML = t("word");
     $("#q").placeholder = t("search");
+    renderAcct();
+    if (user && sb) sb.from("profiles").update({ lang: l }).eq("id", user.id).then(() => {}, () => {});
     if (!C) return;
     render();
     const d = $("#detail"); if (!d.hidden) openDetail(d.dataset.id);
@@ -437,21 +532,113 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     else if (el.dataset.hero) { heroIdx = +el.dataset.hero; swapHero(); }
     else if (el.dataset.close !== undefined) closeDetail();
     else if (el.dataset.list) {
-      const id = el.dataset.list; list.has(id) ? list.delete(id) : list.add(id); store.set("list", [...list]);
+      const id = el.dataset.list; list.has(id) ? list.delete(id) : list.add(id);
+      saveMark("watchlist", id, list.has(id));
       toast(list.has(id) ? t("toastAdd") : t("toastRem"));
       if (!$("#detail").hidden) openDetail(id); else if (view === "home") swapHero(); else render();
     } else if (el.dataset.watch) {
-      const id = el.dataset.watch; watched.has(id) ? watched.delete(id) : watched.add(id); store.set("watched", [...watched]);
+      const id = el.dataset.watch; watched.has(id) ? watched.delete(id) : watched.add(id);
+      saveMark("watched", id, watched.has(id));
       toast(watched.has(id) ? t("toastW") : t("toastUW")); openDetail(id);
     }
   });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#detail").hidden) closeDetail(); });
+  document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#auth").hidden) $("#auth").hidden = true; else if (!$("#detail").hidden) closeDetail(); });
   $("#lang-en").onclick = () => setLang("en");
   $("#lang-he").onclick = () => setLang("he");
   let qT; $("#q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(() => { if (!$("#detail").hidden) closeDetail(); else render(); }, 180); });
 
+  async function saveMark(table, id, on) {
+    if (user && sb) {
+      try {
+        if (on) await sb.from(table).upsert({ user_id: user.id, title_id: id });
+        else await sb.from(table).delete().eq("user_id", user.id).eq("title_id", id);
+      } catch (e) { toast(t("genericErr")); }
+    } else store.set(table === "watchlist" ? "list" : "watched", [...(table === "watchlist" ? list : watched)]);
+  }
+  async function syncFromServer() {
+    if (!user || !sb) return;
+    try {
+      // Move anything saved on this device before signing in into the account, once.
+      const localList = store.get("list", []), localW = store.get("watched", []);
+      if (localList.length) await sb.from("watchlist").upsert(localList.map(id => ({ user_id: user.id, title_id: id })), { ignoreDuplicates: true });
+      if (localW.length) await sb.from("watched").upsert(localW.map(id => ({ user_id: user.id, title_id: id })), { ignoreDuplicates: true });
+      store.set("list", []); store.set("watched", []);
+      const [a, b, pr] = await Promise.all([
+        sb.from("watchlist").select("title_id, added_at").order("added_at", { ascending: false }),
+        sb.from("watched").select("title_id"),
+        sb.from("profiles").select("lang").eq("id", user.id).maybeSingle(),
+      ]);
+      list = new Set((a.data || []).map(r => r.title_id));
+      watched = new Set((b.data || []).map(r => r.title_id));
+      if (C) await ensureItems([...list, ...watched]);
+      if (pr.data && pr.data.lang && pr.data.lang !== lang) setLang(pr.data.lang); else if (C) refresh();
+    } catch (e) { /* keep what's on screen */ }
+  }
+  function refresh() { const d = $("#detail"); if (!d.hidden) openDetail(d.dataset.id); else render(); }
+
+  function renderAcct() {
+    const w = $("#acct-wrap");
+    if (!sb) { w.innerHTML = ""; return; }
+    if (!user) { w.innerHTML = `<button class="btn acct" type="button" data-auth="in"><span>${t("signIn")}</span></button>`; return; }
+    const email = user.email || "";
+    w.innerHTML = `<button class="btn acct" type="button" id="acct-btn" aria-expanded="${menuOpen}"><span class="avatar">${esc(email[0] || "?")}</span><span class="label">${t("mylist")}</span></button>
+      ${menuOpen ? `<div class="menu" role="menu"><div class="who">${esc(email)}</div>
+        <button type="button" role="menuitem" data-view="list">${t("mylist")}</button>
+        <button type="button" role="menuitem" id="sign-out">${t("signOut")}</button></div>` : ""}`;
+  }
+  function openAuth(mode) {
+    authMode = mode; menuOpen = false;
+    const up = mode === "up";
+    $("#auth-title").textContent = up ? t("upTitle") : t("inTitle");
+    $("#auth-sub").textContent = up ? t("upSub") : t("inSub");
+    $("#auth-submit").textContent = up ? t("signUp") : t("signIn");
+    $("#auth-alt-q").textContent = up ? t("haveAcct") : t("noAcct");
+    $("#auth-switch").textContent = up ? t("signIn") : t("signUp");
+    $("#auth-pass").autocomplete = up ? "new-password" : "current-password";
+    $("#auth-msg").hidden = true;
+    $("#auth").hidden = false; $("#auth-email").focus();
+  }
+  function authMsg(text, ok) { const m = $("#auth-msg"); m.textContent = text; m.className = "msg " + (ok ? "ok" : "err"); m.hidden = false; }
+  $("#auth-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const email = $("#auth-email").value.trim(), password = $("#auth-pass").value;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return authMsg(t("badEmail"));
+    if (password.length < 6) return authMsg(t("shortPass"));
+    const btn = $("#auth-submit"); btn.disabled = true;
+    try {
+      if (authMode === "up") {
+        const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
+        if (error) throw error;
+        if (data.session) { $("#auth").hidden = true; toast(t("welcome")); }
+        else { authMsg(t("checkEmail"), true); authMode = "in"; $("#auth-submit").textContent = t("signIn"); }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        $("#auth").hidden = true; $("#auth-pass").value = ""; toast(t("welcome"));
+      }
+    } catch (err) {
+      const m = String(err && err.message || "");
+      authMsg(/invalid login|invalid credentials/i.test(m) ? t("badLogin") : /password/i.test(m) && /6/.test(m) ? t("shortPass") : (m || t("genericErr")));
+    } finally { btn.disabled = false; }
+  });
+  $("#auth-switch").onclick = () => openAuth(authMode === "up" ? "in" : "up");
+  $("#auth-cancel").onclick = () => { $("#auth").hidden = true; };
+  $("#auth").addEventListener("click", e => { if (e.target.id === "auth") $("#auth").hidden = true; });
+  document.addEventListener("click", async e => {
+    const a = e.target.closest("[data-auth]"); if (a) { openAuth(a.dataset.auth); return; }
+    if (e.target.closest("#acct-btn")) { menuOpen = !menuOpen; renderAcct(); return; }
+    if (e.target.closest("#sign-out")) { menuOpen = false; await sb.auth.signOut(); toast(t("bye")); return; }
+    if (menuOpen && !e.target.closest("#acct-wrap")) { menuOpen = false; renderAcct(); }
+  });
+  if (sb) sb.auth.onAuthStateChange((event, session) => {
+    const was = user && user.id; user = session ? session.user : null;
+    renderAcct();
+    if (user && user.id !== was) setTimeout(syncFromServer, 0);
+    if (!user && was) { list = new Set(); watched = new Set(); if (C) refresh(); }
+  });
+
   setLang(lang);
-  fetch("catalog.json").then(r => r.json()).then(data => { C = data; render(); })
+  fetch("catalog.json").then(r => r.json()).then(async data => { C = data; render(); if (user) { await ensureItems([...list, ...watched]); refresh(); } })
     .catch(() => { $("#main").innerHTML = `<div class="loading">The catalog didn’t load. Refresh the page to try again.</div>`; });
 })();
 </script>
