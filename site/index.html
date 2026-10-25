@@ -1,0 +1,457 @@
+<title>What to Watch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: media-center shell. Fixed icon rail (bottom bar on phones), sticky search bar,
+   a featured hero, then horizontally scrolling poster shelves. Dark by design. */
+:root {
+  --bg: #0e0c18;          /* violet-tinted night */
+  --surface: #181527;
+  --surface-2: #231f37;
+  --line: #2e2947;
+  --fg: #eceaf6;
+  --muted: #9a96b5;
+  --accent: #8b6dff;      /* the one violet */
+  --accent-ink: #ffffff;
+  --gold: #f2c94c;        /* ratings */
+  --ok: #4fd1a5;          /* watched */
+  --font-ui: "Figtree", "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-he: "Rubik", "Figtree", system-ui, "Segoe UI", "Arial Hebrew", sans-serif;
+  --rail: 76px;
+  --poster: 150px;
+  color-scheme: dark;
+}
+html[lang="he"] { --font-ui: var(--font-he); }
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--font-ui); font-size: 15px; line-height: 1.45;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+button, input { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* ---------- rail ---------- */
+.rail {
+  position: fixed; inset-block: 0; inset-inline-start: 0; width: var(--rail); z-index: 20;
+  background: var(--surface); border-inline-end: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding-block: calc(14px + env(safe-area-inset-top, 0px)) 14px;
+}
+.brand { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 15px; margin-block-end: 14px; letter-spacing: -.02em; }
+.nav-btn { width: 60px; padding-block: 9px 7px; border: 0; background: none; border-radius: 12px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; font-weight: 600; }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn:hover { color: var(--fg); background: var(--surface-2); }
+.nav-btn[aria-current="page"] { color: var(--fg); background: var(--surface-2); }
+.nav-btn[aria-current="page"] svg { color: var(--accent); }
+
+/* ---------- top bar ---------- */
+.app { margin-inline-start: var(--rail); min-width: 0; }
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15;
+  display: flex; align-items: center; gap: 14px;
+  padding-block: 14px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(var(--bg) 60%, transparent);
+}
+.wordmark { font-weight: 800; font-size: 19px; letter-spacing: -.02em; white-space: nowrap; }
+.wordmark span { color: var(--accent); }
+.search { flex: 1; max-width: 560px; margin-inline: auto; position: relative; min-width: 0; }
+.search input { width: 100%; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface);
+  padding-inline: 44px 16px; outline: none; }
+.search input::placeholder { color: var(--muted); }
+.search input:focus { border-color: var(--accent); }
+.search svg { position: absolute; inset-inline-start: 15px; top: 12px; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
+.lang { display: flex; border: 1px solid var(--line); border-radius: 22px; padding: 3px; background: var(--surface); flex: none; }
+.lang button { border: 0; background: none; border-radius: 18px; padding: 6px 12px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.lang button:last-child { font-family: var(--font-he); }
+
+/* ---------- content ---------- */
+main { padding-bottom: 48px; }
+.pad { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+
+.hero { position: relative; margin-inline: max(24px, env(safe-area-inset-left, 0px)); border-radius: 18px; overflow: hidden;
+  min-height: 380px; display: flex; align-items: flex-end; background: var(--surface); isolation: isolate; }
+.hero img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; max-width: none; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to top, var(--bg) 2%, rgba(14,12,24,.75) 38%, rgba(14,12,24,.05) 75%),
+              linear-gradient(to right, rgba(14,12,24,.85), transparent 65%); }
+html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%, rgba(14,12,24,.75) 38%, rgba(14,12,24,.05) 75%),
+              linear-gradient(to left, rgba(14,12,24,.85), transparent 65%); }
+.hero-body { padding: 32px; max-width: 620px; display: grid; gap: 12px; }
+.hero h1 { margin: 0; font-size: clamp(28px, 4.4vw, 48px); line-height: 1.05; letter-spacing: -.02em; text-wrap: balance; font-weight: 800; }
+.hero p { margin: 0; color: #d6d3e8; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 60ch; }
+.hero-dots { position: absolute; bottom: 18px; inset-inline-end: 22px; display: flex; gap: 6px; }
+.hero-dots button { width: 8px; height: 8px; border-radius: 4px; border: 0; padding: 0; background: rgba(255,255,255,.35); cursor: pointer; transition: width .25s; }
+.hero-dots button[aria-current="true"] { width: 22px; background: var(--fg); }
+
+.meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.imdb { display: inline-flex; align-items: center; gap: 5px; color: var(--fg); font-weight: 700; }
+.imdb b { background: var(--gold); color: #1a1500; font-size: 10px; font-weight: 800; padding: 2px 4px; border-radius: 3px; letter-spacing: .02em; }
+.chip { border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 12px; color: var(--fg); }
+
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { height: 44px; padding-inline: 18px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface-2);
+  font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.on { border-color: var(--ok); color: var(--ok); }
+.btn svg { width: 18px; height: 18px; }
+
+.shelf { margin-top: 30px; }
+.shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.shelf-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.shelf-head span { color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x proximity; padding-block: 6px 12px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.row::-webkit-scrollbar { height: 6px; } .row::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.card { flex: none; width: var(--poster); scroll-snap-align: start; border: 0; padding: 0; background: none; text-align: start; cursor: pointer; display: grid; gap: 8px; }
+.poster { position: relative; aspect-ratio: 2/3; width: 100%; max-width: 100%; border-radius: 12px; overflow: hidden; background: var(--surface-2);
+  box-shadow: 0 0 0 1px var(--line); transition: transform .2s ease, box-shadow .2s ease; }
+.poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card:hover .poster, .card:focus-visible .poster { transform: translateY(-4px) scale(1.03); box-shadow: 0 0 0 2px var(--accent), 0 14px 30px rgba(0,0,0,.45); }
+.card:focus-visible { outline: none; }
+.badge { position: absolute; top: 7px; inset-inline-start: 7px; background: rgba(14,12,24,.82); backdrop-filter: blur(4px);
+  border-radius: 8px; padding: 2px 7px; font-size: 12px; font-weight: 700; display: inline-flex; gap: 4px; align-items: center; font-variant-numeric: tabular-nums; }
+.badge i { color: var(--gold); font-style: normal; }
+.mark { position: absolute; top: 7px; inset-inline-end: 7px; width: 24px; height: 24px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--ok); color: #062a1f; }
+.mark svg { width: 14px; height: 14px; }
+.card-title { font-size: 14px; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-sub { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.textcard { position: absolute; inset: 0; display: grid; align-content: end; padding: 12px; gap: 4px;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface)); }
+.textcard strong { font-size: 15px; line-height: 1.2; }
+.textcard small { color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 22px 16px; }
+.grid .card { width: auto; }
+.view-head { margin: 8px 0 20px; display: grid; gap: 4px; }
+.view-head h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+.view-head p { margin: 0; color: var(--muted); max-width: 60ch; }
+.empty { border: 1px dashed var(--line); border-radius: 16px; padding: 28px; color: var(--muted); max-width: 520px; display: grid; gap: 8px; }
+.empty strong { color: var(--fg); font-size: 16px; }
+
+/* ---------- detail ---------- */
+.detail { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background: var(--bg); }
+.detail-bg { position: absolute; inset: 0 0 auto; height: 520px; overflow: hidden; z-index: 0; }
+.detail-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.2); opacity: .45; transform: scale(1.15); max-width: none; }
+.detail-bg img.sharp { filter: none; opacity: .5; transform: none; }
+.detail-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(14,12,24,.2), var(--bg) 92%); }
+.detail-inner { position: relative; z-index: 1; max-width: 1080px; margin-inline: auto;
+  padding-block: calc(20px + env(safe-area-inset-top, 0px)) 60px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+.back { margin-bottom: 26px; }
+.detail-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 36px; align-items: start; }
+.detail-grid .poster { box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--line); }
+.detail-text { display: grid; gap: 14px; min-width: 0; }
+.detail h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -.02em; text-wrap: balance; }
+.alt-title { color: var(--muted); font-size: 16px; margin-top: -8px; }
+.overview { margin: 0; font-size: 16px; line-height: 1.6; max-width: 64ch; color: #dad7ea; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
+.links a:hover { border-color: var(--accent); }
+.links svg { width: 13px; height: 13px; opacity: .7; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); max-width: 640px; }
+.facts div { display: grid; gap: 2px; }
+.facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+html[lang="he"] .facts dt { letter-spacing: 0; }
+.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.toast { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 14px; }
+
+.loading { padding: 80px 24px; color: var(--muted); text-align: center; }
+
+/* ---------- phone ---------- */
+@media (max-width: 720px) {
+  :root { --poster: 118px; }
+  .rail { inset: auto 0 0 0; width: auto; height: auto; flex-direction: row; justify-content: space-around; gap: 0;
+    border-inline-end: 0; border-top: 1px solid var(--line);
+    padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .brand { display: none; }
+  .nav-btn { width: auto; flex: 1; font-size: 10px; padding-block: 6px; }
+  .app { margin-inline-start: 0; }
+  main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .top { flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .search { order: 3; flex-basis: 100%; max-width: none; }
+  .wordmark { margin-inline-end: auto; }
+  .pad, .row { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hero { margin-inline: max(16px, env(safe-area-inset-left, 0px)); min-height: 340px; }
+  .hero-body { padding: 20px; }
+  .row { gap: 10px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
+  .detail-grid { grid-template-columns: 1fr; gap: 20px; }
+  .detail-grid .poster { width: 170px; }
+  .detail-inner { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<nav class="rail" aria-label="Main">
+  <div class="brand" aria-hidden="true">W2W</div>
+  <button class="nav-btn" data-view="home" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="home"></span></button>
+  <button class="nav-btn" data-view="movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span data-t="movies"></span></button>
+  <button class="nav-btn" data-view="tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 2 4 4 4-4"/></svg><span data-t="series"></span></button>
+  <button class="nav-btn" data-view="il" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="israeli"></span></button>
+  <button class="nav-btn" data-view="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span data-t="mylist"></span></button>
+  <button class="nav-btn" data-view="ai" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg><span data-t="ai"></span></button>
+</nav>
+
+<div class="app">
+  <header class="top">
+    <div class="wordmark" id="wordmark"></div>
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="lang-en" aria-pressed="true">EN</button>
+      <button type="button" id="lang-he" aria-pressed="false">עב</button>
+    </div>
+  </header>
+  <main id="main"><div class="loading">Loading…</div></main>
+</div>
+
+<section class="detail" id="detail" hidden aria-modal="true" role="dialog"></section>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const T = {
+    en: { home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
+      search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
+      markWatched: "Mark watched", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
+      min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + "h " : ""}${m % 60}m`, results: n => `${n} results`, noResults: "Nothing found",
+      noResultsHint: "Try the English or the Hebrew title, or fewer words.", year: "Year", runtime: "Runtime", rating: "IMDb rating",
+      votes: "Votes", country: "Country", us: "United States", il: "Israel", seasonsL: "Seasons",
+      listEmpty: "Your list is empty", listHint: "Open any title and tap “My list” to save it here. Titles you mark as watched get a green check.",
+      moviesH: "Movies", moviesP: "The most watched US and Israeli films since 1980.",
+      seriesH: "Series", seriesP: "The most watched US and Israeli series since 1980.",
+      ilH: "Israeli", ilP: "Israeli movies and series, from Waltz with Bashir to Fauda.",
+      listH: "My list", aiH: "Ask AI", aiP: "Tell it what you’re in the mood for and it picks from the whole catalog. Coming in the next version.",
+      aiEx: ["A tense Israeli series like Fauda", "A feel-good 90s comedy for tonight", "Something like Breaking Bad, but shorter"],
+      toastAdd: "Added to my list", toastRem: "Removed from my list", toastW: "Marked as watched", toastUW: "Marked as not watched",
+      wiki: "Wikipedia", wikiHe: "Wikipedia (Hebrew)", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      word: 'What to <span>Watch</span>', titles: "titles", ongoing: "present" },
+    he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
+      search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
+      markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
+      min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + " ש׳ " : ""}${m % 60} ד׳`, results: n => `${n} תוצאות`, noResults: "לא נמצא כלום",
+      noResultsHint: "נסו את השם בעברית או באנגלית, או פחות מילים.", year: "שנה", runtime: "אורך", rating: "דירוג IMDb",
+      votes: "מדרגים", country: "מדינה", us: "ארצות הברית", il: "ישראל", seasonsL: "עונות",
+      listEmpty: "הרשימה שלך ריקה", listHint: "פתחו כותר ולחצו על „לרשימה” כדי לשמור אותו כאן. כותרים שסימנתם כנצפו מקבלים וי ירוק.",
+      moviesH: "סרטים", moviesP: "הסרטים האמריקאיים והישראליים הנצפים ביותר מאז 1980.",
+      seriesH: "סדרות", seriesP: "הסדרות האמריקאיות והישראליות הנצפות ביותר מאז 1980.",
+      ilH: "ישראלי", ilP: "סרטים וסדרות ישראליים, מוואלס עם באשיר ועד פאודה.",
+      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "ספרו מה בא לכם לראות, והוא יבחר מכל הקטלוג. מגיע בגרסה הבאה.",
+      aiEx: ["סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "משהו כמו שובר שורות, אבל קצר יותר"],
+      toastAdd: "נוסף לרשימה", toastRem: "הוסר מהרשימה", toastW: "סומן כנצפה", toastUW: "הסימון בוטל",
+      wiki: "ויקיפדיה (אנגלית)", wikiHe: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      word: 'מה <span>לראות</span>', titles: "כותרים", ongoing: "היום" },
+  };
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("w2w:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("w2w:" + k, JSON.stringify(v)); } catch {} },
+  };
+  let lang = store.get("lang", "en");
+  let list = new Set(store.get("list", []));
+  let watched = new Set(store.get("watched", []));
+  let view = "home", heroIdx = 0, heroTimer = null, C = null;
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const t = k => T[lang][k];
+  const title = it => lang === "he" ? (it.th || it.t) : it.t;
+  const altTitle = it => lang === "he" ? (it.th && it.th !== it.t ? it.t : "") : (it.th && it.th !== it.t ? it.th : "");
+  const poster = it => lang === "he" ? (it.ph || it.p) : it.p;
+  const overview = it => lang === "he" ? (it.oh || it.o) : (it.o || it.oh);
+  const genre = g => lang === "he" ? (C.genres_he[g] || g) : g;
+  const years = it => it.ty === "tv" && it.y ? (it.ye ? (it.ye === it.y ? `${it.y}` : `${it.y}–${it.ye}`) : `${it.y}–`) : `${it.y ?? ""}`;
+  const icon = {
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>',
+  };
+
+  function card(id) {
+    const it = C.items[id]; if (!it) return "";
+    const p = poster(it);
+    return `<button class="card" type="button" data-id="${id}">
+      <div class="poster">${p ? `<img src="${p}" alt="" loading="lazy" decoding="async">`
+        : `<div class="textcard"><strong>${esc(title(it))}</strong><small>${it.y ?? ""}</small></div>`}
+        ${it.rt ? `<span class="badge"><i>★</i>${it.rt.toFixed(1)}</span>` : ""}
+        ${watched.has(id) ? `<span class="mark" title="${t("watched")}">${icon.check}</span>` : ""}
+      </div>
+      <div class="card-title">${esc(title(it))}</div>
+      <div class="card-sub">${years(it)} · ${it.ty === "tv" ? t("tv") : t("movie")}</div>
+    </button>`;
+  }
+  const shelfName = s => lang === "he" ? s.he : s.en;
+  function shelf(s) {
+    return `<section class="shelf"><div class="shelf-head pad"><h2>${esc(shelfName(s))}</h2><span>${s.ids.length} ${t("titles")}</span></div>
+      <div class="row">${s.ids.map(card).join("")}</div></section>`;
+  }
+  function hero() {
+    const id = C.hero[heroIdx], it = C.items[id];
+    const g = it.g.slice(0, 2).map(x => `<span class="chip">${esc(genre(x))}</span>`).join("");
+    return `<section class="hero" id="hero">
+      ${it.b ? `<img class="bg" src="${it.b}" alt="">` : ""}
+      <div class="hero-body">
+        <div class="meta">${it.rt ? `<span class="imdb"><b>IMDb</b>${it.rt.toFixed(1)}</span>` : ""}<span>${years(it)}</span>${g}</div>
+        <h1>${esc(title(it))}</h1>
+        <p>${esc(overview(it))}</p>
+        <div class="btns">
+          <button class="btn primary" type="button" data-open="${id}">${icon.info}${t("details")}</button>
+          <button class="btn ${list.has(id) ? "on" : ""}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
+        </div>
+      </div>
+      <div class="hero-dots">${C.hero.map((_, i) => `<button type="button" aria-label="${i + 1}" data-hero="${i}" aria-current="${i === heroIdx}"></button>`).join("")}</div>
+    </section>`;
+  }
+  const footer = () => `<footer class="pad">${esc(t("footer"))}</footer>`;
+
+  function byType(pred, n = 120) {
+    return C.index.filter(id => pred(C.items[id])).slice(0, n);
+  }
+  function render() {
+    const main = $("#main");
+    const q = $("#q").value.trim();
+    clearInterval(heroTimer);
+    document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
+    if (q) { main.innerHTML = searchView(q); return; }
+    if (view === "home") {
+      main.innerHTML = hero() + C.shelves.map(shelf).join("") + footer();
+      heroTimer = setInterval(() => { if (!document.hidden && $("#detail").hidden) { heroIdx = (heroIdx + 1) % C.hero.length; swapHero(); } }, 9000);
+    } else if (view === "movie" || view === "tv") {
+      const keys = view === "movie" ? ["movies", "il-movies", "comedy", "anim", "docs"] : ["series", "il-series", "top"];
+      const shelves = C.shelves.filter(s => keys.includes(s.key)).map(s => ({ ...s, ids: s.ids.filter(id => C.items[id].ty === view) })).filter(s => s.ids.length);
+      main.innerHTML = head(t(view === "movie" ? "moviesH" : "seriesH"), t(view === "movie" ? "moviesP" : "seriesP")) + shelves.map(shelf).join("")
+        + `<section class="shelf pad"><div class="grid">${byType(it => it.ty === view).map(card).join("")}</div></section>` + footer();
+    } else if (view === "il") {
+      const shelves = C.shelves.filter(s => s.key.startsWith("il-"));
+      main.innerHTML = head(t("ilH"), t("ilP")) + shelves.map(shelf).join("")
+        + `<section class="shelf pad"><div class="grid">${byType(it => it.il, 200).map(card).join("")}</div></section>` + footer();
+    } else if (view === "list") {
+      const ids = [...list].filter(id => C.items[id]);
+      main.innerHTML = head(t("listH"), "") + `<div class="pad">${ids.length ? `<div class="grid">${ids.map(card).join("")}</div>`
+        : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}</div>` + footer();
+    } else if (view === "ai") {
+      main.innerHTML = head(t("aiH"), t("aiP")) + `<div class="pad"><div class="btns">${t("aiEx").map(x => `<span class="chip" style="padding:8px 14px;font-size:14px">${esc(x)}</span>`).join("")}</div></div>` + footer();
+    }
+  }
+  const head = (h, p) => `<div class="view-head pad"><h1>${esc(h)}</h1>${p ? `<p>${esc(p)}</p>` : ""}</div>`;
+  function swapHero() { const h = $("#hero"); if (h) h.outerHTML = hero(); }
+
+  const norm = s => (s || "").toLowerCase().normalize("NFKD").replace(/[֑-ׇ]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+  function searchView(q) {
+    const nq = norm(q), words = nq.split(" ");
+    const hits = [];
+    for (const id of C.index) {
+      const it = C.items[id], hay = norm(it.t) + " " + norm(it.th);
+      if (words.every(w => hay.includes(w))) {
+        const exact = norm(it.t) === nq || norm(it.th) === nq;
+        hits.push([exact ? 0 : 1, id]);
+        if (hits.length > 400) break;
+      }
+    }
+    hits.sort((a, b) => a[0] - b[0]);
+    const ids = hits.slice(0, 60).map(h => h[1]);
+    return `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("results")(ids.length)}</p></div><div class="pad">`
+      + (ids.length ? `<div class="grid">${ids.map(card).join("")}</div>` : `<div class="empty"><strong>${t("noResults")}</strong><span>${t("noResultsHint")}</span></div>`) + `</div>`;
+  }
+
+  function openDetail(id) {
+    const it = C.items[id]; if (!it) return;
+    const d = $("#detail"), p = poster(it);
+    const facts = [
+      [t("year"), years(it)],
+      it.ty === "tv" ? (it.s ? [t("seasonsL"), it.s] : null) : (it.rm ? [t("runtime"), t("min")(it.rm)] : null),
+      it.rt ? [t("rating"), `${it.rt.toFixed(1)} / 10`] : null,
+      it.v ? [t("votes"), it.v.toLocaleString(lang === "he" ? "he-IL" : "en-US")] : null,
+      [t("country"), it.il ? t("il") : t("us")],
+    ].filter(Boolean);
+    const links = [
+      it.imdb && ["IMDb", it.imdb], it.wh && lang === "he" && [t("wikiHe"), it.wh], it.we && [t("wiki"), it.we],
+      it.wh && lang === "en" && [t("wikiHe"), it.wh], it.mc && ["Metacritic", it.mc],
+    ].filter(Boolean);
+    const bg = it.b ? `<img class="sharp" src="${it.b}" alt="">` : (p ? `<img src="${p}" alt="">` : "");
+    d.innerHTML = `<div class="detail-bg">${bg}</div><div class="detail-inner">
+      <button class="btn back" type="button" data-close>${icon.back}${t("back")}</button>
+      <div class="detail-grid">
+        <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
+        <div class="detail-text">
+          <div class="meta">${it.rt ? `<span class="imdb"><b>IMDb</b>${it.rt.toFixed(1)}</span>` : ""}<span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
+            <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}</div>
+          <h1>${esc(title(it))}</h1>
+          ${altTitle(it) ? `<div class="alt-title">${esc(altTitle(it))}</div>` : ""}
+          <div class="meta">${it.g.map(x => `<span class="chip">${esc(genre(x))}</span>`).join("")}</div>
+          ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
+          <div class="btns">
+            <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
+            <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
+          </div>
+          <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+          <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
+        </div>
+      </div></div>`;
+    d.dataset.id = id; d.hidden = false; d.scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    d.querySelector("[data-close]").focus();
+  }
+  function closeDetail() { const d = $("#detail"); d.hidden = true; d.innerHTML = ""; document.body.style.overflow = ""; render(); }
+
+  let toastT;
+  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 1800); }
+
+  function setLang(l) {
+    lang = l; store.set("lang", l);
+    document.documentElement.lang = l; document.documentElement.dir = l === "he" ? "rtl" : "ltr";
+    $("#lang-en").setAttribute("aria-pressed", l === "en"); $("#lang-he").setAttribute("aria-pressed", l === "he");
+    document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
+    $("#wordmark").innerHTML = t("word");
+    $("#q").placeholder = t("search");
+    if (!C) return;
+    render();
+    const d = $("#detail"); if (!d.hidden) openDetail(d.dataset.id);
+  }
+
+  document.addEventListener("click", e => {
+    const el = e.target.closest("button, a"); if (!el) return;
+    if (el.dataset.view) { view = el.dataset.view; $("#q").value = ""; if (!$("#detail").hidden) closeDetail(); render(); window.scrollTo(0, 0); }
+    else if (el.dataset.id) openDetail(el.dataset.id);
+    else if (el.dataset.open) openDetail(el.dataset.open);
+    else if (el.dataset.hero) { heroIdx = +el.dataset.hero; swapHero(); }
+    else if (el.dataset.close !== undefined) closeDetail();
+    else if (el.dataset.list) {
+      const id = el.dataset.list; list.has(id) ? list.delete(id) : list.add(id); store.set("list", [...list]);
+      toast(list.has(id) ? t("toastAdd") : t("toastRem"));
+      if (!$("#detail").hidden) openDetail(id); else if (view === "home") swapHero(); else render();
+    } else if (el.dataset.watch) {
+      const id = el.dataset.watch; watched.has(id) ? watched.delete(id) : watched.add(id); store.set("watched", [...watched]);
+      toast(watched.has(id) ? t("toastW") : t("toastUW")); openDetail(id);
+    }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#detail").hidden) closeDetail(); });
+  $("#lang-en").onclick = () => setLang("en");
+  $("#lang-he").onclick = () => setLang("he");
+  let qT; $("#q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(() => { if (!$("#detail").hidden) closeDetail(); else render(); }, 180); });
+
+  setLang(lang);
+  fetch("catalog.json").then(r => r.json()).then(data => { C = data; render(); })
+    .catch(() => { $("#main").innerHTML = `<div class="loading">The catalog didn’t load. Refresh the page to try again.</div>`; });
+})();
+</script>
