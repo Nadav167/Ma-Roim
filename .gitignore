@@ -1,0 +1,15 @@
+# Secrets — never commit
+.secrets/
+.env
+
+# Raw downloads and caches (regenerable with the scripts)
+raw/
+
+# Build outputs (compressed copies live in data/)
+out/
+
+# Python / OS
+__pycache__/
+*.pyc
+.DS_Store
+.~lock*
