@@ -32,7 +32,9 @@ for r in rows:
         "poster_en": r["poster_en"] or None, "poster_he": r["poster_he"] or None, "backdrop": r["backdrop"] or None,
         "overview_en": r["overview_en"] or None, "overview_he": r["overview_he"] or None,
         "imdb_url": r["imdb_url"] or None, "wikipedia_en": r["wikipedia_en"] or None, "wikipedia_he": r["wikipedia_he"] or None,
-        "metacritic_url": r["metacritic_url"] or None, "same_name_flag": r["same_name_flag"] or None,
+        "metacritic_url": r["metacritic_url"] or None,
+        "rt_score": num(r.get("rt_score"), int), "mc_score": num(r.get("mc_score"), int), "rt_url": r.get("rt_url") or None,
+        "same_name_flag": r["same_name_flag"] or None,
     })
 print("rows to load", len(out), flush=True)
 

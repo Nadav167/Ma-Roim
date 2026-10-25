@@ -24,6 +24,8 @@ def slim(r):
         "id": r["wikidata_id"], "t": r["title"], "th": r["title_he"], "ty": "tv" if r["type"] == "TV series" else "movie",
         "y": r["year"], "ye": r["end_year"] or None, "il": "Israel" in r["country"],
         "g": g, "rt": r["imdb_rating"] or None, "v": r["imdb_votes"] or 0,
+        "rs": r.get("rt_score") if r.get("rt_score") != "" else None, "ms": r.get("mc_score") if r.get("mc_score") != "" else None,
+        "ru": r.get("rt_url") or None,
         "rm": r["runtime_min"] or None, "s": r["seasons"] or None,
         "p": r["poster_en"] or None, "ph": r["poster_he"] or None, "b": r["backdrop"] or None,
         "o": r["overview_en"] or "", "oh": r["overview_he"] or "",

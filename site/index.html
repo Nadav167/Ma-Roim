@@ -103,6 +103,23 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
 .imdb { display: inline-flex; align-items: center; gap: 5px; color: var(--fg); font-weight: 700; }
 .imdb b { background: var(--gold); color: #1a1500; font-size: 10px; font-weight: 800; padding: 2px 4px; border-radius: 3px; letter-spacing: .02em; }
+.scores { display: flex; flex-wrap: wrap; gap: 10px; }
+.score { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; row-gap: 1px; min-width: 150px;
+  padding: 10px 14px 10px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
+html[dir="rtl"] .score { padding: 10px 10px 10px 14px; }
+a.score:hover { border-color: var(--muted); }
+.score .val { grid-row: span 2; min-width: 48px; height: 48px; padding-inline: 6px; border-radius: 10px; display: grid; place-items: center;
+  font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.score .src { font-size: 12px; color: var(--muted); font-weight: 600; }
+.score .verdict { font-size: 14px; font-weight: 700; }
+.val.imdb-v { background: var(--gold); color: #1a1500; }
+.val.fresh { background: #fa320a; color: #fff; }      /* Tomatometer 60%+ */
+.val.rotten { background: #2f8f3a; color: #fff; }     /* below 60% */
+.val.mc-hi { background: #00ce7a; color: #062b19; }   /* Metascore 61–100 */
+.val.mc-mid { background: #ffbd3f; color: #2b1d00; }  /* 40–60 */
+.val.mc-lo { background: #ff6874; color: #2b0006; }   /* 0–39 */
+.mini { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; }
+.mini i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 .chip { border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 12px; color: var(--fg); }
 
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -222,13 +239,19 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
+  .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 3px; }
+  .score .val { grid-row: auto; height: 40px; min-width: 44px; font-size: 17px; margin-bottom: 4px; }
+  .score .src { font-size: 11px; overflow-wrap: anywhere; }
+  .score .verdict { font-size: 12px; line-height: 1.25; }
   .acct { padding-inline: 8px; }
   .pad, .row { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .hero { margin-inline: max(16px, env(safe-area-inset-left, 0px)); min-height: 340px; }
   .hero-body { padding: 20px; }
   .row { gap: 10px; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
-  .detail-grid { grid-template-columns: 1fr; gap: 20px; }
+  .detail-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .facts { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
   .detail-grid .poster { width: 170px; }
   .detail-inner { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 }
@@ -303,7 +326,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       checkEmail: "Almost done. We sent a confirmation link to your email. Open it, then sign in here.",
       badLogin: "That email and password don’t match. Check them and try again.", shortPass: "Use at least 6 characters for the password.",
       badEmail: "Enter a valid email address.", genericErr: "Something went wrong. Try again in a moment.",
-      welcome: "Signed in", bye: "Signed out", searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
+      welcome: "Signed in", bye: "Signed out",
+      votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
+      mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
       markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
@@ -325,7 +350,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       checkEmail: "כמעט סיימנו. שלחנו קישור אישור לאימייל שלכם. פתחו אותו ואז התחברו כאן.",
       badLogin: "האימייל והסיסמה לא תואמים. בדקו ונסו שוב.", shortPass: "הסיסמה צריכה להכיל לפחות 6 תווים.",
       badEmail: "הזינו כתובת אימייל תקינה.", genericErr: "משהו השתבש. נסו שוב בעוד רגע.",
-      welcome: "התחברתם", bye: "התנתקתם", searching: "מחפש…", signInToSave: "התחברו כדי לשמור את הרשימה בכל מכשיר" },
+      welcome: "התחברתם", bye: "התנתקתם",
+      votesN: n => `${n} מדרגים`, fresh: "טרי", rotten: "רקוב", critics: "מבקרים",
+      mcBands: ["שליליות מאוד", "ביקורות שליליות", "ביקורות מעורבות", "ביקורות חיוביות", "שבחים גורפים"], searching: "מחפש…", signInToSave: "התחברו כדי לשמור את הרשימה בכל מכשיר" },
   };
   const store = {
     get(k, d) { try { const v = localStorage.getItem("w2w:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -341,7 +368,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
-    rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he,
+    rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url,
     b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
   async function ensureItems(ids) {
     const missing = ids.filter(id => !C.items[id]);
@@ -361,6 +388,24 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   const overview = it => lang === "he" ? (it.oh || it.o) : (it.o || it.oh);
   const genre = g => lang === "he" ? (C.genres_he[g] || g) : g;
   const years = it => it.ty === "tv" && it.y ? (it.ye ? (it.ye === it.y ? `${it.y}` : `${it.y}–${it.ye}`) : `${it.y}–`) : `${it.y ?? ""}`;
+  const compact = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
+  const mcClass = m => m >= 61 ? "mc-hi" : m >= 40 ? "mc-mid" : "mc-lo";
+  const mcBand = m => t("mcBands")[m >= 81 ? 4 : m >= 61 ? 3 : m >= 40 ? 2 : m >= 20 ? 1 : 0];
+  function scoreTiles(it) {
+    const tile = (href, cls, val, src, verdict) => {
+      const inner = `<span class="val ${cls}">${val}</span><span class="src">${src}</span><span class="verdict">${esc(verdict)}</span>`;
+      return href ? `<a class="score" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="score">${inner}</div>`;
+    };
+    const out = [];
+    if (it.rt) out.push(tile(it.imdb, "imdb-v", it.rt.toFixed(1), "IMDb", it.v ? t("votesN")(compact(it.v)) : "/ 10"));
+    if (it.rs != null) out.push(tile(it.ru, it.rs >= 60 ? "fresh" : "rotten", `${it.rs}%`, "Rotten Tomatoes", it.rs >= 60 ? t("fresh") : t("rotten")));
+    if (it.ms != null) out.push(tile(it.mc, mcClass(it.ms), it.ms, "Metacritic", mcBand(it.ms)));
+    return out.length ? `<div class="scores">${out.join("")}</div>` : "";
+  }
+  const miniScores = it => [
+    it.rs != null ? `<span class="mini" title="Rotten Tomatoes"><i class="${it.rs >= 60 ? "fresh" : "rotten"}" style="background:${it.rs >= 60 ? "#fa320a" : "#2f8f3a"}"></i>${it.rs}%</span>` : "",
+    it.ms != null ? `<span class="mini" title="Metacritic"><i style="background:${it.ms >= 61 ? "#00ce7a" : it.ms >= 40 ? "#ffbd3f" : "#ff6874"}"></i>${it.ms}</span>` : "",
+  ].join("");
   const icon = {
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
@@ -393,7 +438,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     return `<section class="hero" id="hero">
       ${it.b ? `<img class="bg" src="${it.b}" alt="">` : ""}
       <div class="hero-body">
-        <div class="meta">${it.rt ? `<span class="imdb"><b>IMDb</b>${it.rt.toFixed(1)}</span>` : ""}<span>${years(it)}</span>${g}</div>
+        <div class="meta">${it.rt ? `<span class="imdb"><b>IMDb</b>${it.rt.toFixed(1)}</span>` : ""}${miniScores(it)}<span>${years(it)}</span>${g}</div>
         <h1>${esc(title(it))}</h1>
         <p>${esc(overview(it))}</p>
         <div class="btns">
@@ -484,13 +529,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     const facts = [
       [t("year"), years(it)],
       it.ty === "tv" ? (it.s ? [t("seasonsL"), it.s] : null) : (it.rm ? [t("runtime"), t("min")(it.rm)] : null),
-      it.rt ? [t("rating"), `${it.rt.toFixed(1)} / 10`] : null,
-      it.v ? [t("votes"), it.v.toLocaleString(lang === "he" ? "he-IL" : "en-US")] : null,
       [t("country"), it.il ? t("il") : t("us")],
     ].filter(Boolean);
     const links = [
       it.imdb && ["IMDb", it.imdb], it.wh && lang === "he" && [t("wikiHe"), it.wh], it.we && [t("wiki"), it.we],
-      it.wh && lang === "en" && [t("wikiHe"), it.wh], it.mc && ["Metacritic", it.mc],
+      it.wh && lang === "en" && [t("wikiHe"), it.wh], it.ru && ["Rotten Tomatoes", it.ru], it.mc && ["Metacritic", it.mc],
     ].filter(Boolean);
     const bg = it.b ? `<img class="sharp" src="${it.b}" alt="">` : (p ? `<img src="${p}" alt="">` : "");
     d.innerHTML = `<div class="detail-bg">${bg}</div><div class="detail-inner">
@@ -498,11 +541,12 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       <div class="detail-grid">
         <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
         <div class="detail-text">
-          <div class="meta">${it.rt ? `<span class="imdb"><b>IMDb</b>${it.rt.toFixed(1)}</span>` : ""}<span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
+          <div class="meta"><span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
             <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}</div>
           <h1>${esc(title(it))}</h1>
           ${altTitle(it) ? `<div class="alt-title">${esc(altTitle(it))}</div>` : ""}
           <div class="meta">${it.g.map(x => `<span class="chip">${esc(genre(x))}</span>`).join("")}</div>
+          ${scoreTiles(it)}
           ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>

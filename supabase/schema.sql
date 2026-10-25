@@ -32,6 +32,9 @@ create table if not exists public.titles (
   wikipedia_en    text,
   wikipedia_he    text,
   metacritic_url  text,
+  rt_score        smallint check (rt_score between 0 and 100),
+  mc_score        smallint check (mc_score between 0 and 100),
+  rt_url          text,
   same_name_flag  text,
   search_text     text generated always as (lower(title || ' ' || coalesce(title_he, '') || ' ' || coalesce(original_title, ''))) stored
 );
