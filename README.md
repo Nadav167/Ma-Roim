@@ -11,6 +11,7 @@ A bilingual (English / Hebrew) catalog of US and Israeli movies and TV series fr
 | `titles.json.gz` | All titles, one object per title — what the website reads |
 | `titles.csv.gz` | The same data as CSV |
 | `same_name_review.csv` | US/Israeli titles that share a name, for manual review |
+| `hewiki_poster_review.csv` | Probable Hebrew posters from Hebrew Wikipedia, for manual review (`use_it` column) |
 
 About 58,000 titles: ~42,000 movies and ~16,000 TV series. Each has English and (where available) Hebrew title, year, genres, runtime, seasons, IMDb rating and votes, English and Hebrew posters, English and Hebrew synopses, and links to IMDb, English/Hebrew Wikipedia and Metacritic.
 
@@ -30,7 +31,9 @@ Run from the repo root, in order:
 4. `scripts/tmdb_enrich.py` — TMDB: posters (EN/HE), Hebrew titles, synopses, seasons
 5. `scripts/merge_tmdb.py` — merges TMDB data, applies the Hebrew and same-name rules
 6. `scripts/hewiki_posters.py` — Hebrew Wikipedia: lead images for titles still missing a Hebrew poster
-7. `scripts/xlsx_build.py` — Excel version for browsing
+7. `scripts/hewiki_apply.py` — adds those posters where they're clearly Hebrew (Israeli titles, or the file says so) and lists the rest in `data/hewiki_poster_review.csv`
+8. `scripts/site_catalog.py` — builds `site/catalog.json` for the website
+9. `scripts/xlsx_build.py` — Excel version for browsing
 
 Step 3 needs `title.basics.tsv.gz` and `title.ratings.tsv.gz` from https://datasets.imdbws.com in `raw/imdb/`.
 Step 4 needs a TMDB API Read Access Token in `.secrets/tmdb_token` (not committed).
