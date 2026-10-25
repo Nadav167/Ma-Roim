@@ -361,6 +361,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   let lang = store.get("lang", "en");
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
+  const BUILD = "2026-10-26.0153";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -449,7 +450,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       <div class="hero-dots">${C.hero.map((_, i) => `<button type="button" aria-label="${i + 1}" data-hero="${i}" aria-current="${i === heroIdx}"></button>`).join("")}</div>
     </section>`;
   }
-  const footer = () => `<footer class="pad">${esc(t("footer"))}</footer>`;
+  const footer = () => `<footer class="pad">${esc(t("footer"))} · v${BUILD}</footer>`;
 
   function byType(pred, n = 120) {
     return C.index.filter(id => pred(C.items[id])).slice(0, n);
@@ -693,7 +694,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   });
 
   setLang(lang);
-  fetch("catalog.json").then(r => r.json()).then(async data => { C = data; render(); if (user) { await ensureItems([...list, ...watched]); refresh(); } })
+  fetch("catalog.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => { C = data; render(); if (user) { await ensureItems([...list, ...watched]); refresh(); } })
     .catch(() => { $("#main").innerHTML = `<div class="loading">The catalog didn’t load. Refresh the page to try again.</div>`; });
 })();
 </script>
