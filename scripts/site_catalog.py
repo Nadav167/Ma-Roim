@@ -78,7 +78,7 @@ if os.path.exists("out/credits.json") and os.path.exists("out/people.json"):
             if k in seen or count.get(c["role"], 0) >= LIMIT[c["role"]]: continue
             seen.add(k); count[c["role"]] = count.get(c["role"], 0) + 1
             p = ppl[c["person_id"]]
-            out.append([c["role"], c["ord"], c["character"], p["id"], p["name"], p.get("name_he")])
+            out.append([c["role"], c["ord"], c["character"], p["id"], p["name"], p.get("name_he"), p.get("photo")])
         if tid in items: items[tid]["cr"] = out
 
 if mode == "preview":

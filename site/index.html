@@ -133,12 +133,14 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .person { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line);
   background: var(--surface); border-radius: 12px; padding: 8px 10px; cursor: pointer; min-width: 0; }
 .person:hover { border-color: var(--accent); }
-.person .ini { width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 14px; }
+.face { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); flex: none; }
+.face img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
+.face svg { width: 60%; height: 60%; }
 .person b { display: block; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .person small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .skeleton { height: 56px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .person-head { display: flex; gap: 18px; align-items: center; margin-bottom: 22px; }
-.person-head .ini { width: 84px; height: 84px; border-radius: 42px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 30px; font-weight: 800; flex: none; }
+.person-head .face { width: 96px; height: 96px; box-shadow: 0 0 0 2px var(--line); }
 .person-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.02em; }
 .scores { display: flex; flex-wrap: wrap; gap: 10px; }
 .score { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; row-gap: 1px; min-width: 150px;
@@ -279,7 +281,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .composer { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); padding-bottom: 10px; }
   .ai-turn .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .person-head .ini { width: 64px; height: 64px; font-size: 24px; }
+  .person-head .face { width: 76px; height: 76px; }
   .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 3px; }
   .score .val { grid-row: auto; height: 40px; min-width: 44px; font-size: 17px; margin-bottom: 4px; }
@@ -420,7 +422,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   let hist = [];   // details overlay history: {k: "t"|"p", id}
   const pname = p => lang === "he" && p.name_he ? p.name_he : p.name;
   const palt = p => p.name_he && p.name_he !== p.name ? (lang === "he" ? p.name : p.name_he) : "";
-  const initials = n => (n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  const SILHOUETTE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.6-4.4 4.2-7 8.5-7s7.9 2.6 8.5 7z"/></svg>';
+  const face = (photo, size = "w185") => `<span class="face">${photo ? `<img src="https://image.tmdb.org/t/p/${size}${photo}" alt="" loading="lazy" decoding="async">` : SILHOUETTE}</span>`;
   function reopen() { const top = hist[hist.length - 1]; if (!top) return; top.k === "p" ? openPerson(top.id, false) : openDetail(top.id, false); }
   try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
@@ -632,9 +635,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     if (creditsCache[id]) return creditsCache[id];
     const it = C && C.items[id];
     if (it && it.cr) {
-      creditsCache[id] = Promise.resolve(it.cr.map(([role, ord, character, pid, name, name_he]) => ({ role, ord, character, people: { id: pid, name, name_he } })));
+      creditsCache[id] = Promise.resolve(it.cr.map(([role, ord, character, pid, name, name_he, photo]) => ({ role, ord, character, people: { id: pid, name, name_he, photo } })));
     } else {
-      creditsCache[id] = sb.from("credits").select("role, ord, character, people(id, name, name_he)").eq("title_id", id).order("ord")
+      const q = cols => sb.from("credits").select(`role, ord, character, people(${cols})`).eq("title_id", id).order("ord");
+      creditsCache[id] = q("id, name, name_he, photo")
+        .then(r => r.error && /photo/.test(r.error.message || "") ? q("id, name, name_he") : r)   // before the photo column exists
         .then(({ data, error }) => { if (error) throw error; return data || []; });
       creditsCache[id].catch(() => { delete creditsCache[id]; });
     }
@@ -658,7 +663,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       const cast = cr.filter(c => c.role === "cast" && c.people);
       el.innerHTML = `<dl class="crew">${crewRow(n => n > 1 ? t("directorsL") : t("directorL"), "director")}${crewRow(t("creatorL"), "creator")}${crewRow(t("writerL"), "writer", 3)}${crewRow(t("composerL"), "composer", 2)}</dl>
         ${cast.length ? `<h2>${t("castH")}</h2><div class="cast-grid">${cast.map(c => `<button class="person" type="button" data-person="${c.people.id}">
-          <span class="ini">${esc(initials(c.people.name))}</span><span><b>${esc(pname(c.people))}</b>${c.character ? `<small>${esc(c.character)}</small>` : ""}</span></button>`).join("")}</div>` : ""}`;
+          ${face(c.people.photo)}<span><b>${esc(pname(c.people))}</b>${c.character ? `<small>${esc(c.character)}</small>` : ""}</span></button>`).join("")}</div>` : ""}`;
     } catch (e) { const el = box(); if (el) el.remove(); }   // no cast section rather than an error
   }
 
@@ -669,7 +674,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     const d = $("#detail");
     d.dataset.id = ""; d.hidden = false; document.body.style.overflow = "hidden";
     const shell = (head, body) => `<div class="detail-inner"><button class="btn back" type="button" data-close>${icon.back}${t("back")}</button>${head}${body}</div>`;
-    if (!personCache[pid]) d.innerHTML = shell(`<div class="person-head"><span class="ini">…</span></div>`, `<div class="grid">${'<div class="skeleton" style="aspect-ratio:2/3;height:auto"></div>'.repeat(6)}</div>`);
+    if (!personCache[pid]) d.innerHTML = shell(`<div class="person-head">${face(null)}</div>`, `<div class="grid">${'<div class="skeleton" style="aspect-ratio:2/3;height:auto"></div>'.repeat(6)}</div>`);
     if (push) d.scrollTop = 0;
     try {
       if (!personCache[pid]) {
@@ -689,7 +694,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       const { p, ids } = personCache[pid];
       if (!p) { goBack(); return; }
       const facts = [p.birth_year ? t("born")(p.birth_year) : "", t("credits")(ids.length)].filter(Boolean).join(" · ");
-      d.innerHTML = shell(`<div class="person-head"><span class="ini">${esc(initials(p.name))}</span><div>
+      d.innerHTML = shell(`<div class="person-head">${face(p.photo, "h632")}<div>
           <h1>${esc(pname(p))}</h1>${palt(p) ? `<div class="alt-title" style="margin-top:4px">${esc(palt(p))}</div>` : ""}<div class="meta" style="margin-top:6px">${esc(facts)}</div></div></div>`,
         `<div class="grid">${ids.map(card).join("")}</div>`);
       d.querySelector("[data-close]").focus();
