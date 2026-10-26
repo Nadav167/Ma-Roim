@@ -103,6 +103,25 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
 .imdb { display: inline-flex; align-items: center; gap: 5px; color: var(--fg); font-weight: 700; }
 .imdb b { background: var(--gold); color: #1a1500; font-size: 10px; font-weight: 800; padding: 2px 4px; border-radius: 3px; letter-spacing: .02em; }
+.credits { display: grid; gap: 18px; margin-top: 8px; }
+.credits h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.crew { display: grid; gap: 6px; }
+.crew-row { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.crew-row dt { color: var(--muted); font-size: 13px; min-width: 84px; }
+.crew-row dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.name-link { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 600; color: var(--fg); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.name-link:hover { text-decoration-color: var(--accent); color: var(--accent); }
+.cast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.person { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line);
+  background: var(--surface); border-radius: 12px; padding: 8px 10px; cursor: pointer; min-width: 0; }
+.person:hover { border-color: var(--accent); }
+.person .ini { width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 14px; }
+.person b { display: block; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skeleton { height: 56px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.person-head { display: flex; gap: 18px; align-items: center; margin-bottom: 22px; }
+.person-head .ini { width: 84px; height: 84px; border-radius: 42px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 30px; font-weight: 800; flex: none; }
+.person-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.02em; }
 .scores { display: flex; flex-wrap: wrap; gap: 10px; }
 .score { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; row-gap: 1px; min-width: 150px;
   padding: 10px 14px 10px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
@@ -239,6 +258,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
+  .cast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .person-head .ini { width: 64px; height: 64px; font-size: 24px; }
   .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 3px; }
   .score .val { grid-row: auto; height: 40px; min-width: 44px; font-size: 17px; margin-bottom: 4px; }
@@ -327,6 +348,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       badLogin: "That email and password don’t match. Check them and try again.", shortPass: "Use at least 6 characters for the password.",
       badEmail: "Enter a valid email address.", genericErr: "Something went wrong. Try again in a moment.",
       welcome: "Signed in", bye: "Signed out",
+      castH: "Cast", directorL: "Director", directorsL: "Directors", creatorL: "Created by", writerL: "Writers", composerL: "Music",
+      born: y => `Born ${y}`, credits: n => n === 1 ? "1 title" : `${n} titles`, castLoadErr: "The cast didn’t load.",
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
@@ -351,6 +374,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       badLogin: "האימייל והסיסמה לא תואמים. בדקו ונסו שוב.", shortPass: "הסיסמה צריכה להכיל לפחות 6 תווים.",
       badEmail: "הזינו כתובת אימייל תקינה.", genericErr: "משהו השתבש. נסו שוב בעוד רגע.",
       welcome: "התחברתם", bye: "התנתקתם",
+      castH: "שחקנים", directorL: "במאי", directorsL: "במאים", creatorL: "יוצרים", writerL: "תסריט", composerL: "מוזיקה",
+      born: y => `נולד/ה ב-${y}`, credits: n => n === 1 ? "כותר אחד" : `${n} כותרים`, castLoadErr: "רשימת השחקנים לא נטענה.",
       votesN: n => `${n} מדרגים`, fresh: "טרי", rotten: "רקוב", critics: "מבקרים",
       mcBands: ["שליליות מאוד", "ביקורות שליליות", "ביקורות מעורבות", "ביקורות חיוביות", "שבחים גורפים"], searching: "מחפש…", signInToSave: "התחברו כדי לשמור את הרשימה בכל מכשיר" },
   };
@@ -366,6 +391,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
   let sb = null, user = null, authMode = "in", menuOpen = false;
+  let hist = [];   // details overlay history: {k: "t"|"p", id}
+  const pname = p => lang === "he" && p.name_he ? p.name_he : p.name;
+  const palt = p => p.name_he && p.name_he !== p.name ? (lang === "he" ? p.name : p.name_he) : "";
+  const initials = n => (n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  function reopen() { const top = hist[hist.length - 1]; if (!top) return; top.k === "p" ? openPerson(top.id, false) : openDetail(top.id, false); }
   try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
@@ -524,8 +554,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       + (ids.length ? `<div class="grid">${ids.map(card).join("")}</div>` : `<div class="empty"><strong>${t("noResults")}</strong><span>${t("noResultsHint")}</span></div>`) + `</div>`;
   }
 
-  function openDetail(id) {
+  function openDetail(id, push = true) {
     const it = C.items[id]; if (!it) return;
+    if (push) hist.push({ k: "t", id });
     const d = $("#detail"), p = poster(it);
     const facts = [
       [t("year"), years(it)],
@@ -555,13 +586,72 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
           </div>
           <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
           <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
+          ${sb ? `<section class="credits" id="credits"><div class="cast-grid">${'<div class="skeleton"></div>'.repeat(4)}</div></section>` : ""}
         </div>
       </div></div>`;
-    d.dataset.id = id; d.hidden = false; d.scrollTop = 0;
+    d.dataset.id = id; d.hidden = false; if (push) d.scrollTop = 0;
+    if (sb) loadCredits(id);
     document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
   }
-  function closeDetail() { const d = $("#detail"); d.hidden = true; d.innerHTML = ""; document.body.style.overflow = ""; render(); }
+  function closeDetail() { hist = []; const d = $("#detail"); d.hidden = true; d.innerHTML = ""; document.body.style.overflow = ""; render(); }
+  function goBack() { hist.pop(); if (hist.length) reopen(); else closeDetail(); }
+
+  const creditsCache = {};
+  async function loadCredits(id) {
+    const box = () => $("#detail").dataset.id === id ? $("#credits") : null;
+    try {
+      if (!creditsCache[id]) {
+        const { data, error } = await sb.from("credits").select("role, ord, character, people(id, name, name_he)").eq("title_id", id).order("ord");
+        if (error) throw error;
+        creditsCache[id] = data || [];
+      }
+      const el = box(); if (!el) return;
+      const cr = creditsCache[id];
+      if (!cr.length) { el.remove(); return; }
+      const btn = p => `<button class="name-link" type="button" data-person="${p.id}">${esc(pname(p))}</button>`;
+      const crewRow = (label, role, max = 4) => { const ps = cr.filter(c => c.role === role && c.people).slice(0, max).map(c => c.people);
+        return ps.length ? `<div class="crew-row"><dt>${esc(typeof label === "function" ? label(ps.length) : label)}</dt><dd>${ps.map(btn).join("")}</dd></div>` : ""; };
+      const cast = cr.filter(c => c.role === "cast" && c.people);
+      el.innerHTML = `<dl class="crew">${crewRow(n => n > 1 ? t("directorsL") : t("directorL"), "director")}${crewRow(t("creatorL"), "creator")}${crewRow(t("writerL"), "writer", 3)}${crewRow(t("composerL"), "composer", 2)}</dl>
+        ${cast.length ? `<h2>${t("castH")}</h2><div class="cast-grid">${cast.map(c => `<button class="person" type="button" data-person="${c.people.id}">
+          <span class="ini">${esc(initials(c.people.name))}</span><span><b>${esc(pname(c.people))}</b>${c.character ? `<small>${esc(c.character)}</small>` : ""}</span></button>`).join("")}</div>` : ""}`;
+    } catch (e) { const el = box(); if (el) el.remove(); }   // no cast section rather than an error
+  }
+
+  const personCache = {};
+  async function openPerson(pid, push = true) {
+    if (!sb) return;
+    if (push) hist.push({ k: "p", id: pid });
+    const d = $("#detail");
+    d.dataset.id = ""; d.hidden = false; document.body.style.overflow = "hidden";
+    const shell = (head, body) => `<div class="detail-inner"><button class="btn back" type="button" data-close>${icon.back}${t("back")}</button>${head}${body}</div>`;
+    if (!personCache[pid]) d.innerHTML = shell(`<div class="person-head"><span class="ini">…</span></div>`, `<div class="grid">${'<div class="skeleton" style="aspect-ratio:2/3;height:auto"></div>'.repeat(6)}</div>`);
+    if (push) d.scrollTop = 0;
+    try {
+      if (!personCache[pid]) {
+        const [pp, cc] = await Promise.all([
+          sb.from("people").select("*").eq("id", pid).maybeSingle(),
+          sb.from("credits").select("role, character, titles(*)").eq("person_id", pid),
+        ]);
+        if (pp.error || cc.error) throw pp.error || cc.error;
+        const seen = new Set(), ids = [];
+        (cc.data || []).filter(c => c.titles).sort((a, b) => (b.titles.imdb_votes || 0) - (a.titles.imdb_votes || 0)).forEach(c => {
+          if (!C.items[c.titles.id] || !C.items[c.titles.id].p) C.items[c.titles.id] = fromRow(c.titles);
+          if (!seen.has(c.titles.id)) { seen.add(c.titles.id); ids.push(c.titles.id); }
+        });
+        personCache[pid] = { p: pp.data, ids };
+      }
+      const top = hist[hist.length - 1]; if (!top || top.k !== "p" || top.id !== pid) return;
+      const { p, ids } = personCache[pid];
+      if (!p) { goBack(); return; }
+      const facts = [p.birth_year ? t("born")(p.birth_year) : "", t("credits")(ids.length)].filter(Boolean).join(" · ");
+      d.innerHTML = shell(`<div class="person-head"><span class="ini">${esc(initials(p.name))}</span><div>
+          <h1>${esc(pname(p))}</h1>${palt(p) ? `<div class="alt-title" style="margin-top:4px">${esc(palt(p))}</div>` : ""}<div class="meta" style="margin-top:6px">${esc(facts)}</div></div></div>`,
+        `<div class="grid">${ids.map(card).join("")}</div>`);
+      d.querySelector("[data-close]").focus();
+    } catch (e) { d.innerHTML = shell("", `<div class="empty"><strong>${t("genericErr")}</strong></div>`); }
+  }
 
   let toastT;
   function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 1800); }
@@ -577,7 +667,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     if (user && sb) sb.from("profiles").update({ lang: l }).eq("id", user.id).then(() => {}, () => {});
     if (!C) return;
     render();
-    const d = $("#detail"); if (!d.hidden) openDetail(d.dataset.id);
+    if (!$("#detail").hidden) reopen();
   }
 
   document.addEventListener("click", e => {
@@ -586,16 +676,17 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     else if (el.dataset.id) openDetail(el.dataset.id);
     else if (el.dataset.open) openDetail(el.dataset.open);
     else if (el.dataset.hero) { heroIdx = +el.dataset.hero; swapHero(); }
-    else if (el.dataset.close !== undefined) closeDetail();
+    else if (el.dataset.close !== undefined) goBack();
+    else if (el.dataset.person) openPerson(el.dataset.person);
     else if (el.dataset.list) {
       const id = el.dataset.list; list.has(id) ? list.delete(id) : list.add(id);
       saveMark("watchlist", id, list.has(id));
       toast(list.has(id) ? t("toastAdd") : t("toastRem"));
-      if (!$("#detail").hidden) openDetail(id); else if (view === "home") swapHero(); else render();
+      if (!$("#detail").hidden) reopen(); else if (view === "home") swapHero(); else render();
     } else if (el.dataset.watch) {
       const id = el.dataset.watch; watched.has(id) ? watched.delete(id) : watched.add(id);
       saveMark("watched", id, watched.has(id));
-      toast(watched.has(id) ? t("toastW") : t("toastUW")); openDetail(id);
+      toast(watched.has(id) ? t("toastW") : t("toastUW")); reopen();
     }
   });
   document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#auth").hidden) $("#auth").hidden = true; else if (!$("#detail").hidden) closeDetail(); });
@@ -630,7 +721,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       if (pr.data && pr.data.lang && pr.data.lang !== lang) setLang(pr.data.lang); else if (C) refresh();
     } catch (e) { /* keep what's on screen */ }
   }
-  function refresh() { const d = $("#detail"); if (!d.hidden) openDetail(d.dataset.id); else render(); }
+  function refresh() { if (!$("#detail").hidden) reopen(); else render(); }
 
   function renderAcct() {
     const w = $("#acct-wrap");
