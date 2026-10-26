@@ -36,4 +36,5 @@ used = {c["person_id"] for c in credits}
 people = [p for p in json.load(open("out/people.json", encoding="utf-8")) if p["id"] in used]
 print("titles", len(ids), "people", len(people), "credits", len(credits), flush=True)
 load("people", people, "id")
-load("credits", credits, "title_id,person_id,role")
+if "--people-only" not in sys.argv:   # rerun with --people-only after updating names (e.g. Hebrew names)
+    load("credits", credits, "title_id,person_id,role")
