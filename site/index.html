@@ -88,7 +88,7 @@ html[lang="he"] .suggest h3 { letter-spacing: 0; }
 .sg.all { grid-template-columns: 1fr; color: var(--accent); font-weight: 700; padding: 10px; border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; margin-top: 4px; }
 .people-row .person { width: 220px; flex: none; }
 .search input:focus { border-color: var(--accent); }
-.search svg { position: absolute; inset-inline-start: 15px; top: 12px; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
+.search > svg { position: absolute; inset-inline-start: 15px; top: 12px; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
 .lang { display: flex; border: 1px solid var(--line); border-radius: 22px; padding: 3px; background: var(--surface); flex: none; }
 .lang button { border: 0; background: none; border-radius: 18px; padding: 6px 12px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--muted); }
 .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
@@ -973,27 +973,46 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     q = (q || "").trim(); hideSuggest(); $("#q").blur();
     searchQ = q; if (!$("#detail").hidden) closeDetail(); else render(); window.scrollTo(0, 0);
   }
-  async function suggest(q) {
-    const seq = ++sgSeq;
-    if (!sb || q.length < 2) { hideSuggest(); return; }
-    const [tr, pr] = await Promise.all([
-      sb.rpc("search_titles", { q, lim: 25 }).then(r => r, () => ({ data: [] })),
-      sb.rpc("search_people", { q, lim: 10 }).then(r => r, () => ({ data: [] })),
-    ]);
-    if (seq !== sgSeq || $("#q").value.trim() !== q) return;
-    // What you typed matching the start of a name ranks first; the database's popularity order breaks ties
-    const nq = norm(q);
-    const rank = names => { const ns = names.map(norm).filter(Boolean);
-      return ns.some(n => n === nq) ? 0 : ns.some(n => n.startsWith(nq)) ? 1 : ns.some(n => n.split(" ").some(w => w.startsWith(nq))) ? 2 : 3; };
-    const byRank = (list, names) => list.map((x, i) => [rank(names(x)), i, x]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(r => r[2]);
-    const titles = tr.error ? [] : byRank(tr.data || [], r => [r.title, r.title_he, r.original_title]).slice(0, 5);
-    // People: any word starting with what you typed counts equally, then the most popular first
-    const wordHit = p => [p.name, p.name_he].map(norm).some(n => n && n.split(" ").some(w => w.startsWith(nq.split(" ")[0])) && n.includes(nq)) ? 0 : 1;
-    const people = pr.error ? [] : (pr.data || []).map((p, i) => [wordHit(p), i, p]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(r => r[2]).slice(0, 3);
-    titles.forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
-    sgItems = [...titles.map(r => ({ k: "t", id: r.id })), ...people.map(p => ({ k: "p", id: p.id })), { k: "all" }];
+  // Suggestions appear on every keystroke from what the page already has (6,000 popular titles and the
+  // people in them), then get topped up from the full database a moment later.
+  let peopleIndex = null;
+  function buildPeopleIndex() {
+    const m = new Map();
+    for (const [tid, it] of Object.entries(C.items)) for (const [, , , pid, name, name_he, photo] of (it.cr || [])) {
+      const e = m.get(pid) || { id: pid, name, name_he, photo, pop: 0, best: null };
+      e.pop += it.v || 0; if (!e.best || (it.v || 0) > (C.items[e.best].v || 0)) e.best = tid;
+      m.set(pid, e);
+    }
+    peopleIndex = [...m.values()].map(e => ({ ...e, known_for: e.best && C.items[e.best].t, known_for_he: e.best && C.items[e.best].th }));
+  }
+  const sgRank = (nq, names) => { const ns = names.map(norm).filter(Boolean);
+    return ns.some(n => n === nq) ? 0 : ns.some(n => n.startsWith(nq)) ? 1 : ns.some(n => n.split(" ").some(w => w.startsWith(nq))) ? 2 : ns.some(n => n.includes(nq)) ? 3 : 9; };
+  function rankTitles(q, ids) {
+    const nq = norm(q), seen = new Set();
+    return ids.filter(id => C.items[id] && !seen.has(id) && seen.add(id))
+      .map(id => { const it = C.items[id]; return [sgRank(nq, [it.t, it.th]), -(it.v || 0), id]; })
+      .filter(r => r[0] < 9).sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, 5).map(r => r[2]);
+  }
+  function rankPeople(q, list) {
+    const nq = norm(q), seen = new Set();
+    return list.filter(p => !seen.has(p.id) && seen.add(p.id))
+      .map(p => [sgRank(nq, [p.name, p.name_he]) <= 2 ? 0 : sgRank(nq, [p.name, p.name_he]), -(p.pop || 0), p])
+      .filter(r => r[0] < 9).sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, 3).map(r => r[2]);
+  }
+  function localSuggest(q) {
+    const nq = norm(q), words = nq.split(" ");
+    const ids = C.index.filter(id => { const it = C.items[id], hay = norm(it.t) + " " + norm(it.th); return words.every(w => hay.includes(w)); });
+    if (!peopleIndex) buildPeopleIndex();
+    const ppl = peopleIndex.filter(p => { const hay = norm(p.name) + " " + norm(p.name_he); return words.every(w => hay.includes(w)); });
+    return { ids, ppl };
+  }
+  let sgLast = { q: "", ids: [], ppl: [] };
+  function showSuggest(q, ids, ppl) {
+    const titles = rankTitles(q, ids), people = rankPeople(q, ppl);
+    sgLast = { q, ids, ppl };
+    sgItems = [...titles.map(id => ({ k: "t", id })), ...people.map(p => ({ k: "p", id: p.id })), { k: "all" }];
     sgIndex = -1;
-    const tHtml = titles.map((r, i) => { const it = C.items[r.id], ps = poster(it);
+    const tHtml = titles.map((id, i) => { const it = C.items[id], ps = poster(it);
       return `<button class="sg" type="button" role="option" data-sg="${i}"><span class="thumb">${ps ? `<img src="${ps.replace("/w500/", "/w92/")}" alt="">` : ""}</span>
         <span><b>${esc(title(it))}</b><small>${years(it)} · ${it.ty === "tv" ? t("tv") : t("movie")}${altTitle(it) ? " · " + esc(altTitle(it)) : ""}</small></span></button>`; }).join("");
     const pHtml = people.map((p, j) => `<button class="sg" type="button" role="option" data-sg="${titles.length + j}">${face(p.photo)}
@@ -1002,6 +1021,30 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     box.innerHTML = (titles.length ? `<h3>${t("sgTitles")}</h3>${tHtml}` : "") + (people.length ? `<h3>${t("sgPeople")}</h3>${pHtml}` : "")
       + `<button class="sg all" type="button" role="option" data-sg="${sgItems.length - 1}">${esc(t("sgAll")(q))}</button>`;
     box.hidden = false; $("#q").setAttribute("aria-expanded", "true");
+  }
+  function suggestNow(q) {
+    if (!C || q.length < 2) { hideSuggest(); return; }
+    const loc = localSuggest(q);
+    // keep database results from a shorter query that still match what's typed now
+    const nq = norm(q), keepT = sgLast.q && nq.startsWith(norm(sgLast.q)) ? sgLast.ids : [];
+    const keepP = sgLast.q && nq.startsWith(norm(sgLast.q)) ? sgLast.ppl : [];
+    showSuggest(q, [...loc.ids, ...keepT], [...loc.ppl, ...keepP]);
+  }
+  async function suggestRemote(q) {
+    const seq = ++sgSeq;
+    if (!sb || q.length < 2) return;
+    const [tr, pr] = await Promise.all([
+      sb.rpc("search_titles", { q, lim: 25 }).then(r => r, () => ({ data: [] })),
+      sb.rpc("search_people", { q, lim: 10 }).then(r => r, () => ({ data: [] })),
+    ]);
+    const cur = $("#q").value.trim();
+    if (!cur || $("#suggest").hidden && cur !== q) return;
+    if (!norm(cur).startsWith(norm(q))) return;               // typed something different meanwhile
+    (tr.data || []).forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
+    const loc = localSuggest(cur);
+    // database people first: their popularity covers all titles, not just the ones loaded on the page
+    showSuggest(cur, [...loc.ids, ...(tr.error ? [] : (tr.data || []).map(r => r.id))], [...(pr.error ? [] : (pr.data || [])), ...loc.ppl.filter(p => !(pr.data || []).length)]);
+    if (seq !== sgSeq) suggestRemote(cur);                     // a newer query is waiting; fetch it too
   }
   function pickSuggestion(i) {
     const s = sgItems[i]; if (!s) return;
@@ -1012,7 +1055,9 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   $("#q").addEventListener("input", () => {
     clearTimeout(qT); const q = $("#q").value.trim();
     if (!q && searchQ) { clearSearch(); render(); return; }
-    qT = setTimeout(() => suggest(q), 160);
+    if (q.length < 2) { sgLast = { q: "", ids: [], ppl: [] }; hideSuggest(); return; }
+    suggestNow(q);                                   // instant, from what's loaded
+    qT = setTimeout(() => suggestRemote(q), 140);    // then the full database
   });
   $("#q").addEventListener("keydown", e => {
     const box = $("#suggest");
@@ -1024,7 +1069,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const cur = box.querySelector(`[data-sg="${sgIndex}"]`); if (cur) cur.scrollIntoView({ block: "nearest" });
   });
   $("#search-form").addEventListener("submit", e => { e.preventDefault(); if (sgIndex >= 0) pickSuggestion(sgIndex); else runSearch($("#q").value); });
-  $("#q").addEventListener("focus", () => { const q = $("#q").value.trim(); if (q.length >= 2 && q !== searchQ) suggest(q); });
+  $("#q").addEventListener("focus", () => { const q = $("#q").value.trim(); if (q.length >= 2 && q !== searchQ) { suggestNow(q); suggestRemote(q); } });
   document.addEventListener("click", e => {
     const sg = e.target.closest("[data-sg]"); if (sg) { pickSuggestion(+sg.dataset.sg); return; }
     if (!e.target.closest("#search-form")) hideSuggest();
