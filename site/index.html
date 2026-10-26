@@ -267,7 +267,22 @@ html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
 html[lang="he"] .facts dt { letter-spacing: 0; }
 .facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 
-footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.rail-about { margin-top: auto; }
+.about-btn { display: none; width: 40px; height: 40px; flex: none; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; place-items: center; padding: 0; }
+.about-btn svg { width: 20px; height: 20px; }
+.about-btn[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
+.faq { display: grid; gap: 10px; max-width: 760px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.faq details[open] { border-color: var(--muted); }
+.faq summary { cursor: pointer; list-style: none; padding: 16px 18px; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; font-weight: 600; }
+.faq details[open] summary::after { content: "–"; }
+.faq .ans { padding: 0 18px 18px; color: #d6d3e8; line-height: 1.65; display: grid; gap: 10px; max-width: 64ch; }
+.faq .ans p { margin: 0; }
+.faq .ans ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; }
+.faq .ans small { color: var(--muted); }
+.faq a { color: var(--accent); }
 .toast { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 14px; }
 
@@ -313,6 +328,10 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
+  .rail-about { display: none; }
+  .about-btn { display: grid; width: 36px; height: 36px; }
+  .top { gap: 8px; }
+  .lang button { padding: 6px 10px; }
   body.ai-mode main { inset-inline: 0; bottom: var(--nav-h, 80px); }
   .ai-mode .composer { padding-bottom: 10px; }
   .ai-turn .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -348,6 +367,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   <button class="nav-btn" data-view="il-tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="ilSeries"></span></button>
   <button class="nav-btn" data-view="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span data-t="mylist"></span></button>
   <button class="nav-btn" data-view="ai" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg><span data-t="ai"></span></button>
+  <button class="nav-btn rail-about" data-view="about" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span data-t="about"></span></button>
 </nav>
 
 <div class="app">
@@ -362,6 +382,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       <button type="button" id="lang-en" aria-pressed="true">EN</button>
       <button type="button" id="lang-he" aria-pressed="false">עב</button>
     </div>
+    <button class="about-btn" type="button" data-view="about" data-t-label="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
     <div class="acct-wrap" id="acct-wrap"></div>
   </header>
   <main id="main"><div class="loading">Loading…</div></main>
@@ -386,7 +407,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 <script>
 (() => {
   const T = {
-    en: { home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
+    en: { about: "About", home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
@@ -420,7 +441,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       born: y => `Born ${y}`, credits: n => n === 1 ? "1 title" : `${n} titles`, castLoadErr: "The cast didn’t load.",
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
-    he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
+    he: { about: "אודות", home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
@@ -558,7 +579,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       <div class="hero-dots">${C.hero.map((_, i) => `<button type="button" aria-label="${i + 1}" data-hero="${i}" aria-current="${i === heroIdx}"></button>`).join("")}</div>
     </section>`;
   }
-  const footer = () => `<footer class="pad">${esc(t("footer"))} · v${BUILD}</footer>`;
+  const footer = () => "";   // credits live on the About page
 
   // ---------- Browse pages (full catalog from the database, 60 at a time) ----------
   const PAGE = 60;
@@ -677,7 +698,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     const q = searchQ;
     document.body.classList.toggle("ai-mode", view === "ai" && !q);
     clearInterval(heroTimer);
-    document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
+    document.querySelectorAll(".nav-btn, .about-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
     if (view !== "browse" && !PAGES[view]) viewKey = view;
     if (q) {
       if (sb) { main.innerHTML = `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("searching")}</p></div>`; remoteSearch(q); }
@@ -694,6 +715,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       main.innerHTML = browseView();
       if (browseSort === "genre") { if (!browse.rows) loadGenreRows(); }
       else { updateFoot(); watchFoot(); if (!browse.ids.length && !browse.done) loadMore(); }
+    } else if (view === "about") {
+      main.innerHTML = aboutView();
     } else if (view === "list") {
       const ids = [...list].filter(id => C.items[id]);
       main.innerHTML = head(t("listH"), "") + `<div class="pad">${ids.length ? `<div class="grid">${ids.map(card).join("")}</div>`
@@ -879,6 +902,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     document.documentElement.lang = l; document.documentElement.dir = l === "he" ? "rtl" : "ltr";
     $("#lang-en").setAttribute("aria-pressed", l === "en"); $("#lang-he").setAttribute("aria-pressed", l === "he");
     document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
+    document.querySelectorAll("[data-t-label]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.tLabel)); el.title = t(el.dataset.tLabel); });
     $("#wordmark").innerHTML = t("word");
     $("#q").placeholder = t("search");
     renderAcct();
@@ -991,6 +1015,42 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     const sg = e.target.closest("[data-sg]"); if (sg) { pickSuggestion(+sg.dataset.sg); return; }
     if (!e.target.closest("#search-form")) hideSuggest();
   });
+
+  // ---------- About ----------
+  const ABOUT = {
+    en: [
+      ["What is What to Watch?", `<p>A catalog of about 57,000 American and Israeli movies and TV series from 1980 to today, in English and Hebrew, with an AI helper that suggests what to watch.</p>`],
+      ["Where does the information come from?", `<ul>
+        <li><b>Wikidata</b>: the list of titles, Hebrew titles, links to Wikipedia, IMDb and Metacritic, and detailed genres.</li>
+        <li><b>IMDb</b>: ratings, number of votes, running times, and cast and crew.</li>
+        <li><b>TMDB</b>: posters (English and Hebrew), synopses, cast photos, seasons and keywords.</li>
+        <li><b>Rotten Tomatoes and Metacritic</b>: critics’ scores, as recorded on Wikidata.</li>
+        <li><b>Hebrew Wikipedia</b>: some Hebrew posters.</li></ul>
+        <p><small>This product uses the TMDB API but is not endorsed or certified by TMDB. Information courtesy of IMDb (<a href="https://www.imdb.com" target="_blank" rel="noopener">imdb.com</a>), used with permission for non-commercial use. Not affiliated with IMDb, TMDB, Rotten Tomatoes or Metacritic.</small></p>`],
+      ["How does the AI helper work?", `<p>Describe what you’re in the mood for, in English or Hebrew. It searches the catalog by actors and directors, genres and themes, years and scores, and only suggests titles that are actually here.</p><p>You need to be signed in to use it, with up to 40 questions a day.</p>`],
+      ["Why is a title shown in English on the Hebrew site?", `<p>Each title uses only its own Hebrew name and Hebrew poster. When it doesn’t have one, the English name or poster is shown instead, rather than borrowing one from another title, for example an Israeli remake with the same name.</p>`],
+      ["Do I need an account?", `<p>No, browsing and search are free without one. An account keeps your list and the titles you’ve watched on every device, and lets you use the AI helper.</p>`],
+      ["How up to date is it?", `<p>The catalog was collected in October 2026. Ratings and scores are as they were then.</p><p><small>Version ${BUILD}</small></p>`],
+    ],
+    he: [
+      ["מה זה „מה לראות”?", `<p>קטלוג של כ-57,000 סרטים וסדרות אמריקאיים וישראליים מ-1980 ועד היום, בעברית ובאנגלית, עם עוזר AI שממליץ מה לראות.</p>`],
+      ["מאיפה מגיע המידע?", `<ul>
+        <li><b>Wikidata</b>: רשימת הכותרים, השמות בעברית, קישורים לוויקיפדיה, ל-IMDb ול-Metacritic, וז׳אנרים מפורטים.</li>
+        <li><b>IMDb</b>: דירוגים, מספר המדרגים, אורך, שחקנים ואנשי צוות.</li>
+        <li><b>TMDB</b>: פוסטרים (בעברית ובאנגלית), תקצירים, תמונות שחקנים, עונות ומילות מפתח.</li>
+        <li><b>Rotten Tomatoes ו-Metacritic</b>: ציוני המבקרים, כפי שמופיעים ב-Wikidata.</li>
+        <li><b>ויקיפדיה העברית</b>: חלק מהפוסטרים בעברית.</li></ul>
+        <p dir="ltr" style="text-align:left"><small>This product uses the TMDB API but is not endorsed or certified by TMDB. Information courtesy of IMDb (<a href="https://www.imdb.com" target="_blank" rel="noopener">imdb.com</a>), used with permission for non-commercial use. Not affiliated with IMDb, TMDB, Rotten Tomatoes or Metacritic.</small></p>`],
+      ["איך עובד עוזר ה-AI?", `<p>ספרו מה בא לכם לראות, בעברית או באנגלית. הוא מחפש בקטלוג לפי שחקנים ובמאים, ז׳אנרים ונושאים, שנים וציונים, וממליץ רק על כותרים שבאמת נמצאים כאן.</p><p>כדי להשתמש בו צריך להתחבר, ואפשר לשאול עד 40 שאלות ביום.</p>`],
+      ["למה כותר מוצג באנגלית באתר בעברית?", `<p>כל כותר מוצג רק עם השם והפוסטר העבריים שלו עצמו. כשאין לו כאלה, מוצגים השם או הפוסטר באנגלית, ולא נלקחים מכותר אחר, למשל גרסה ישראלית באותו שם.</p>`],
+      ["צריך חשבון?", `<p>לא, אפשר לגלוש ולחפש בחינם בלי חשבון. עם חשבון הרשימה שלכם והכותרים שצפיתם בהם נשמרים בכל מכשיר, ואפשר להשתמש בעוזר ה-AI.</p>`],
+      ["עד כמה המידע עדכני?", `<p>הקטלוג נאסף באוקטובר 2026. הדירוגים והציונים הם כפי שהיו אז.</p><p><small>גרסה ${BUILD}</small></p>`],
+    ],
+  };
+  function aboutView() {
+    return `<div class="view-head pad"><h1>${esc(t("about"))}</h1></div><div class="pad"><div class="faq">
+      ${ABOUT[lang].map(([q, a], i) => `<details ${i === 0 ? "open" : ""}><summary>${esc(q)}</summary><div class="ans">${a}</div></details>`).join("")}</div></div>`;
+  }
 
   // ---------- AI helper ----------
   let aiMsgs = [], aiBusy = false, aiDraft = "";
