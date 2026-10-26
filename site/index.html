@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e0c18">
 <title>What to Watch</title>
+<link rel="preconnect" href="https://prnfnqvjirwuyafvsulk.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap">
@@ -624,17 +625,32 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   function closeDetail() { hist = []; const d = $("#detail"); d.hidden = true; d.innerHTML = ""; document.body.style.overflow = ""; render(); }
   function goBack() { hist.pop(); if (hist.length) reopen(); else closeDetail(); }
 
+  // Cast: home-page titles carry it in the catalog; others are fetched once and cached.
+  // Fetching starts as soon as a poster is touched, before the details page opens.
   const creditsCache = {};
+  function getCredits(id) {
+    if (creditsCache[id]) return creditsCache[id];
+    const it = C && C.items[id];
+    if (it && it.cr) {
+      creditsCache[id] = Promise.resolve(it.cr.map(([role, ord, character, pid, name, name_he]) => ({ role, ord, character, people: { id: pid, name, name_he } })));
+    } else {
+      creditsCache[id] = sb.from("credits").select("role, ord, character, people(id, name, name_he)").eq("title_id", id).order("ord")
+        .then(({ data, error }) => { if (error) throw error; return data || []; });
+      creditsCache[id].catch(() => { delete creditsCache[id]; });
+    }
+    return creditsCache[id];
+  }
+  const prefetch = e => {
+    const el = e.target.closest && e.target.closest("[data-id], [data-open]");
+    if (el && sb && C) getCredits(el.dataset.id || el.dataset.open);
+  };
+  document.addEventListener("pointerdown", prefetch, { passive: true });
+  document.addEventListener("focusin", prefetch);
   async function loadCredits(id) {
     const box = () => $("#detail").dataset.id === id ? $("#credits") : null;
     try {
-      if (!creditsCache[id]) {
-        const { data, error } = await sb.from("credits").select("role, ord, character, people(id, name, name_he)").eq("title_id", id).order("ord");
-        if (error) throw error;
-        creditsCache[id] = data || [];
-      }
+      const cr = await getCredits(id);
       const el = box(); if (!el) return;
-      const cr = creditsCache[id];
       if (!cr.length) { el.remove(); return; }
       const btn = p => `<button class="name-link" type="button" data-person="${p.id}">${esc(pname(p))}</button>`;
       const crewRow = (label, role, max = 4) => { const ps = cr.filter(c => c.role === role && c.people).slice(0, max).map(c => c.people);

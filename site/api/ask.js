@@ -115,6 +115,7 @@ function system(lang) {
   const today = new Date().toISOString().slice(0, 10);
   return `You are the recommendation helper on "What to Watch", a site listing US and Israeli movies and TV series from 1980 to today. Today is ${today}.
 Find titles that fit what the user asks for, using only the catalog tools. Never recommend a title that did not come back from a tool.
+- Be fast: make all the searches you need in ONE turn (several tool calls at once), then call present_results right after seeing the results. Don't search again unless the first results are empty.
 - Turn the request into filters: person, genre, type, years, minimum IMDb / Rotten Tomatoes / Metacritic score, Israeli or not.
 - "After 2020" means min_year 2021. "Rated 8 or above on IMDb" means min_imdb 8.
 - If the strict search finds nothing, loosen one condition at a time and say clearly which condition the suggestions don't meet.
@@ -147,7 +148,7 @@ module.exports = async function handler(req, res) {
     for (let round = 0; round < MAX_ROUNDS && !result; round++) {
       const lastRound = round === MAX_ROUNDS - 1;
       const resp = await callClaude({
-        model: MODEL, max_tokens: 1500, system: system(lang), tools: TOOLS, messages,
+        model: MODEL, max_tokens: 1000, system: system(lang), tools: TOOLS, messages,
         tool_choice: lastRound ? { type: "tool", name: "present_results" } : { type: "auto" },
       });
       messages.push({ role: "assistant", content: resp.content });
@@ -157,17 +158,18 @@ module.exports = async function handler(req, res) {
         result = { message: text, ids: [] };
         break;
       }
-      const outputs = [];
-      for (const u of uses) {
-        if (u.name === "present_results") {
-          result = { message: String(u.input.message || ""), ids: (u.input.title_ids || []).map(String).slice(0, 12) };
-          break;
-        }
+      const present = uses.find(u => u.name === "present_results");
+      if (present) {
+        result = { message: String(present.input.message || ""), ids: (present.input.title_ids || []).map(String).slice(0, 12) };
+        break;
+      }
+      // Run all searches from this turn at the same time
+      const outputs = await Promise.all(uses.map(async u => {
         let out;
         try { out = await runTool(u.name, u.input || {}, token); }
         catch (e) { out = { error: String(e.message || e) }; }
-        outputs.push({ type: "tool_result", tool_use_id: u.id, content: JSON.stringify(out) });
-      }
+        return { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(out) };
+      }));
       if (!result) messages.push({ role: "user", content: outputs });
     }
     if (!result) result = { message: "", ids: [] };

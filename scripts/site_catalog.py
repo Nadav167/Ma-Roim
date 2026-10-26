@@ -63,6 +63,24 @@ index_ids = [r["wikidata_id"] for r in by_votes[:n_index]]
 keep = shelf_ids | set(index_ids)
 items = {r["wikidata_id"]: slim(r) for r in rows if r["wikidata_id"] in keep}
 
+# Ship the cast of home-page titles with the page so it shows instantly (others load from the database).
+if os.path.exists("out/credits.json") and os.path.exists("out/people.json"):
+    ppl = {p["id"]: p for p in json.load(open("out/people.json", encoding="utf-8"))}
+    LIMIT = {"cast": 12, "director": 4, "creator": 4, "writer": 3, "composer": 2}
+    per = {}
+    for c in json.load(open("out/credits.json", encoding="utf-8")):
+        if c["title_id"] in shelf_ids and c["person_id"] in ppl:
+            per.setdefault(c["title_id"], []).append(c)
+    for tid, cs in per.items():
+        cs.sort(key=lambda c: c["ord"]); seen = set(); out = []; count = {}
+        for c in cs:
+            k = (c["person_id"], c["role"])
+            if k in seen or count.get(c["role"], 0) >= LIMIT[c["role"]]: continue
+            seen.add(k); count[c["role"]] = count.get(c["role"], 0) + 1
+            p = ppl[c["person_id"]]
+            out.append([c["role"], c["ord"], c["character"], p["id"], p["name"], p.get("name_he")])
+        if tid in items: items[tid]["cr"] = out
+
 if mode == "preview":
     # Embed images only for shelf titles; search-only titles get a text card.
     sess = requests.Session()
