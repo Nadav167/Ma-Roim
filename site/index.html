@@ -75,6 +75,18 @@ a { color: inherit; }
 .search input { width: 100%; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface);
   padding-inline: 44px 16px; outline: none; }
 .search input::placeholder { color: var(--muted); }
+.suggest { position: absolute; top: calc(100% + 6px); inset-inline: 0; z-index: 25; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.55); padding: 6px; display: grid; gap: 2px; max-height: min(70vh, 560px); overflow-y: auto; }
+.suggest h3 { margin: 6px 10px 2px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+html[lang="he"] .suggest h3 { letter-spacing: 0; }
+.sg { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 0; background: none; text-align: start; cursor: pointer; width: 100%; }
+.sg:hover, .sg[aria-selected="true"] { background: var(--surface-2); }
+.sg .thumb { width: 40px; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+.sg .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sg b { display: block; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg small { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg.all { grid-template-columns: 1fr; color: var(--accent); font-weight: 700; padding: 10px; border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; margin-top: 4px; }
+.people-row .person { width: 220px; flex: none; }
 .search input:focus { border-color: var(--accent); }
 .search svg { position: absolute; inset-inline-start: 15px; top: 12px; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
 .lang { display: flex; border: 1px solid var(--line); border-radius: 22px; padding: 3px; background: var(--surface); flex: none; }
@@ -332,10 +344,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 <div class="app">
   <header class="top">
     <div class="wordmark" id="wordmark"></div>
-    <label class="search">
+    <form class="search" id="search-form" role="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" autocomplete="off" spellcheck="false">
-    </label>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="suggest" aria-autocomplete="list">
+      <div class="suggest" id="suggest" role="listbox" hidden></div>
+    </form>
     <div class="lang" role="group" aria-label="Language">
       <button type="button" id="lang-en" aria-pressed="true">EN</button>
       <button type="button" id="lang-he" aria-pressed="false">עב</button>
@@ -366,6 +379,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   const T = {
     en: { home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
+      sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
@@ -399,6 +413,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
+      sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
@@ -556,11 +571,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     tv: ["Drama", "Comedy", "Crime", "Reality", "Action & Adventure", "Sci-Fi & Fantasy", "Mystery", "Animation", "Documentary", "Family", "Kids", "War & Politics", "Soap", "Talk"],
   };
   let browse = null, browseSort = "new", prevView = "home", moreTargets = [];
-  const onBrowse = () => (view === "browse" || PAGES[view]) && !$("#q").value.trim();
+  const onBrowse = () => (view === "browse" || PAGES[view]) && !searchQ;
   function openBrowse(name, f, from) {
     if (from) prevView = from;
     browse = { name, f, key: JSON.stringify(f), ids: [], total: null, done: false, loading: false, err: false, rows: null };
-    view = "browse"; $("#q").value = ""; render(); window.scrollTo(0, 0);
+    view = "browse"; clearSearch(); render(); window.scrollTo(0, 0);
   }
   function titlesQuery(f, count) {
     let x = sb.from("titles").select("*", count ? { count: "exact" } : undefined);
@@ -650,7 +665,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   let viewKey = "home";
   function render() {
     const main = $("#main");
-    const q = $("#q").value.trim();
+    const q = searchQ;
     clearInterval(heroTimer);
     document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
     if (view !== "browse" && !PAGES[view]) viewKey = view;
@@ -688,18 +703,22 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   async function remoteSearch(q) {
     const seq = ++searchSeq;
     try {
-      const { data, error } = await sb.rpc("search_titles", { q, lim: 60 });
-      if (error) throw error;
-      if (seq !== searchSeq || $("#q").value.trim() !== q) return;
-      (data || []).forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
-      $("#main").innerHTML = resultsView(q, (data || []).map(r => r.id));
+      const [tr, pr] = await Promise.all([sb.rpc("search_titles", { q, lim: 60 }), sb.rpc("search_people", { q, lim: 12 })]);
+      if (tr.error) throw tr.error;
+      if (seq !== searchSeq || searchQ !== q) return;
+      (tr.data || []).forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
+      $("#main").innerHTML = resultsView(q, (tr.data || []).map(r => r.id), pr.error ? [] : (pr.data || []));
     } catch (e) {
       if (seq === searchSeq) $("#main").innerHTML = searchView(q);
     }
   }
-  function resultsView(q, ids) {
-    return `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("results")(ids.length)}</p></div><div class="pad">`
-      + (ids.length ? `<div class="grid">${ids.map(card).join("")}</div>` : `<div class="empty"><strong>${t("noResults")}</strong><span>${t("noResultsHint")}</span></div>`) + `</div>`;
+  const knownFor = p => p.known_for ? t("knownFor")(lang === "he" && p.known_for_he ? p.known_for_he : p.known_for) : "";
+  function resultsView(q, ids, people = []) {
+    const ppl = people.length ? `<section class="shelf"><div class="shelf-head pad"><h2>${t("sgPeople")}</h2></div>
+      <div class="row people-row">${people.map(p => `<button class="person" type="button" data-person="${p.id}">${face(p.photo)}<span><b>${esc(pname(p))}</b><small>${esc(knownFor(p))}</small></span></button>`).join("")}</div></section>` : "";
+    const titles = ids.length ? `<section class="shelf"><div class="shelf-head pad"><h2>${t("sgTitles")}</h2></div><div class="pad"><div class="grid">${ids.map(card).join("")}</div></div></section>` : "";
+    return `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("results")(ids.length + people.length)}</p></div>`
+      + (ppl || titles ? ppl + titles : `<div class="pad"><div class="empty"><strong>${t("noResults")}</strong><span>${t("noResultsHint")}</span></div></div>`);
   }
   function searchView(q) {
     const nq = norm(q), words = nq.split(" ");
@@ -862,7 +881,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 
   document.addEventListener("click", e => {
     const el = e.target.closest("button, a"); if (!el) return;
-    if (el.dataset.view) { view = el.dataset.view; $("#q").value = ""; if (!$("#detail").hidden) closeDetail(); render(); window.scrollTo(0, 0); }
+    if (el.dataset.view) { view = el.dataset.view; clearSearch(); if (!$("#detail").hidden) closeDetail(); render(); window.scrollTo(0, 0); }
     else if (el.dataset.shelf) { const sh = C.shelves.find(x => x.key === el.dataset.shelf); openBrowse(() => shelfName(sh), SHELF_FILTERS[sh.key], view === "browse" ? prevView : view); }
     else if (el.dataset.more) { const m = moreTargets[+el.dataset.more]; browseSort = "new"; openBrowse(m.name, m.f, PAGES[view] ? view : prevView); }
     else if (el.dataset.backBrowse !== undefined) { view = prevView || "home"; browse = PAGES[view] ? browse : null; viewKey = ""; render(); window.scrollTo(0, 0); }
@@ -898,7 +917,70 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   });
   $("#lang-en").onclick = () => setLang("en");
   $("#lang-he").onclick = () => setLang("he");
-  let qT; $("#q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(() => { if (!$("#detail").hidden) closeDetail(); else render(); }, 180); });
+  // ---------- Search: suggestions while typing, full results on Enter ----------
+  let searchQ = "", qT, sgSeq = 0, sgItems = [], sgIndex = -1;
+  function clearSearch() { searchQ = ""; $("#q").value = ""; hideSuggest(); }
+  function hideSuggest() { const b = $("#suggest"); b.hidden = true; b.innerHTML = ""; $("#q").setAttribute("aria-expanded", "false"); sgItems = []; sgIndex = -1; }
+  function runSearch(q) {
+    q = (q || "").trim(); hideSuggest(); $("#q").blur();
+    searchQ = q; if (!$("#detail").hidden) closeDetail(); else render(); window.scrollTo(0, 0);
+  }
+  async function suggest(q) {
+    const seq = ++sgSeq;
+    if (!sb || q.length < 2) { hideSuggest(); return; }
+    const [tr, pr] = await Promise.all([
+      sb.rpc("search_titles", { q, lim: 25 }).then(r => r, () => ({ data: [] })),
+      sb.rpc("search_people", { q, lim: 10 }).then(r => r, () => ({ data: [] })),
+    ]);
+    if (seq !== sgSeq || $("#q").value.trim() !== q) return;
+    // What you typed matching the start of a name ranks first; the database's popularity order breaks ties
+    const nq = norm(q);
+    const rank = names => { const ns = names.map(norm).filter(Boolean);
+      return ns.some(n => n === nq) ? 0 : ns.some(n => n.startsWith(nq)) ? 1 : ns.some(n => n.split(" ").some(w => w.startsWith(nq))) ? 2 : 3; };
+    const byRank = (list, names) => list.map((x, i) => [rank(names(x)), i, x]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(r => r[2]);
+    const titles = tr.error ? [] : byRank(tr.data || [], r => [r.title, r.title_he, r.original_title]).slice(0, 5);
+    // People: any word starting with what you typed counts equally, then the most popular first
+    const wordHit = p => [p.name, p.name_he].map(norm).some(n => n && n.split(" ").some(w => w.startsWith(nq.split(" ")[0])) && n.includes(nq)) ? 0 : 1;
+    const people = pr.error ? [] : (pr.data || []).map((p, i) => [wordHit(p), i, p]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(r => r[2]).slice(0, 3);
+    titles.forEach(r => { if (!C.items[r.id] || !C.items[r.id].p) C.items[r.id] = fromRow(r); });
+    sgItems = [...titles.map(r => ({ k: "t", id: r.id })), ...people.map(p => ({ k: "p", id: p.id })), { k: "all" }];
+    sgIndex = -1;
+    const tHtml = titles.map((r, i) => { const it = C.items[r.id], ps = poster(it);
+      return `<button class="sg" type="button" role="option" data-sg="${i}"><span class="thumb">${ps ? `<img src="${ps.replace("/w500/", "/w92/")}" alt="">` : ""}</span>
+        <span><b>${esc(title(it))}</b><small>${years(it)} · ${it.ty === "tv" ? t("tv") : t("movie")}${altTitle(it) ? " · " + esc(altTitle(it)) : ""}</small></span></button>`; }).join("");
+    const pHtml = people.map((p, j) => `<button class="sg" type="button" role="option" data-sg="${titles.length + j}">${face(p.photo)}
+        <span><b>${esc(pname(p))}</b><small>${esc(knownFor(p))}</small></span></button>`).join("");
+    const box = $("#suggest");
+    box.innerHTML = (titles.length ? `<h3>${t("sgTitles")}</h3>${tHtml}` : "") + (people.length ? `<h3>${t("sgPeople")}</h3>${pHtml}` : "")
+      + `<button class="sg all" type="button" role="option" data-sg="${sgItems.length - 1}">${esc(t("sgAll")(q))}</button>`;
+    box.hidden = false; $("#q").setAttribute("aria-expanded", "true");
+  }
+  function pickSuggestion(i) {
+    const s = sgItems[i]; if (!s) return;
+    if (s.k === "all") return runSearch($("#q").value);
+    hideSuggest(); $("#q").blur();
+    if (s.k === "t") openDetail(s.id); else openPerson(s.id);
+  }
+  $("#q").addEventListener("input", () => {
+    clearTimeout(qT); const q = $("#q").value.trim();
+    if (!q && searchQ) { clearSearch(); render(); return; }
+    qT = setTimeout(() => suggest(q), 160);
+  });
+  $("#q").addEventListener("keydown", e => {
+    const box = $("#suggest");
+    if (e.key === "Escape") { hideSuggest(); return; }
+    if (box.hidden || !sgItems.length || (e.key !== "ArrowDown" && e.key !== "ArrowUp")) return;
+    e.preventDefault();
+    sgIndex = (sgIndex + (e.key === "ArrowDown" ? 1 : -1) + sgItems.length) % sgItems.length;
+    box.querySelectorAll(".sg").forEach(b => b.setAttribute("aria-selected", +b.dataset.sg === sgIndex ? "true" : "false"));
+    const cur = box.querySelector(`[data-sg="${sgIndex}"]`); if (cur) cur.scrollIntoView({ block: "nearest" });
+  });
+  $("#search-form").addEventListener("submit", e => { e.preventDefault(); if (sgIndex >= 0) pickSuggestion(sgIndex); else runSearch($("#q").value); });
+  $("#q").addEventListener("focus", () => { const q = $("#q").value.trim(); if (q.length >= 2 && q !== searchQ) suggest(q); });
+  document.addEventListener("click", e => {
+    const sg = e.target.closest("[data-sg]"); if (sg) { pickSuggestion(+sg.dataset.sg); return; }
+    if (!e.target.closest("#search-form")) hideSuggest();
+  });
 
   // ---------- AI helper ----------
   let aiMsgs = [], aiBusy = false, aiDraft = "";
@@ -935,7 +1017,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       else reply = { role: "assistant", err: true, content: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("aiSignIn") : t("aiErr") };
     } catch (e) { reply = { role: "assistant", err: true, content: t("aiErr") }; }
     aiMsgs.push(reply); aiBusy = false;
-    if (view === "ai" && !$("#q").value.trim()) render();
+    if (view === "ai" && !searchQ) render();
   }
   document.addEventListener("submit", e => { if (e.target.id === "ai-form") { e.preventDefault(); askAI($("#ai-input").value); } });
   document.addEventListener("input", e => { if (e.target.id === "ai-input") { aiDraft = e.target.value; autoGrow(e.target); } });

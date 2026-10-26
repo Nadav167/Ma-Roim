@@ -23,7 +23,8 @@ const TOOLS = [
       properties: {
         person: { type: "string", description: "Actor, director, writer or creator name in English or Hebrew, e.g. 'James McAvoy'. Partial names work." },
         person_role: { type: "string", enum: ["cast", "director", "writer", "creator", "composer"] },
-        genre: { type: "string", description: "One genre in English, e.g. Horror, Comedy, Drama, Thriller, Crime, Romance, Animation, Documentary, Science Fiction, Fantasy, Action, Adventure, Mystery, Family, War, Western, History, Music, Reality, Sci-Fi & Fantasy, Action & Adventure." },
+        genre: { type: "string", description: "One broad genre in English: Horror, Comedy, Drama, Thriller, Crime, Romance, Animation, Documentary, Science Fiction, Fantasy, Action, Adventure, Mystery, Family, War, Western, History, Music. TV series use TV genres instead: Drama, Comedy, Crime, Mystery, Reality, Sci-Fi & Fantasy, Action & Adventure, War & Politics, Kids — there is no 'Thriller' genre for TV, use tag 'thriller' or genre Mystery/Crime." },
+        tag: { type: "string", description: "A subgenre, theme or keyword, matched inside each title's tags (detailed genres + TMDB keywords). Examples: 'psychological' (finds psychological horror/thriller/drama), 'psychological horror', 'thriller', 'time travel', 'heist', 'serial killer', 'twist ending', 'based on novel', 'coming of age', 'dystopia', 'mockumentary', 'true story'. One tag per call; combine with genre/type/scores." },
         title_type: { type: "string", enum: ["movie", "tv"] },
         min_year: { type: "integer" }, max_year: { type: "integer" },
         min_imdb: { type: "number", description: "Minimum IMDb rating, 0–10" },
@@ -62,6 +63,7 @@ function slim(t) {
     israeli: t.israeli || undefined, genres: (t.genres || []).slice(0, 4), imdb: t.imdb_rating, votes: t.imdb_votes,
     rotten_tomatoes: t.rt_score ?? undefined, metacritic: t.mc_score ?? undefined, seasons: t.seasons || undefined,
     runtime_min: t.runtime_min || undefined, overview: (t.overview_en || t.overview_he || "").slice(0, 220) || undefined,
+    tags: (t.tags || []).slice(0, 8),
   };
 }
 
@@ -74,7 +76,7 @@ async function rpc(fn, args, token) {
 async function runTool(name, input, token) {
   if (name === "find_titles") {
     const args = {};
-    for (const k of ["person", "person_role", "genre", "title_type", "min_year", "max_year", "min_imdb", "min_rt", "min_mc", "israeli", "min_votes"])
+    for (const k of ["person", "person_role", "genre", "tag", "title_type", "min_year", "max_year", "min_imdb", "min_rt", "min_mc", "israeli", "min_votes"])
       if (input[k] !== undefined && input[k] !== null && input[k] !== "") args[k] = input[k];
     args.lim = Math.min(Math.max(Number(input.limit) || 15, 1), 40);
     const rows = await rpc("find_titles", args, token);
@@ -117,6 +119,7 @@ function system(lang) {
 Find titles that fit what the user asks for, using only the catalog tools. Never recommend a title that did not come back from a tool.
 - Be fast: make all the searches you need in ONE turn (several tool calls at once), then call present_results right after seeing the results. Don't search again unless the first results are empty.
 - Turn the request into filters: person, genre, type, years, minimum IMDb / Rotten Tomatoes / Metacritic score, Israeli or not.
+- Broad genres are coarse. For subgenres and themes ("psychological horror", "heist", "time travel", "slow burn", "based on a true story") use the tag filter, possibly in parallel with a genre search, e.g. tag "psychological" + genre "Horror", and tag "psychological" + title_type "tv".
 - "After 2020" means min_year 2021. "Rated 8 or above on IMDb" means min_imdb 8.
 - If the strict search finds nothing, loosen one condition at a time and say clearly which condition the suggestions don't meet.
 - For "something like X", look X up with search_by_name, then search by its genres and similar filters.
