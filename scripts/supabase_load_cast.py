@@ -19,12 +19,12 @@ def load(table, rows, conflict, B=2000):
     print(f"{table} in database:", c.headers.get("content-range"), flush=True)
 
 # Only titles that exist in the database (adult titles were left out)
-ids, start = set(), 0
-while True:
-    r = requests.get(f"{URL}/rest/v1/titles?select=id", headers={**H, "Range": f"{start}-{start + 9999}"}, timeout=120)
-    batch = r.json(); ids |= {x["id"] for x in batch}
-    if len(batch) < 10000: break
-    start += 10000
+ids, last = set(), ""
+while True:   # the API returns at most 1,000 rows per request, so page by id
+    r = requests.get(f"{URL}/rest/v1/titles?select=id&order=id&id=gt.{last}&limit=1000", headers=H, timeout=120)
+    r.raise_for_status(); batch = r.json()
+    if not batch: break
+    ids |= {x["id"] for x in batch}; last = batch[-1]["id"]
 credits = [c for c in json.load(open("out/credits.json", encoding="utf-8")) if c["title_id"] in ids]
 # one row per (title, person, role): keep the best billing position
 best = {}
