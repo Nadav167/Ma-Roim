@@ -211,6 +211,9 @@ html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
 .sort:focus-within { border-color: var(--accent); }
 .list-foot { display: grid; place-items: center; padding-block: 28px 8px; color: var(--muted); }
 .back-row { margin-bottom: 14px; }
+.detail-inner .row { padding-left: 0; padding-right: 0; }
+.detail-inner .shelf-head { padding: 0; }
+.detail-inner .shelf:first-of-type { margin-top: 8px; }
 .grid .card { width: auto; }
 .view-head { margin: 8px 0 20px; display: grid; gap: 4px; }
 .view-head h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
@@ -363,6 +366,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   const T = {
     en: { home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
+      roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
@@ -395,6 +399,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
+      roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
@@ -533,6 +538,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 
   // ---------- Browse pages (full catalog from the database, 60 at a time) ----------
   const PAGE = 60;
+  const ROW = 20;   // every row on the site shows at most 20 titles, then Show all
   const PAGES = {
     "movie": { name: () => t("moviesH"), f: { type: "movie" } },
     "tv": { name: () => t("seriesH"), f: { type: "tv" } },
@@ -558,6 +564,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   }
   function titlesQuery(f, count) {
     let x = sb.from("titles").select("*", count ? { count: "exact" } : undefined);
+    if (f.ids) x = x.in("id", f.ids);   // a person's titles, looked up first (filtering through the cast table is slow)
     if (f.type) x = x.eq("type", f.type);
     if (f.israeli != null) x = x.eq("israeli", f.israeli);
     if (f.genres) x = x.overlaps("genres", f.genres);
@@ -592,7 +599,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     render();
     await Promise.all(b.rows.map(async row => {
       try {
-        const { data } = await sorted(titlesQuery({ ...b.f, genres: [row.g] }), "new").gte("imdb_votes", 200).range(0, 19);
+        const { data } = await sorted(titlesQuery({ ...b.f, genres: [row.g] }), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
         (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
         row.ids = (data || []).map(r => r.id);
       } catch (e) { row.ids = []; }
@@ -809,20 +816,28 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
           sb.from("credits").select("role, character, titles(*)").eq("person_id", pid),
         ]);
         if (pp.error || cc.error) throw pp.error || cc.error;
-        const seen = new Set(), ids = [];
+        const all = new Set(), byRole = {};
         (cc.data || []).filter(c => c.titles).sort((a, b) => (b.titles.imdb_votes || 0) - (a.titles.imdb_votes || 0)).forEach(c => {
           if (!C.items[c.titles.id] || !C.items[c.titles.id].p) C.items[c.titles.id] = fromRow(c.titles);
-          if (!seen.has(c.titles.id)) { seen.add(c.titles.id); ids.push(c.titles.id); }
+          all.add(c.titles.id);
+          const r = (byRole[c.role] = byRole[c.role] || []); if (!r.includes(c.titles.id)) r.push(c.titles.id);
         });
-        personCache[pid] = { p: pp.data, ids };
+        personCache[pid] = { p: pp.data, byRole, total: all.size };
       }
       const top = hist[hist.length - 1]; if (!top || top.k !== "p" || top.id !== pid) return;
-      const { p, ids } = personCache[pid];
+      const { p, byRole, total } = personCache[pid];
       if (!p) { goBack(); return; }
-      const facts = [p.birth_year ? t("born")(p.birth_year) : "", t("credits")(ids.length)].filter(Boolean).join(" · ");
+      const facts = [p.birth_year ? t("born")(p.birth_year) : "", t("credits")(total)].filter(Boolean).join(" · ");
+      // One row per role: the 20 most popular titles, then Show all when there are more
+      const rows = ["cast", "director", "creator", "writer", "composer"].filter(r => byRole[r] && byRole[r].length).map(r => {
+        const ids = byRole[r];
+        const more = ids.length > ROW ? moreCard(`data-person-all="${pid}" data-role="${r}"`) : "";
+        return `<section class="shelf"><div class="shelf-head"><h2>${esc(t("roleRows")[r])}</h2><span>${t("credits")(ids.length)}</span></div>
+          <div class="row">${ids.slice(0, ROW).map(card).join("")}${more}</div></section>`;
+      }).join("");
       d.innerHTML = shell(`<div class="person-head">${face(p.photo, "h632")}<div>
           <h1>${esc(pname(p))}</h1>${palt(p) ? `<div class="alt-title" style="margin-top:4px">${esc(palt(p))}</div>` : ""}<div class="meta" style="margin-top:6px">${esc(facts)}</div></div></div>`,
-        `<div class="grid">${ids.map(card).join("")}</div>`);
+        rows);
       d.querySelector("[data-close]").focus();
     } catch (e) { d.innerHTML = shell("", `<div class="empty"><strong>${t("genericErr")}</strong></div>`); }
   }
@@ -852,6 +867,12 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     else if (el.dataset.more) { const m = moreTargets[+el.dataset.more]; browseSort = "new"; openBrowse(m.name, m.f, PAGES[view] ? view : prevView); }
     else if (el.dataset.backBrowse !== undefined) { view = prevView || "home"; browse = PAGES[view] ? browse : null; viewKey = ""; render(); window.scrollTo(0, 0); }
     else if (el.dataset.loadMore !== undefined) loadMore();
+    else if (el.dataset.personAll) {
+      const pid = el.dataset.personAll, role = el.dataset.role, pc = personCache[pid];
+      const from = PAGES[view] || view === "browse" ? (view === "browse" ? prevView : view) : view;
+      closeDetail(); browseSort = "new";
+      openBrowse(() => `${pname(pc.p)} · ${t("roleRows")[role]}`, { ids: pc.byRole[role], person: pid }, from);
+    }
     else if (el.dataset.id) openDetail(el.dataset.id);
     else if (el.dataset.open) openDetail(el.dataset.open);
     else if (el.dataset.hero) { heroIdx = +el.dataset.hero; swapHero(); }
