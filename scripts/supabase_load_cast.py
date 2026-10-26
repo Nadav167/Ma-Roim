@@ -33,7 +33,8 @@ for c in credits:
     if k not in best or c["ord"] < best[k]["ord"]: best[k] = c
 credits = list(best.values())
 used = {c["person_id"] for c in credits}
-people = [p for p in json.load(open("out/people.json", encoding="utf-8")) if p["id"] in used]
+FIELDS = ("id", "name", "name_he", "birth_year", "death_year", "photo")   # every row needs the same keys
+people = [{k: p.get(k) for k in FIELDS} for p in json.load(open("out/people.json", encoding="utf-8")) if p["id"] in used]
 print("titles", len(ids), "people", len(people), "credits", len(credits), flush=True)
 load("people", people, "id")
 if "--people-only" not in sys.argv:   # rerun with --people-only after updating names (e.g. Hebrew names)

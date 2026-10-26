@@ -199,6 +199,18 @@ a.score:hover { border-color: var(--muted); }
 .textcard small { color: var(--muted); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 22px 16px; }
+.card.more .poster { display: grid; place-items: center; align-content: center; gap: 10px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--fg); font-weight: 700; }
+.card.more .poster svg { width: 34px; height: 34px; padding: 7px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
+.browse-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin: 8px 0 22px; }
+.browse-head .view-head { margin: 0; }
+.sort { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding-inline: 14px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.sort label { color: var(--muted); font-size: 13px; font-weight: 600; }
+.sort select { border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; outline: none; cursor: pointer; padding-inline-end: 4px; }
+.sort select option { background: var(--surface); color: var(--fg); }
+.sort:focus-within { border-color: var(--accent); }
+.list-foot { display: grid; place-items: center; padding-block: 28px 8px; color: var(--muted); }
+.back-row { margin-bottom: 14px; }
 .grid .card { width: auto; }
 .view-head { margin: 8px 0 20px; display: grid; gap: 4px; }
 .view-head h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
@@ -308,7 +320,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   <button class="nav-btn" data-view="home" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="home"></span></button>
   <button class="nav-btn" data-view="movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span data-t="movies"></span></button>
   <button class="nav-btn" data-view="tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 2 4 4 4-4"/></svg><span data-t="series"></span></button>
-  <button class="nav-btn" data-view="il" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="israeli"></span></button>
+  <button class="nav-btn" data-view="il-movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="ilMovies"></span></button>
+  <button class="nav-btn" data-view="il-tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="ilSeries"></span></button>
   <button class="nav-btn" data-view="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span data-t="mylist"></span></button>
   <button class="nav-btn" data-view="ai" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg><span data-t="ai"></span></button>
 </nav>
@@ -349,6 +362,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
 (() => {
   const T = {
     en: { home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
+      ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
+      sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
+      nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
       markWatched: "Mark watched", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + "h " : ""}${m % 60}m`, results: n => `${n} results`, noResults: "Nothing found",
@@ -378,6 +394,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
+      ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
+      sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
+      nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
       markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + " ש׳ " : ""}${m % 60} ד׳`, results: n => `${n} תוצאות`, noResults: "לא נמצא כלום",
@@ -488,9 +507,10 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     </button>`;
   }
   const shelfName = s => lang === "he" ? s.he : s.en;
+  const moreCard = attrs => `<button class="card more" type="button" ${attrs}><div class="poster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>${t("showAll")}</span></div></button>`;
   function shelf(s) {
-    return `<section class="shelf"><div class="shelf-head pad"><h2>${esc(shelfName(s))}</h2><span>${s.ids.length} ${t("titles")}</span></div>
-      <div class="row">${s.ids.map(card).join("")}</div></section>`;
+    return `<section class="shelf"><div class="shelf-head pad"><h2>${esc(shelfName(s))}</h2></div>
+      <div class="row">${s.ids.map(card).join("")}${sb && SHELF_FILTERS[s.key] ? moreCard(`data-shelf="${s.key}"`) : ""}</div></section>`;
   }
   function hero() {
     const id = C.hero[heroIdx], it = C.items[id];
@@ -511,14 +531,122 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   }
   const footer = () => `<footer class="pad">${esc(t("footer"))} · v${BUILD}</footer>`;
 
-  function byType(pred, n = 120) {
-    return C.index.filter(id => pred(C.items[id])).slice(0, n);
+  // ---------- Browse pages (full catalog from the database, 60 at a time) ----------
+  const PAGE = 60;
+  const PAGES = {
+    "movie": { name: () => t("moviesH"), f: { type: "movie" } },
+    "tv": { name: () => t("seriesH"), f: { type: "tv" } },
+    "il-movie": { name: () => t("ilMovies"), f: { type: "movie", israeli: true } },
+    "il-tv": { name: () => t("ilSeries"), f: { type: "tv", israeli: true } },
+  };
+  const SHELF_FILTERS = {
+    "new": { minYear: new Date().getFullYear() - 2 }, "movies": { type: "movie" }, "series": { type: "tv" },
+    "il-series": { type: "tv", israeli: true }, "il-movies": { type: "movie", israeli: true }, "top": { minVotes: 250000 },
+    "comedy": { genres: ["Comedy"] }, "crime": { genres: ["Crime", "Thriller"] },
+    "scifi": { genres: ["Science Fiction", "Sci-Fi & Fantasy", "Fantasy"] }, "anim": { genres: ["Animation"] }, "docs": { genres: ["Documentary"] },
+  };
+  const GENRES = {
+    movie: ["Drama", "Comedy", "Thriller", "Action", "Crime", "Horror", "Romance", "Science Fiction", "Adventure", "Animation", "Family", "Mystery", "Fantasy", "Documentary", "History", "War", "Music", "Western"],
+    tv: ["Drama", "Comedy", "Crime", "Reality", "Action & Adventure", "Sci-Fi & Fantasy", "Mystery", "Animation", "Documentary", "Family", "Kids", "War & Politics", "Soap", "Talk"],
+  };
+  let browse = null, browseSort = "new", prevView = "home", moreTargets = [];
+  const onBrowse = () => (view === "browse" || PAGES[view]) && !$("#q").value.trim();
+  function openBrowse(name, f, from) {
+    if (from) prevView = from;
+    browse = { name, f, key: JSON.stringify(f), ids: [], total: null, done: false, loading: false, err: false, rows: null };
+    view = "browse"; $("#q").value = ""; render(); window.scrollTo(0, 0);
   }
+  function titlesQuery(f, count) {
+    let x = sb.from("titles").select("*", count ? { count: "exact" } : undefined);
+    if (f.type) x = x.eq("type", f.type);
+    if (f.israeli != null) x = x.eq("israeli", f.israeli);
+    if (f.genres) x = x.overlaps("genres", f.genres);
+    if (f.minYear) x = x.gte("year", f.minYear);
+    if (f.minVotes) x = x.gte("imdb_votes", f.minVotes);
+    return x;
+  }
+  function sorted(x, sort) {
+    if (sort === "old") return x.order("year", { ascending: true, nullsFirst: false }).order("imdb_votes", { ascending: false });
+    if (sort === "az") return lang === "he" ? x.order("title_he", { ascending: true, nullsFirst: false }).order("title") : x.order("title");
+    return x.order("year", { ascending: false, nullsFirst: false }).order("imdb_votes", { ascending: false });
+  }
+  async function loadMore() {
+    const b = browse; if (!b || b.done || b.loading || browseSort === "genre") return;
+    b.loading = true; updateFoot();
+    try {
+      const { data, error, count } = await sorted(titlesQuery(b.f, b.total == null), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
+      if (error) throw error;
+      if (browse !== b) return;
+      if (count != null) b.total = count;
+      (data || []).forEach(r => { C.items[r.id] = fromRow(r); b.ids.push(r.id); });
+      if (!data || data.length < PAGE) b.done = true;
+      b.err = false;
+    } catch (e) { b.err = true; }
+    b.loading = false;
+    if (browse === b && onBrowse()) appendBrowse();
+  }
+  async function loadGenreRows() {
+    const b = browse; if (!b || b.rows) return;
+    const list = b.f.genres ? b.f.genres : b.f.type ? GENRES[b.f.type] : [...new Set([...GENRES.movie, ...GENRES.tv])];
+    b.rows = list.map(g => ({ g, ids: null }));
+    render();
+    await Promise.all(b.rows.map(async row => {
+      try {
+        const { data } = await sorted(titlesQuery({ ...b.f, genres: [row.g] }), "new").gte("imdb_votes", 200).range(0, 19);
+        (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
+        row.ids = (data || []).map(r => r.id);
+      } catch (e) { row.ids = []; }
+      if (browse === b && browseSort === "genre" && onBrowse()) render();
+    }));
+  }
+  function browseView() {
+    const b = browse;
+    const sel = `<div class="sort"><label for="sort-sel">${t("sortL")}</label><select id="sort-sel">
+      ${[["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")]].map(([v, l]) => `<option value="${v}" ${browseSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}
+      </select></div>`;
+    const back = prevView && !PAGES[viewKey] ? `<button class="btn back-row" type="button" data-back-browse>${icon.back}${t("back")}</button>` : "";
+    const headHtml = `<div class="pad">${back}<div class="browse-head"><div class="view-head"><h1>${esc(b.name())}</h1>
+      <p id="browse-count">${b.total != null ? t("nTitles")(b.total) : "&nbsp;"}</p></div>${sel}</div></div>`;
+    if (browseSort === "genre") {
+      moreTargets = [];
+      const rows = (b.rows || []).filter(r => r.ids === null || r.ids.length).map(r => {
+        const i = moreTargets.push({ name: () => `${b.name()} · ${genre(r.g)}`, f: { ...b.f, genres: [r.g] } }) - 1;
+        return `<section class="shelf"><div class="shelf-head pad"><h2>${esc(genre(r.g))}</h2></div>
+          <div class="row">${r.ids === null ? '<div class="skeleton" style="width:var(--poster);aspect-ratio:2/3;height:auto;flex:none"></div>'.repeat(6) : r.ids.map(card).join("") + moreCard(`data-more="${i}"`)}</div></section>`;
+      }).join("");
+      return headHtml + rows + footer();
+    }
+    return headHtml + `<div class="pad"><div class="grid" id="browse-grid">${b.ids.map(card).join("")}</div><div class="list-foot" id="browse-foot"></div></div>` + footer();
+  }
+  function footHtml() {
+    const b = browse;
+    if (b.err) return `<span>${t("listErr")}</span><button class="btn" type="button" data-load-more style="margin-top:10px">${t("loadMore")}</button>`;
+    if (b.loading) return `<span>${t("loadingMore")}</span>`;
+    if (!b.done) return `<button class="btn" type="button" data-load-more>${t("loadMore")}</button>`;
+    return "";
+  }
+  function updateFoot() { const f = $("#browse-foot"); if (f) f.innerHTML = footHtml(); }
+  function appendBrowse() {
+    const g = $("#browse-grid"); if (!g) return render();
+    const have = g.children.length;
+    g.insertAdjacentHTML("beforeend", browse.ids.slice(have).map(card).join(""));
+    const c = $("#browse-count"); if (c && browse.total != null) c.textContent = t("nTitles")(browse.total);
+    updateFoot(); watchFoot();
+  }
+  let footObserver = null;
+  function watchFoot() {
+    if (footObserver) footObserver.disconnect();
+    const f = $("#browse-foot"); if (!f || !("IntersectionObserver" in window)) return;
+    footObserver = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) loadMore(); }, { rootMargin: "800px 0px" });
+    footObserver.observe(f);
+  }
+  let viewKey = "home";
   function render() {
     const main = $("#main");
     const q = $("#q").value.trim();
     clearInterval(heroTimer);
     document.querySelectorAll(".nav-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
+    if (view !== "browse" && !PAGES[view]) viewKey = view;
     if (q) {
       if (sb) { main.innerHTML = `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("searching")}</p></div>`; remoteSearch(q); }
       else main.innerHTML = searchView(q);
@@ -527,15 +655,13 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     if (view === "home") {
       main.innerHTML = hero() + C.shelves.map(shelf).join("") + footer();
       heroTimer = setInterval(() => { if (!document.hidden && $("#detail").hidden) { heroIdx = (heroIdx + 1) % C.hero.length; swapHero(); } }, 9000);
-    } else if (view === "movie" || view === "tv") {
-      const keys = view === "movie" ? ["movies", "il-movies", "comedy", "anim", "docs"] : ["series", "il-series", "top"];
-      const shelves = C.shelves.filter(s => keys.includes(s.key)).map(s => ({ ...s, ids: s.ids.filter(id => C.items[id].ty === view) })).filter(s => s.ids.length);
-      main.innerHTML = head(t(view === "movie" ? "moviesH" : "seriesH"), t(view === "movie" ? "moviesP" : "seriesP")) + shelves.map(shelf).join("")
-        + `<section class="shelf pad"><div class="grid">${byType(it => it.ty === view).map(card).join("")}</div></section>` + footer();
-    } else if (view === "il") {
-      const shelves = C.shelves.filter(s => s.key.startsWith("il-"));
-      main.innerHTML = head(t("ilH"), t("ilP")) + shelves.map(shelf).join("")
-        + `<section class="shelf pad"><div class="grid">${byType(it => it.il, 200).map(card).join("")}</div></section>` + footer();
+    } else if (PAGES[view] || view === "browse") {
+      if (PAGES[view]) {   // nav pages are browse pages with a fixed filter
+        if (!browse || viewKey !== view) { viewKey = view; prevView = null; const pg = PAGES[view]; browse = { name: pg.name, f: pg.f, key: view, ids: [], total: null, done: false, loading: false, err: false, rows: null }; }
+      } else viewKey = "browse";
+      main.innerHTML = browseView();
+      if (browseSort === "genre") { if (!browse.rows) loadGenreRows(); }
+      else { updateFoot(); watchFoot(); if (!browse.ids.length && !browse.done) loadMore(); }
     } else if (view === "list") {
       const ids = [...list].filter(id => C.items[id]);
       main.innerHTML = head(t("listH"), "") + `<div class="pad">${ids.length ? `<div class="grid">${ids.map(card).join("")}</div>`
@@ -712,6 +838,7 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     $("#wordmark").innerHTML = t("word");
     $("#q").placeholder = t("search");
     renderAcct();
+    if (browse && browseSort === "az") { browse.ids = []; browse.total = null; browse.done = false; }   // A–Z order depends on language
     if (user && sb) sb.from("profiles").update({ lang: l }).eq("id", user.id).then(() => {}, () => {});
     if (!C) return;
     render();
@@ -721,6 +848,10 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   document.addEventListener("click", e => {
     const el = e.target.closest("button, a"); if (!el) return;
     if (el.dataset.view) { view = el.dataset.view; $("#q").value = ""; if (!$("#detail").hidden) closeDetail(); render(); window.scrollTo(0, 0); }
+    else if (el.dataset.shelf) { const sh = C.shelves.find(x => x.key === el.dataset.shelf); openBrowse(() => shelfName(sh), SHELF_FILTERS[sh.key], view === "browse" ? prevView : view); }
+    else if (el.dataset.more) { const m = moreTargets[+el.dataset.more]; browseSort = "new"; openBrowse(m.name, m.f, PAGES[view] ? view : prevView); }
+    else if (el.dataset.backBrowse !== undefined) { view = prevView || "home"; browse = PAGES[view] ? browse : null; viewKey = ""; render(); window.scrollTo(0, 0); }
+    else if (el.dataset.loadMore !== undefined) loadMore();
     else if (el.dataset.id) openDetail(el.dataset.id);
     else if (el.dataset.open) openDetail(el.dataset.open);
     else if (el.dataset.hero) { heroIdx = +el.dataset.hero; swapHero(); }
@@ -738,6 +869,12 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
     }
   });
   document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#auth").hidden) $("#auth").hidden = true; else if (!$("#detail").hidden) closeDetail(); });
+  document.addEventListener("change", e => {
+    if (e.target.id !== "sort-sel") return;
+    browseSort = e.target.value;
+    if (browse) { browse.ids = []; browse.total = null; browse.done = false; browse.err = false; browse.rows = null; }
+    render();
+  });
   $("#lang-en").onclick = () => setLang("en");
   $("#lang-he").onclick = () => setLang("he");
   let qT; $("#q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(() => { if (!$("#detail").hidden) closeDetail(); else render(); }, 180); });
