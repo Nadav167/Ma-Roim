@@ -256,6 +256,17 @@ html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
 .detail-text { display: grid; gap: 14px; min-width: 0; }
 .detail h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -.02em; text-wrap: balance; }
 .alt-title { color: var(--muted); font-size: 16px; margin-top: -8px; }
+.trailer { position: relative; width: 100%; max-width: 680px; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000;
+  border: 1px solid var(--line); cursor: pointer; padding: 0; display: block; }
+.trailer img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .85; transition: opacity .2s; }
+.trailer:hover img { opacity: 1; }
+.trailer .play { position: absolute; inset: 0; margin: auto; width: 68px; height: 68px; border-radius: 50%; background: rgba(14,12,24,.72); backdrop-filter: blur(4px);
+  display: grid; place-items: center; border: 2px solid rgba(255,255,255,.85); transition: transform .2s, background .2s; }
+.trailer:hover .play { transform: scale(1.06); background: var(--accent); border-color: var(--accent); }
+.trailer .play svg { width: 26px; height: 26px; margin-inline-start: 4px; color: #fff; }
+html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start: 0; margin-inline-end: 4px; }
+.trailer .tlabel { position: absolute; bottom: 10px; inset-inline-start: 10px; background: rgba(14,12,24,.8); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 10px; }
+.trailer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .overview { margin: 0; font-size: 16px; line-height: 1.6; max-width: 64ch; color: #dad7ea; }
 .links { display: flex; flex-wrap: wrap; gap: 8px; }
 .links a { font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
@@ -409,6 +420,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   const T = {
     en: { about: "About", home: "Home", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
+      trailer: "Trailer", trailerHe: "Trailer · Hebrew subtitles", playTrailer: "Play trailer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
@@ -443,6 +455,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { about: "אודות", home: "בית", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
+      trailer: "טריילר", trailerHe: "טריילר · מתורגם לעברית", playTrailer: "נגן טריילר",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
@@ -497,7 +510,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
-    rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url,
+    rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url, tr: r.trailer_en, trh: r.trailer_he,
     b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
   async function ensureItems(ids) {
     const missing = ids.filter(id => !C.items[id]);
@@ -796,6 +809,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
           <div class="meta">${it.g.map(x => `<span class="chip">${esc(genre(x))}</span>`).join("")}</div>
           ${scoreTiles(it)}
           ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
+          ${trailerHtml(it)}
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
             <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
@@ -1014,6 +1028,27 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   document.addEventListener("click", e => {
     const sg = e.target.closest("[data-sg]"); if (sg) { pickSuggestion(+sg.dataset.sg); return; }
     if (!e.target.closest("#search-form")) hideSuggest();
+  });
+
+  // ---------- Trailers ----------
+  // Hebrew site: the Hebrew (usually Hebrew-subtitled) trailer first; otherwise the English one with YouTube asked to
+  // turn on Hebrew subtitles if the video has them. English site: the English trailer, else whatever exists.
+  function pickTrailer(it) {
+    if (lang === "he") return it.trh ? { key: it.trh, he: true } : it.tr ? { key: it.tr, cc: true } : null;
+    return it.tr ? { key: it.tr } : it.trh ? { key: it.trh, he: true } : null;
+  }
+  function trailerHtml(it) {
+    const tr = pickTrailer(it); if (!tr) return "";
+    return `<button class="trailer" type="button" data-yt="${esc(tr.key)}" data-cc="${tr.cc ? 1 : 0}" aria-label="${esc(t("playTrailer"))}">
+      <img src="https://i.ytimg.com/vi/${esc(tr.key)}/hqdefault.jpg" alt="" loading="lazy">
+      <span class="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></span>
+      <span class="tlabel">${esc(tr.he ? t("trailerHe") : t("trailer"))}</span></button>`;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".trailer[data-yt]"); if (!b || b.querySelector("iframe")) return;
+    const cc = b.dataset.cc === "1" ? "&cc_load_policy=1&cc_lang_pref=he&hl=he" : "";
+    b.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&rel=0&playsinline=1${cc}"
+      title="${esc(t("trailer"))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   });
 
   // ---------- About ----------
