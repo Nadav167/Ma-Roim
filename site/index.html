@@ -103,6 +103,23 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
 .imdb { display: inline-flex; align-items: center; gap: 5px; color: var(--fg); font-weight: 700; }
 .imdb b { background: var(--gold); color: #1a1500; font-size: 10px; font-weight: 800; padding: 2px 4px; border-radius: 3px; letter-spacing: .02em; }
+.chat { display: grid; gap: 18px; max-width: 980px; }
+.bubble { max-width: 640px; padding: 12px 16px; border-radius: 18px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble.user { justify-self: end; background: var(--accent); color: var(--accent-ink); border-end-end-radius: 6px; }
+.bubble.ai { justify-self: start; background: var(--surface); border: 1px solid var(--line); border-end-start-radius: 6px; }
+.bubble.wait { color: var(--muted); }
+.bubble.err { color: #ff9c9c; }
+.ai-turn { display: grid; gap: 12px; }
+.ai-turn .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.composer { position: sticky; bottom: 0; z-index: 5; padding-block: 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--bg) 30%); }
+.composer form { display: flex; gap: 10px; align-items: flex-end; max-width: 980px; }
+.composer textarea { flex: 1; min-width: 0; resize: none; min-height: 48px; max-height: 160px; border-radius: 24px; border: 1px solid var(--line);
+  background: var(--surface); padding: 13px 18px; outline: none; line-height: 1.4; font: inherit; color: inherit; }
+.composer textarea:focus { border-color: var(--accent); }
+.composer .btn { height: 48px; flex: none; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.examples button { border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 9px 14px; cursor: pointer; text-align: start; font-size: 14px; }
+.examples button:hover { border-color: var(--accent); }
 .credits { display: grid; gap: 18px; margin-top: 8px; }
 .credits h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
 .crew { display: grid; gap: 6px; }
@@ -258,6 +275,8 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
+  .composer { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); padding-bottom: 10px; }
+  .ai-turn .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .person-head .ini { width: 64px; height: 64px; font-size: 24px; }
   .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -336,8 +355,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       moviesH: "Movies", moviesP: "The most watched US and Israeli films since 1980.",
       seriesH: "Series", seriesP: "The most watched US and Israeli series since 1980.",
       ilH: "Israeli", ilP: "Israeli movies and series, from Waltz with Bashir to Fauda.",
-      listH: "My list", aiH: "Ask AI", aiP: "Tell it what you’re in the mood for and it picks from the whole catalog. Coming in the next version.",
-      aiEx: ["A tense Israeli series like Fauda", "A feel-good 90s comedy for tonight", "Something like Breaking Bad, but shorter"],
+      listH: "My list", aiH: "Ask AI", aiP: "Describe what you’re in the mood for. It searches all 57,000 titles by cast, genre, year and scores.",
+      aiEx: ["A horror film after 2020 with James McAvoy rated 8+ on IMDb", "A tense Israeli series like Fauda", "A feel-good 90s comedy for tonight", "Christopher Nolan movies with 90%+ on Rotten Tomatoes"],
+      aiPh: "What do you feel like watching?", aiSend: "Ask", aiThinking: "Searching the catalog…", aiNew: "New chat",
+      aiSignIn: "Sign in to use the AI helper. It’s free.", aiLimit: "You’ve reached today’s limit. Try again tomorrow.",
+      aiNotReady: "The AI helper isn’t switched on yet.", aiErr: "That didn’t work. Try again in a moment.", aiNone: "No titles to show for this one.",
       toastAdd: "Added to my list", toastRem: "Removed from my list", toastW: "Marked as watched", toastUW: "Marked as not watched",
       wiki: "Wikipedia", wikiHe: "Wikipedia (Hebrew)", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
       word: 'What to <span>Watch</span>', titles: "titles", ongoing: "present",
@@ -362,8 +384,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
       moviesH: "סרטים", moviesP: "הסרטים האמריקאיים והישראליים הנצפים ביותר מאז 1980.",
       seriesH: "סדרות", seriesP: "הסדרות האמריקאיות והישראליות הנצפות ביותר מאז 1980.",
       ilH: "ישראלי", ilP: "סרטים וסדרות ישראליים, מוואלס עם באשיר ועד פאודה.",
-      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "ספרו מה בא לכם לראות, והוא יבחר מכל הקטלוג. מגיע בגרסה הבאה.",
-      aiEx: ["סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "משהו כמו שובר שורות, אבל קצר יותר"],
+      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בכל 57,000 הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
+      aiEx: ["סרט אימה אחרי 2020 עם ג׳יימס מקאבוי עם ציון 8+ ב-IMDb", "סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "סרטים של כריסטופר נולאן עם 90%+ ב-Rotten Tomatoes"],
+      aiPh: "מה בא לכם לראות?", aiSend: "שאל", aiThinking: "מחפש בקטלוג…", aiNew: "שיחה חדשה",
+      aiSignIn: "התחברו כדי להשתמש בעוזר ה-AI. זה בחינם.", aiLimit: "הגעתם למגבלה היומית. נסו שוב מחר.",
+      aiNotReady: "עוזר ה-AI עוד לא הופעל.", aiErr: "זה לא עבד. נסו שוב בעוד רגע.", aiNone: "אין כותרים להציג הפעם.",
       toastAdd: "נוסף לרשימה", toastRem: "הוסר מהרשימה", toastW: "סומן כנצפה", toastUW: "הסימון בוטל",
       wiki: "ויקיפדיה (אנגלית)", wikiHe: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
       word: 'מה <span>לראות</span>', titles: "כותרים", ongoing: "היום",
@@ -513,7 +538,9 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
         : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}
         ${!user && sb ? `<div class="btns" style="margin-top:20px"><button class="btn primary" type="button" data-auth="up">${t("signInToSave")}</button></div>` : ""}</div>` + footer();
     } else if (view === "ai") {
-      main.innerHTML = head(t("aiH"), t("aiP")) + `<div class="pad"><div class="btns">${t("aiEx").map(x => `<span class="chip" style="padding:8px 14px;font-size:14px">${esc(x)}</span>`).join("")}</div></div>` + footer();
+      main.innerHTML = aiView();
+      const ta = $("#ai-input"); if (ta) { ta.value = aiDraft; autoGrow(ta); }
+      const last = main.querySelector(".chat > :last-child"); if (last && aiMsgs.length) last.scrollIntoView({ block: "end" });
     }
   }
   const head = (h, p) => `<div class="view-head pad"><h1>${esc(h)}</h1>${p ? `<p>${esc(p)}</p>` : ""}</div>`;
@@ -693,6 +720,51 @@ footer { margin-top: 48px; color: var(--muted); font-size: 12px; display: flex; 
   $("#lang-en").onclick = () => setLang("en");
   $("#lang-he").onclick = () => setLang("he");
   let qT; $("#q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(() => { if (!$("#detail").hidden) closeDetail(); else render(); }, 180); });
+
+  // ---------- AI helper ----------
+  let aiMsgs = [], aiBusy = false, aiDraft = "";
+  function aiView() {
+    const signedOut = sb && !user;
+    const turns = aiMsgs.map(m => m.role === "user"
+      ? `<div class="bubble user">${esc(m.content)}</div>`
+      : `<div class="ai-turn"><div class="bubble ai ${m.err ? "err" : ""}">${esc(m.content || t("aiNone"))}</div>
+          ${m.ids && m.ids.filter(id => C.items[id]).length ? `<div class="grid">${m.ids.filter(id => C.items[id]).map(card).join("")}</div>` : ""}</div>`).join("");
+    return `<div class="view-head pad"><h1>${esc(t("aiH"))}</h1><p>${esc(t("aiP"))}</p></div>
+      <div class="pad"><div class="chat">
+        ${aiMsgs.length ? turns : `<div class="examples">${t("aiEx").map(x => `<button type="button" data-ask="${esc(x)}">${esc(x)}</button>`).join("")}</div>`}
+        ${aiBusy ? `<div class="bubble ai wait">${t("aiThinking")}</div>` : ""}
+        ${signedOut ? `<div class="empty"><strong>${t("aiSignIn")}</strong><div class="btns"><button class="btn primary" type="button" data-auth="in">${t("signIn")}</button></div></div>` : ""}
+      </div></div>
+      ${signedOut ? "" : `<div class="composer pad"><form id="ai-form">
+        <textarea id="ai-input" rows="1" placeholder="${esc(t("aiPh"))}" ${signedOut || aiBusy ? "disabled" : ""}></textarea>
+        <button class="btn primary" type="submit" ${signedOut || aiBusy ? "disabled" : ""}>${t("aiSend")}</button>
+        ${aiMsgs.length && !aiBusy ? `<button class="btn" type="button" id="ai-new">${t("aiNew")}</button>` : ""}
+      </form></div>`}`;
+  }
+  function autoGrow(ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
+  async function askAI(text) {
+    text = (text || "").trim(); if (!text || aiBusy) return;
+    if (!user) { openAuth("in"); return; }
+    aiMsgs.push({ role: "user", content: text }); aiDraft = ""; aiBusy = true; render();
+    let reply;
+    try {
+      const { data } = await sb.auth.getSession();
+      const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
+        body: JSON.stringify({ lang, messages: aiMsgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.role === "assistant" ? (m.content + (m.ids && m.ids.length ? "\n[Recommended: " + m.ids.map(id => C.items[id] ? C.items[id].t : id).join(", ") + "]" : "")) : m.content })) }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) { await ensureItems(j.ids || []); reply = { role: "assistant", content: j.message || "", ids: j.ids || [] }; }
+      else reply = { role: "assistant", err: true, content: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("aiSignIn") : t("aiErr") };
+    } catch (e) { reply = { role: "assistant", err: true, content: t("aiErr") }; }
+    aiMsgs.push(reply); aiBusy = false;
+    if (view === "ai" && !$("#q").value.trim()) render();
+  }
+  document.addEventListener("submit", e => { if (e.target.id === "ai-form") { e.preventDefault(); askAI($("#ai-input").value); } });
+  document.addEventListener("input", e => { if (e.target.id === "ai-input") { aiDraft = e.target.value; autoGrow(e.target); } });
+  document.addEventListener("keydown", e => { if (e.target.id === "ai-input" && e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); askAI(e.target.value); } });
+  document.addEventListener("click", e => {
+    const a = e.target.closest("[data-ask]"); if (a) { askAI(a.dataset.ask); return; }
+    if (e.target.closest("#ai-new")) { aiMsgs = []; render(); }
+  });
 
   async function saveMark(table, id, on) {
     if (user && sb) {
