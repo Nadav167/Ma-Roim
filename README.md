@@ -33,8 +33,10 @@ Run from the repo root, in order:
 6. `scripts/hewiki_posters.py` — Hebrew Wikipedia: lead images for titles still missing a Hebrew poster
 7. `scripts/hewiki_apply.py` — adds those posters where they're clearly Hebrew (Israeli titles, or the file says so) and lists the rest in `data/hewiki_poster_review.csv`
 8. `scripts/scores.py` — Wikidata: Rotten Tomatoes (Tomatometer) and Metacritic scores, and Rotten Tomatoes page links
-9. `scripts/site_catalog.py` — builds `site/catalog.json` for the website
-10. `scripts/xlsx_build.py` — Excel version for browsing
+9. `scripts/cast.py`, `scripts/people_he.py`, `scripts/people_photos.py` — cast and crew from IMDb, Hebrew names from Wikidata, photos from TMDB
+10. `scripts/tags.py` — tags per title: Wikidata detailed genres + TMDB keywords
+11. `scripts/site_catalog.py` — builds `site/catalog.json` for the website
+12. `scripts/xlsx_build.py` — Excel version for browsing
 
 Step 3 needs `title.basics.tsv.gz` and `title.ratings.tsv.gz` from https://datasets.imdbws.com in `raw/imdb/`.
 Step 4 needs a TMDB API Read Access Token in `.secrets/tmdb_token` (not committed).
