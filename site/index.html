@@ -335,6 +335,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
 .acct-wrap { position: relative; flex: none; }
 .modal { position: fixed; inset: 0; z-index: 60; background: rgba(6,5,12,.7); backdrop-filter: blur(6px); display: grid; place-items: center;
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { overflow-y: auto; align-items: start; }
+.modal > .sheet { margin: auto; }
 .sheet { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 16px; }
 .sheet h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
 .sheet p { margin: 0; color: var(--muted); }
@@ -841,7 +843,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
           ${scoreTiles(it)}
           ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
           ${trailerHtml(it)}
-          <div id="watch">${it.wa !== undefined ? watchHtml(it.wa) : watchHtml(undefined)}</div>
+          <div id="watch">${it.wa !== undefined && PROV ? watchHtml(it.wa) : watchHtml(undefined)}</div>
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
             <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
@@ -854,7 +856,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     d.dataset.id = id; d.hidden = false; if (push) d.scrollTop = 0;
     if (sb) loadCredits(id);
     if (sb && !it.f) fillDetails(id);
-    if (it.wa === undefined) loadWatch(id);
+    if (it.wa === undefined || !PROV) loadWatch(id);
     document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
   }
@@ -1127,9 +1129,10 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let myServices = new Set(store.get("services", []));
   const provLogo = pid => PROV && PROV[pid] ? `https://image.tmdb.org/t/p/w92${PROV[pid][1]}` : "";
   const provName = pid => PROV && PROV[pid] ? PROV[pid][0] : "";
+  const loadProv = async () => { if (!PROV) PROV = await fetch("watch/providers.json?v=" + BUILD).then(r => r.ok ? r.json() : {}).catch(() => ({})); return PROV; };
   async function getWatch(id) {
+    await loadProv();                                   // service names and logos, needed for every title
     const it = C.items[id]; if (it && it.wa !== undefined) return it.wa;
-    if (!PROV) PROV = await fetch("watch/providers.json?v=" + BUILD).then(r => r.json()).catch(() => ({}));
     const shard = (parseInt(String(id).slice(1), 10) || 0) % 64;
     if (!shardCache[shard]) shardCache[shard] = fetch(`watch/${shard}.json?v=${BUILD}`).then(r => r.ok ? r.json() : null).catch(() => null);
     const data = await shardCache[shard];
@@ -1157,13 +1160,13 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   }
   function servicesView() {
     if (!PROV) return `<div class="loading">…</div>`;
-    const list = Object.entries(PROV).filter(([, v]) => v[2]).sort((a, b) => b[1][2] - a[1][2]).slice(0, 24);
+    const list = Object.entries(PROV).filter(([, v]) => v[2] >= 10).sort((a, b) => b[1][2] - a[1][2]).slice(0, 12);   // real services, most titles first
     return `<div class="sheet" style="max-width:640px"><h2>${t("wPickH")}</h2><p>${t("wPickP")}</p>
       <div class="svc-grid">${list.map(([pid, [name, logo]]) => `<button class="svc" type="button" data-svc="${pid}" aria-pressed="${myServices.has(+pid)}"><img src="https://image.tmdb.org/t/p/w92${logo}" alt="">${esc(name)}</button>`).join("")}</div>
       <button class="btn primary" type="button" data-svc-done>${t("wDone")}</button></div>`;
   }
   async function openServices() {
-    if (!PROV) PROV = await fetch("watch/providers.json?v=" + BUILD).then(r => r.json()).catch(() => ({}));
+    await loadProv();
     let m = $("#svc-modal");
     if (!m) { m = document.createElement("div"); m.id = "svc-modal"; m.className = "modal"; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); document.body.appendChild(m); }
     m.innerHTML = servicesView(); m.hidden = false;
