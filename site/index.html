@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e0c18">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="What to Watch">
 <title>What to Watch</title>
 <link rel="preconnect" href="https://prnfnqvjirwuyafvsulk.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1277,6 +1284,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   };
   if ("ResizeObserver" in window) { const ro = new ResizeObserver(setTopH); ro.observe(topBar); ro.observe(rail); } setTopH();
   addEventListener("resize", setTopH);
+
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
 
   setLang(lang);
   fetch("catalog.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => { C = data; render(); if (user) { await ensureItems([...list, ...watched]); refresh(); } })
