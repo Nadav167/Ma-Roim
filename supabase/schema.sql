@@ -1,4 +1,4 @@
--- What to Watch — database schema
+-- Ma Roim — database schema
 -- Run once in Supabase: SQL Editor → New query → paste → Run.
 
 create extension if not exists pg_trgm;

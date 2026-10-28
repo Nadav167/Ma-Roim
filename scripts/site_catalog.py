@@ -5,7 +5,7 @@
 import json, os, base64, sys, requests
 from concurrent.futures import ThreadPoolExecutor
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 rows = [r for r in rows if "Adult" not in (r["genres"] or "")]
 
 HE_GENRE = {

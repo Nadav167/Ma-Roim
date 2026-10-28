@@ -1,8 +1,8 @@
 # Original channel of Israeli titles (Wikidata P449, "original broadcaster"), mapped to where they can be watched now.
-# Adds "network_il": [[name_en, name_he, service_key or null]] to out/what_to_watch_titles.json.
+# Adds "network_il": [[name_en, name_he, service_key or null]] to out/ma_roim_titles.json.
 import json, requests, collections
 EP = "https://query.wikidata.org/sparql"
-H = {"User-Agent": "WhatToWatchDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
+H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
 Q = """SELECT ?item ?net ?en ?he WHERE { ?item wdt:P495 wd:Q801 ; wdt:P449 ?net .
  OPTIONAL { ?net rdfs:label ?en FILTER(LANG(?en)="en") } OPTIONAL { ?net rdfs:label ?he FILTER(LANG(?he)="he") } }"""
 # Wikidata channel → today's streaming home (the site holds names and links for these keys)
@@ -20,10 +20,10 @@ for b in r.json()["results"]["bindings"]:
     q = b["item"]["value"].rsplit("/", 1)[1]; n = b["net"]["value"].rsplit("/", 1)[1]
     e = [b.get("en", {}).get("value") or b.get("he", {}).get("value") or n, b.get("he", {}).get("value") or b.get("en", {}).get("value") or n, SERVICE.get(n)]
     if e not in nets[q]: nets[q].append(e)
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 for row in rows:
     row["network_il"] = nets.get(row["wikidata_id"]) or None
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 have = [x for x in rows if x["network_il"]]
 print("titles with an original channel:", len(have), "| linked to a service:", sum(1 for x in have if any(e[2] for e in x["network_il"])))
 for t in ("Fauda", "Shtisel", "Srugim", "Prisoners of War", "Tehran", "Arab Labor"):

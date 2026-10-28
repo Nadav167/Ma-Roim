@@ -1,11 +1,11 @@
 # Rotten Tomatoes (Tomatometer %) and Metacritic (Metascore /100) from Wikidata review scores (P444).
 # Keeps the most recent value per source when several are recorded.
 # Writes raw/scores.json {wikidata_id: {"rt": int, "mc": int}} and adds rt_score / mc_score
-# to out/what_to_watch_titles.{json,csv}.
+# to out/ma_roim_titles.{json,csv}.
 import requests, json, csv, re, collections
 
 EP = "https://query.wikidata.org/sparql"
-H = {"User-Agent": "WhatToWatchDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
+H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
 RT, MC = "Q105584", "Q150248"
 TOMATOMETER, METASCORE = "Q108403393", "Q106515043"
 Q = """SELECT ?item ?by ?score ?method ?date WHERE {
@@ -43,16 +43,16 @@ for country in ("Q30", "Q801"):
         scores.setdefault(b["item"]["value"].rsplit("/", 1)[1], {})["rid"] = b["rid"]["value"].strip("/")
 json.dump(scores, open("raw/scores.json", "w"))
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 for r in rows:
     s = scores.get(r["wikidata_id"], {})
     r["rt_score"] = s.get("rt", "")
     r["mc_score"] = s.get("mc", "")
     r["rt_url"] = f"https://www.rottentomatoes.com/{s['rid']}" if s.get("rid") else ""
 fields = list(rows[0].keys())
-with open("out/what_to_watch_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
+with open("out/ma_roim_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(rows)
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 
 n = len(rows)
 for k in ("imdb_rating", "rt_score", "mc_score", "rt_url"):

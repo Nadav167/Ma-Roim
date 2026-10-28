@@ -9,7 +9,7 @@ B = "https://api.themoviedb.org/3"
 OUT = "raw/tmdb/results.jsonl"
 os.makedirs("raw/tmdb", exist_ok=True)
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 ids = [r["imdb_url"].rstrip("/").rsplit("/", 1)[1] for r in rows if r["imdb_url"]]
 done = set()
 if os.path.exists(OUT):

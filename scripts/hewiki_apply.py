@@ -4,10 +4,10 @@
 #   review  – the file name is in Hebrew (often the Hebrew poster, not confirmed), or the title
 #             is on the US/Israeli same-name list (left untouched by rule)
 #   skip    – file name in English letters (usually the original English poster)
-# Only poster-shaped images (portrait) count. Rewrites out/what_to_watch_titles.{json,csv}.
+# Only poster-shaped images (portrait) count. Rewrites out/ma_roim_titles.{json,csv}.
 import json, csv, re
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 imgs = json.load(open("raw/hewiki/images.json", encoding="utf-8"))
 heb = lambda s: bool(re.search(r"[א-ת]", s or ""))
 
@@ -39,9 +39,9 @@ with open("out/hewiki_poster_review.csv", "w", newline="", encoding="utf-8-sig")
         w.writerow([r["title"], r["title_he"], r["year"], r["type"], why, url, f, r["poster_en"], r["wikipedia_he"], r["wikidata_id"], ""])
 
 fields = list(rows[0].keys())
-with open("out/what_to_watch_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
+with open("out/ma_roim_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(rows)
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 n = len(rows)
 il = [r for r in rows if "Israel" in r["country"]]
 print("accepted", accepted, "| for review", len(review))

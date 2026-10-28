@@ -3,13 +3,13 @@
 # Paced to respect Wikimedia rate limits. Output: raw/hewiki/images.json {wikidata_id: {...}}
 import requests, json, time, urllib.parse, os
 
-H = {"User-Agent": "WhatToWatchDataset/0.1 (nadav167@gmail.com; personal project)"}
+H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com; personal project)"}
 API = "https://he.wikipedia.org/w/api.php"
 os.makedirs("raw/hewiki", exist_ok=True)
 OUT = "raw/hewiki/images.json"
 res = json.load(open(OUT)) if os.path.exists(OUT) else {}
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 todo = [r for r in rows if r["wikipedia_he"] and not r["poster_he"] and r["wikidata_id"] not in res]
 print("todo", len(todo), flush=True)
 

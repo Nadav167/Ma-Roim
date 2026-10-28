@@ -1,8 +1,8 @@
 # Cast and crew from IMDb's principals (top-billed people per title) + names, with Hebrew names from Wikidata.
-# Writes out/people.json and out/credits.json, and adds cast/directors summaries to out/what_to_watch_titles.json.
+# Writes out/people.json and out/credits.json, and adds cast/directors summaries to out/ma_roim_titles.json.
 import gzip, json, csv, requests, collections, re
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 imdb2q = {}
 for r in rows:
     if r["imdb_url"]:
@@ -41,7 +41,7 @@ print("people", len(people))
 
 # Hebrew names: Wikidata humans with an IMDb person ID and a Hebrew label
 EP = "https://query.wikidata.org/sparql"
-H = {"User-Agent": "WhatToWatchDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
+H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
 Q = """SELECT ?imdb ?he WHERE { ?p wdt:P345 ?imdb ; rdfs:label ?he . FILTER(LANG(?he) = "he") FILTER(STRSTARTS(?imdb, "nm")) }"""
 try:
     r = requests.post(EP, data={"query": Q}, headers=H, timeout=300)
@@ -68,9 +68,9 @@ for r in rows:
     r["directors"] = ", ".join(people[c["person_id"]]["name"] for c in cs if c["role"] == "director")
     r["creators"] = ", ".join(people[c["person_id"]]["name"] for c in cs if c["role"] == "creator")
 fields = list(rows[0].keys())
-with open("out/what_to_watch_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
+with open("out/ma_roim_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(rows)
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 with_cast = sum(1 for r in rows if r["cast"])
 print(f"titles with cast: {with_cast} ({with_cast / len(rows):.0%}); top 5,000: {sum(1 for r in rows[:5000] if r['cast']) / 50:.0f}%")
 for r in rows:

@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="What to Watch">
-<title>What to Watch</title>
+<meta name="apple-mobile-web-app-title" content="Ma Roim">
+<title>Ma Roim · מה רואים</title>
 <link rel="preconnect" href="https://prnfnqvjirwuyafvsulk.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -426,7 +426,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
 <body>
 
 <nav class="rail" aria-label="Main">
-  <div class="brand" aria-hidden="true">W2W</div>
+  <div class="brand" aria-hidden="true">MR</div>
   <button class="nav-btn" data-view="home" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="home"></span></button>
   <button class="nav-btn" data-view="movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span data-t="movies"></span></button>
   <button class="nav-btn" data-view="tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 2 4 4 4-4"/></svg><span data-t="series"></span></button>
@@ -476,7 +476,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
 (() => {
   const T = {
     en: { about: "About", home: "Home", discover: "Discover",
-      dH: "Find what you like", dP: "Pick one of two, again and again. Every choice teaches it your taste. Stop whenever you want and get picks made for you.",
+      dH: "Want something new?", dP: "Pick one of two, again and again. Every choice teaches it your taste. Stop whenever you want and get picks made for you.",
       dMovies: "Movies", dSeries: "Series", dContinue: n => `Continue (${n} choices so far)`, dRestart: "Start over",
       dQ: "Which would you rather watch?", dNeither: "Neither", dCount: n => `${n} choices`, dStop: "Show my picks",
       dMin: n => `Make ${n} more ${n === 1 ? "choice" : "choices"} to get picks`, dTaste: "Your taste so far", dLikes: "You lean toward", dLess: "Less your thing",
@@ -510,7 +510,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       aiNotReady: "The AI helper isn’t switched on yet.", aiErr: "That didn’t work. Try again in a moment.", aiNone: "No titles to show for this one.",
       toastAdd: "Added to my list", toastRem: "Removed from my list", toastW: "Marked as watched", toastUW: "Marked as not watched",
       wiki: "Wikipedia", wikiHe: "Wikipedia (Hebrew)", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      word: 'What to <span>Watch</span>', titles: "titles", ongoing: "present",
+      word: 'Ma <span>Roim</span>', titles: "titles", ongoing: "present",
       signIn: "Sign in", signUp: "Create account", signOut: "Sign out", email: "Email", password: "Password", cancel: "Cancel",
       inTitle: "Sign in", inSub: "Your list and watched titles follow you to every device.", upTitle: "Create your account",
       upSub: "Free. Save titles to your list and mark what you’ve watched.", noAcct: "No account?", haveAcct: "Already have one?",
@@ -523,7 +523,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { about: "אודות", home: "בית", discover: "גלו",
-      dH: "גלו מה אתם אוהבים", dP: "בחרו אחד מתוך שניים, שוב ושוב. כל בחירה מלמדת את הטעם שלכם. עצרו מתי שתרצו וקבלו המלצות בשבילכם.",
+      dH: "בא לכם משהו חדש?", dP: "בחרו אחד מתוך שניים, שוב ושוב. כל בחירה מלמדת את הטעם שלכם. עצרו מתי שתרצו וקבלו המלצות בשבילכם.",
       dMovies: "סרטים", dSeries: "סדרות", dContinue: n => `המשיכו (${n} בחירות עד עכשיו)`, dRestart: "התחילו מחדש",
       dQ: "מה הייתם מעדיפים לראות?", dNeither: "אף אחד", dCount: n => `${n} בחירות`, dStop: "הראו לי המלצות",
       dMin: n => `עוד ${n} בחירות כדי לקבל המלצות`, dTaste: "הטעם שלכם עד עכשיו", dLikes: "אתם נמשכים ל", dLess: "פחות בשבילכם",
@@ -557,7 +557,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       aiNotReady: "עוזר ה-AI עוד לא הופעל.", aiErr: "זה לא עבד. נסו שוב בעוד רגע.", aiNone: "אין כותרים להציג הפעם.",
       toastAdd: "נוסף לרשימה", toastRem: "הוסר מהרשימה", toastW: "סומן כנצפה", toastUW: "הסימון בוטל",
       wiki: "ויקיפדיה (אנגלית)", wikiHe: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      word: 'מה <span>לראות</span>', titles: "כותרים", ongoing: "היום",
+      word: 'מה <span>רואים</span>', titles: "כותרים", ongoing: "היום",
       signIn: "התחברות", signUp: "יצירת חשבון", signOut: "התנתקות", email: "אימייל", password: "סיסמה", cancel: "ביטול",
       inTitle: "התחברות", inSub: "הרשימה והכותרים שצפיתם בהם יופיעו בכל מכשיר.", upTitle: "יצירת חשבון",
       upSub: "בחינם. שמרו כותרים לרשימה וסמנו מה כבר ראיתם.", noAcct: "אין לכם חשבון?", haveAcct: "כבר יש לכם חשבון?",
@@ -1443,7 +1443,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   // ---------- About ----------
   const ABOUT = {
     en: [
-      ["What is What to Watch?", `<p>A catalog of about 57,000 American and Israeli movies and TV series from 1980 to today, in English and Hebrew, with an AI helper that suggests what to watch.</p>`],
+      ["What is Ma Roim?", `<p>“Ma roim?” is Hebrew for “what are we watching?” It’s a catalog of about 57,000 American and Israeli movies and TV series from 1980 to today, in English and Hebrew, with an AI helper that suggests what to watch.</p>`],
       ["Where does the information come from?", `<ul>
         <li><b>Wikidata</b>: the list of titles, Hebrew titles, links to Wikipedia, IMDb and Metacritic, and detailed genres.</li>
         <li><b>IMDb</b>: ratings, number of votes, running times, and cast and crew.</li>
@@ -1457,7 +1457,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ["How up to date is it?", `<p>The catalog was collected in October 2026. Ratings and scores are as they were then.</p><p><small>Version ${BUILD}</small></p>`],
     ],
     he: [
-      ["מה זה „מה לראות”?", `<p>קטלוג של כ-57,000 סרטים וסדרות אמריקאיים וישראליים מ-1980 ועד היום, בעברית ובאנגלית, עם עוזר AI שממליץ מה לראות.</p>`],
+      ["מה זה „מה רואים”?", `<p>קטלוג של כ-57,000 סרטים וסדרות אמריקאיים וישראליים מ-1980 ועד היום, בעברית ובאנגלית, עם עוזר AI שממליץ מה לראות.</p>`],
       ["מאיפה מגיע המידע?", `<ul>
         <li><b>Wikidata</b>: רשימת הכותרים, השמות בעברית, קישורים לוויקיפדיה, ל-IMDb ול-Metacritic, וז׳אנרים מפורטים.</li>
         <li><b>IMDb</b>: דירוגים, מספר המדרגים, אורך, שחקנים ואנשי צוות.</li>

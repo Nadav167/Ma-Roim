@@ -1,13 +1,13 @@
 # YouTube trailers from TMDB, in English and Hebrew. Picks per language: official Trailer > Trailer > Teaser,
 # newest first. Hebrew = videos TMDB marks as Hebrew (usually Hebrew-subtitled trailers from Israeli distributors).
-# Resumable: raw/tmdb/videos.jsonl. Output: adds trailer_en / trailer_he (YouTube keys) to out/what_to_watch_titles.json.
+# Resumable: raw/tmdb/videos.jsonl. Output: adds trailer_en / trailer_he (YouTube keys) to out/ma_roim_titles.json.
 import json, os, time, threading, requests
 from concurrent.futures import ThreadPoolExecutor
 
 T = open(".secrets/tmdb_token").read().strip()
 s = requests.Session(); s.headers.update({"Authorization": f"Bearer {T}", "accept": "application/json"})
 OUT = "raw/tmdb/videos.jsonl"
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 todo = [(r["wikidata_id"], r["tmdb_type"], int(r["tmdb_id"])) for r in rows if r["tmdb_id"]]
 done = set()
 if os.path.exists(OUT):
@@ -52,7 +52,7 @@ for r in rows:
     v = vids.get(r["wikidata_id"], [])
     r["trailer_en"] = best(v, "en") or ""
     r["trailer_he"] = best(v, "he") or ""
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 top = rows[:5000]
 for k in ("trailer_en", "trailer_he"):
     print(f"{k}: {sum(1 for r in rows if r[k])} titles; top 5,000: {sum(1 for r in top if r[k]) / 50:.0f}%", flush=True)

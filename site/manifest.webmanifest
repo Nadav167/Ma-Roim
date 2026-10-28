@@ -1,6 +1,6 @@
 {
-  "name": "What to Watch",
-  "short_name": "What to Watch",
+  "name": "Ma Roim · מה רואים",
+  "short_name": "Ma Roim",
   "description": "US and Israeli movies and series in English and Hebrew, with an AI helper.",
   "start_url": "./",
   "scope": "./",

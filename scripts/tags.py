@@ -1,13 +1,13 @@
 # Tags for every title: detailed genres from Wikidata (e.g. "psychological horror") + TMDB keywords
 # (e.g. "time travel", "heist", "based on novel or book"). The AI helper searches these.
-# Resumable fetch: raw/tmdb/keywords.jsonl. Output: adds "tags" to out/what_to_watch_titles.json.
+# Resumable fetch: raw/tmdb/keywords.jsonl. Output: adds "tags" to out/ma_roim_titles.json.
 import json, os, re, time, threading, requests
 from concurrent.futures import ThreadPoolExecutor
 
 T = open(".secrets/tmdb_token").read().strip()
 s = requests.Session(); s.headers.update({"Authorization": f"Bearer {T}", "accept": "application/json"})
 OUT = "raw/tmdb/keywords.jsonl"
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 todo = [(r["wikidata_id"], r["tmdb_type"], int(r["tmdb_id"])) for r in rows if r["tmdb_id"]]
 done = set()
 if os.path.exists(OUT):
@@ -55,7 +55,7 @@ for r in rows:
     for x in [g for g in wd if g] + [k.lower() for k in kws.get(r["wikidata_id"], [])]:
         if x not in tags: tags.append(x)
     r["tags"] = tags[:40]
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 have = sum(1 for r in rows if r["tags"])
 print(f"titles with tags: {have} ({have / len(rows):.0%}); psychological horror: {sum(1 for r in rows if any('psychological horror' in t for t in r['tags']))}", flush=True)
 for t in ("Severance", "The Shining", "Fauda", "Inception"):

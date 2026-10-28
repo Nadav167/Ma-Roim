@@ -1,7 +1,7 @@
 # Stage 1: IDs + dates for each (country, class). Direct P31 classes, no subclass traversal (fast).
 import requests, time, json, os
 EP="https://query.wikidata.org/sparql"
-H={"User-Agent":"WhatToWatchDataset/0.1 (nadav167@gmail.com)","Accept":"application/sparql-results+json"}
+H={"User-Agent":"MaRoimDataset/0.1 (nadav167@gmail.com)","Accept":"application/sparql-results+json"}
 FILM=["Q11424","Q506240","Q202866","Q1261214","Q93204","Q120243801","Q98807719","Q98701476",
       "Q122914801","Q20650540","Q12912091","Q104840802","Q123126551"]
 TV=["Q5398426","Q15416","Q1259759","Q526877","Q117467246","Q117467240","Q581714","Q63952888",

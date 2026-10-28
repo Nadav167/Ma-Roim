@@ -87,9 +87,9 @@ for q, it in items.items():
 
 rows.sort(key=lambda r: (-(r["imdb_votes"] or 0), r["title"]))
 fields = list(rows[0].keys())
-with open("out/what_to_watch_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
+with open("out/ma_roim_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(rows)
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 print(len(rows), "rows"); [print(k, v) for k, v in sorted(stats.items(), key=str)]
 cov = lambda k: sum(1 for r in rows if r[k]) / len(rows)
 for k in ["title_he", "imdb_url", "wikipedia_en", "wikipedia_he", "metacritic_url", "imdb_rating", "genres"]:

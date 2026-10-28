@@ -3,7 +3,7 @@
 #   site/watch/NN.json         64 shards: {wikidata_id: {"k": "movie/123", "s": [ids], "f": [...], "r": [...], "b": [...]}}
 # Shard = numeric part of the Wikidata ID % 64 (the site computes the same).
 import json, os, collections
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 os.makedirs("site/watch", exist_ok=True)
 prov, stream_count, shards = {}, collections.Counter(), collections.defaultdict(dict)
 for r in rows:

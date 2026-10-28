@@ -3,7 +3,7 @@ import json, requests, time
 from concurrent.futures import ThreadPoolExecutor
 
 EP = "https://query.wikidata.org/sparql"
-H = {"User-Agent": "WhatToWatchDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
+H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
 Q = """SELECT ?imdb ?he WHERE { VALUES ?imdb { %s } ?p wdt:P345 ?imdb ; rdfs:label ?he . FILTER(LANG(?he) = "he") }"""
 
 people = {p["id"]: p for p in json.load(open("out/people.json", encoding="utf-8"))}

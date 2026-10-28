@@ -77,9 +77,9 @@ with open("out/same_name_review.csv", "w", newline="", encoding="utf-8-sig") as 
 print("same-name pairs:", len(pairs), "| TV-TV pairs:", sum(1 for _, u, i in pairs if u["type"] == i["type"] == "TV series"))
 
 fields = list(out[0].keys())
-with open("out/what_to_watch_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
+with open("out/ma_roim_titles.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(out)
-json.dump(out, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(out, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 n = len(out)
 print(n, "rows")
 for k in ["title_he", "poster_en", "poster_he", "overview_en", "overview_he", "tmdb_id", "metacritic_url", "wikipedia_he"]:

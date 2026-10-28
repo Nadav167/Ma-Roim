@@ -1,4 +1,4 @@
-# What to Watch
+# Ma Roim · מה רואים
 
 A bilingual (English / Hebrew) catalog of US and Israeli movies and TV series from 1980 to today, with links to Wikipedia, IMDb and Metacritic, and an AI chat that recommends what to watch.
 

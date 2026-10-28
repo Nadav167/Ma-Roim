@@ -2,7 +2,7 @@
 import requests, time, json, os, glob, collections
 from concurrent.futures import ThreadPoolExecutor
 EP="https://query.wikidata.org/sparql"
-H={"User-Agent":"WhatToWatchDataset/0.1 (nadav167@gmail.com)","Accept":"application/sparql-results+json"}
+H={"User-Agent":"MaRoimDataset/0.1 (nadav167@gmail.com)","Accept":"application/sparql-results+json"}
 # merge stage1: item -> {kinds, countries, year}
 items={}
 def yi(r,k): return int(r[k]) if k in r else None

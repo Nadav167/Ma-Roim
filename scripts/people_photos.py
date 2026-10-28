@@ -8,7 +8,7 @@ T = open(".secrets/tmdb_token").read().strip()
 s = requests.Session(); s.headers.update({"Authorization": f"Bearer {T}", "accept": "application/json"})
 OUT = "raw/tmdb/credits.jsonl"
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 todo = [(r["wikidata_id"], r["tmdb_type"], int(r["tmdb_id"])) for r in rows if r["tmdb_id"]]
 done = set()
 if os.path.exists(OUT):

@@ -3,7 +3,7 @@ import json, time, requests, sys
 URL = open(".secrets/supabase_url").read().strip().rstrip("/")
 KEY = open(".secrets/supabase_secret").read().strip()
 H = {"apikey": KEY, "Authorization": f"Bearer {KEY}", "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal"}
-rows = [r for r in json.load(open("out/what_to_watch_titles.json", encoding="utf-8")) if "Adult" not in (r["genres"] or "")]
+rows = [r for r in json.load(open("out/ma_roim_titles.json", encoding="utf-8")) if "Adult" not in (r["genres"] or "")]
 # id, type and title are included because they're required columns (the upsert updates them with the same values)
 out = [{"id": r["wikidata_id"], "type": "tv" if r["type"] == "TV series" else "movie", "title": r["title"], "tags": r.get("tags") or [],
         "trailer_en": r.get("trailer_en") or None, "trailer_he": r.get("trailer_he") or None} for r in rows]

@@ -25,7 +25,7 @@ def write_sheet(ws, header, data, widths):
     ws.freeze_panes = "B2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(header))}{len(data) + 1}"
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 cols = [
     ("title", "Title", 36), ("title_he", "Hebrew title", 28), ("type", "Type", 10), ("year", "Year", 7),
     ("end_year", "Ended", 7), ("country", "Country", 20), ("genres", "Genres", 28),
@@ -53,5 +53,5 @@ write_sheet(ws2, header, data, [8, 12, 26, 22, 9, 7, 30, 30, 30, 26, 22, 9, 7, 3
 dec = header.index("Your decision") + 1
 for r in range(2, len(data) + 2):
     ws2.cell(row=r, column=dec).fill = PatternFill("solid", start_color="FFF2CC")
-wb.save("out/what_to_watch_titles.xlsx")
+wb.save("out/ma_roim_titles.xlsx")
 print("saved", len(rows), "titles,", len(data), "review pairs")

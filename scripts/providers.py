@@ -1,5 +1,5 @@
 # Where to watch in Israel: streaming / rent / buy availability per title from TMDB (data by JustWatch).
-# Resumable: raw/tmdb/providers.jsonl. Output: adds "watch_il" to out/what_to_watch_titles.json:
+# Resumable: raw/tmdb/providers.jsonl. Output: adds "watch_il" to out/ma_roim_titles.json:
 #   {"link": <JustWatch/TMDB page>, "stream": [[id, name, logo]], "rent": [...], "buy": [...], "free": [...]}
 import json, os, time, threading, collections, requests
 from concurrent.futures import ThreadPoolExecutor
@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 T = open(".secrets/tmdb_token").read().strip()
 s = requests.Session(); s.headers.update({"Authorization": f"Bearer {T}", "accept": "application/json"})
 OUT = "raw/tmdb/providers.jsonl"
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 todo = [(r["wikidata_id"], r["tmdb_type"], int(r["tmdb_id"])) for r in rows if r["tmdb_id"]]
 done = set()
 if os.path.exists(OUT):
@@ -55,7 +55,7 @@ for r in rows:
          "rent": lst(il.get("rent")), "buy": lst(il.get("buy"))}
     r["watch_il"] = w if any(w[k] for k in ("stream", "free", "rent", "buy")) else None
     for p in w["stream"]: counts[p[1]] += 1
-json.dump(rows, open("out/what_to_watch_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 top = rows[:5000]
 print(f"titles available in Israel: {sum(1 for r in rows if r['watch_il'])}; top 5,000: {sum(1 for r in top if r['watch_il']) / 50:.0f}%"
       f"; streaming in top 5,000: {sum(1 for r in top if r['watch_il'] and r['watch_il']['stream']) / 50:.0f}%", flush=True)

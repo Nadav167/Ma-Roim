@@ -7,7 +7,7 @@ KEY = open(".secrets/supabase_secret").read().strip()
 H = {"apikey": KEY, "Authorization": f"Bearer {KEY}", "Content-Type": "application/json",
      "Prefer": "resolution=merge-duplicates,return=minimal"}
 
-rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
+rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 
 def num(v, cast):
     try: return cast(v) if v not in ("", None) else None
