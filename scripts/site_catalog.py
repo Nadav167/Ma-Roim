@@ -119,10 +119,11 @@ if mode == "site":
     # where to watch in Israel for home titles (same compact shape as site/watch/NN.json; null = not available)
     by_id = {r["wikidata_id"]: r for r in rows}
     for i, it in home_items.items():
-        w = by_id[i].get("watch_il")
+        w = by_id[i].get("watch_il") or {}
         if "watch_il" not in by_id[i]: continue
-        if not w: it["wa"] = None; continue
-        e = {"k": f"{by_id[i]['tmdb_type']}/{by_id[i]['tmdb_id']}"}
+        if not w and not by_id[i].get("network_il"): it["wa"] = None; continue
+        e = {"k": f"{by_id[i]['tmdb_type']}/{by_id[i]['tmdb_id']}"} if by_id[i].get("tmdb_id") else {}
+        if by_id[i].get("network_il"): e["o"] = by_id[i]["network_il"]
         for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
             ids = list(dict.fromkeys(p[0] for p in (w.get(src) or [])))
             if ids: e[dst] = ids

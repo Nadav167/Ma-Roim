@@ -485,7 +485,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check.", wDone: "Done",
-      wData: "Availability data by JustWatch", wLoading: "Checking where it’s available…",
+      wData: "Availability data by JustWatch",
+      wOrig: "Originally on", wFreeOn: n => `Watch free on ${n}`, wSubOn: n => `With a ${n} subscription`, wLoading: "Checking where it’s available…",
       trailer: "Trailer", trailerHe: "Trailer · Hebrew subtitles", playTrailer: "Play trailer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
@@ -529,7 +530,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק.", wDone: "סיום",
-      wData: "נתוני זמינות: JustWatch", wLoading: "בודק איפה זה זמין…",
+      wData: "נתוני זמינות: JustWatch",
+      wOrig: "שודר במקור ב", wFreeOn: n => `צפייה חינם ב${n}`, wSubOn: n => `במנוי ${n}`, wLoading: "בודק איפה זה זמין…",
       trailer: "טריילר", trailerHe: "טריילר · מתורגם לעברית", playTrailer: "נגן טריילר",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
@@ -1168,6 +1170,15 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   });
 
   // ---------- Where to watch in Israel (TMDB, data by JustWatch) ----------
+  // Israeli channels' own streaming services, for titles' original channel (from Wikidata)
+  const LOCAL = {
+    kan: { en: "Kan BOX", he: "כאן BOX", url: "https://www.kan.org.il/", free: true },
+    mako: { en: "mako", he: "mako", url: "https://www.mako.co.il/mako-vod", free: true },
+    "13": { en: "13+", he: "13+", url: "https://13tv.co.il/", free: true },
+    "14": { en: "Now14", he: "עכשיו 14", url: "https://www.now14.co.il/", free: true },
+    yes: { en: "yes", he: "yes", url: "https://www.yes.co.il/", free: false },
+    hot: { en: "HOT", he: "HOT", url: "https://www.hot.net.il/", free: false },
+  };
   // Home titles carry it in home.json; others come from small static files (watch/NN.json), 64 of them.
   let PROV = null; const shardCache = {};
   let myServices = new Set(store.get("services", []));
@@ -1188,13 +1199,18 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   function watchHtml(w) {
     if (w === undefined) return `<div class="watch"><div class="watch-head"><h2>${t("whereH")}</h2></div><span class="watch-note">${t("wLoading")}</span></div>`;
     const rows = [["s", t("wStream")], ["f", t("wFree")], ["r", t("wRent")], ["b", t("wBuy")]].filter(([k]) => w && w[k] && w[k].length);
+    const orig = (w && w.o || []).map(([en, he, key]) => {
+      const L = key && LOCAL[key], nm = lang === "he" ? he : en;
+      return L ? `<a class="chip" href="${L.url}" target="_blank" rel="noopener" style="text-decoration:none">${esc(nm)} · ${esc(L.free ? t("wFreeOn")(L[lang]) : t("wSubOn")(L[lang]))}</a>` : `<span class="chip">${esc(nm)}</span>`;
+    });
     const link = w && w.k ? `https://www.themoviedb.org/${w.k}/watch?locale=IL` : "https://www.justwatch.com/il";
     const mine = w ? [...new Set([...(w.s || []), ...(w.f || [])])].filter(p => myServices.has(p)).map(provName) : [];
     const tile = p => `<a class="prov ${myServices.has(p) ? "mine" : ""}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(provName(p))}"><img src="${provLogo(p)}" alt="${esc(provName(p))}" loading="lazy"></a>`;
     return `<section class="watch"><div class="watch-head"><h2>${t("whereH")}</h2><button type="button" data-services>${t("wPick")}</button></div>
       ${mine.length ? `<div class="watch-mine">✓ ${esc(t("wMine")(mine.join(", ")))}</div>` : ""}
       ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
-        : `<span class="watch-note">${t("wNone")}</span>`}
+        : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
+      ${orig.length ? `<div class="watch-row"><dt>${t("wOrig")}</dt><dd>${orig.join("")}</dd></div>` : ""}
       <span class="watch-note"><a href="https://www.justwatch.com/il" target="_blank" rel="noopener">${t("wData")}</a></span></section>`;
   }
   async function loadWatch(id) {

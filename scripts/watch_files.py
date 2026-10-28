@@ -7,9 +7,10 @@ rows = json.load(open("out/what_to_watch_titles.json", encoding="utf-8"))
 os.makedirs("site/watch", exist_ok=True)
 prov, stream_count, shards = {}, collections.Counter(), collections.defaultdict(dict)
 for r in rows:
-    w = r.get("watch_il")
-    if not w: continue
-    e = {"k": f"{r['tmdb_type']}/{r['tmdb_id']}"}
+    w = r.get("watch_il") or {}
+    if not w and not r.get("network_il"): continue
+    e = {"k": f"{r['tmdb_type']}/{r['tmdb_id']}"} if r.get("tmdb_id") else {}
+    if r.get("network_il"): e["o"] = r["network_il"]          # original channel(s): [en, he, service key]
     for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
         ids = []
         for pid, name, logo in w.get(src) or []:
