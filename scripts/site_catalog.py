@@ -116,6 +116,17 @@ if mode == "site":
     # Everything else (synopsis, trailer, cast of other titles) is fetched from the database when a title is opened.
     CARD = ("t", "th", "ty", "y", "ye", "il", "g", "rt", "v", "p", "ph", "rs", "ms")
     home_items = {i: {**items[i], "f": 1} for i in shelf_ids if i in items}
+    # where to watch in Israel for home titles (same compact shape as site/watch/NN.json; null = not available)
+    by_id = {r["wikidata_id"]: r for r in rows}
+    for i, it in home_items.items():
+        w = by_id[i].get("watch_il")
+        if "watch_il" not in by_id[i]: continue
+        if not w: it["wa"] = None; continue
+        e = {"k": f"{by_id[i]['tmdb_type']}/{by_id[i]['tmdb_id']}"}
+        for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
+            ids = list(dict.fromkeys(p[0] for p in (w.get(src) or [])))
+            if ids: e[dst] = ids
+        it["wa"] = e
     home = {k: v for k, v in cat.items() if k not in ("items", "index")}
     home["items"] = home_items
     index = {"ids": index_ids, "items": {i: {k: items[i].get(k) for k in CARD if items[i].get(k) not in (None, "", [])} for i in index_ids if i not in home_items}}

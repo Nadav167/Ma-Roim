@@ -7,6 +7,11 @@ rows = [r for r in json.load(open("out/what_to_watch_titles.json", encoding="utf
 # id, type and title are included because they're required columns (the upsert updates them with the same values)
 out = [{"id": r["wikidata_id"], "type": "tv" if r["type"] == "TV series" else "movie", "title": r["title"], "tags": r.get("tags") or [],
         "trailer_en": r.get("trailer_en") or None, "trailer_he": r.get("trailer_he") or None} for r in rows]
+if "--with-stream" in sys.argv:   # needs supabase/008_where_to_watch.sql
+    by = {r["wikidata_id"]: r for r in rows}
+    for o in out:
+        w = by[o["id"]].get("watch_il") or {}
+        o["stream_il"] = sorted({p[0] for p in (w.get("stream") or []) + (w.get("free") or [])})
 for i in range(0, len(out), 2000):
     for a in range(5):
         x = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(out[i:i + 2000]), timeout=180)
