@@ -486,6 +486,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check.", wDone: "Done",
       wData: "Availability data by JustWatch",
+      rViewers: "Viewers report", rAsk: "Seen it on another service?", rPickH: "Where did you see it?", rPickP: "Tap every service you saw it on in Israel. Others see only the totals.",
+      rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
       wOrig: "Originally on", wFreeOn: n => `Watch free on ${n}`, wSubOn: n => `With a ${n} subscription`, wLoading: "Checking where it’s available…",
       trailer: "Trailer", trailerHe: "Trailer · Hebrew subtitles", playTrailer: "Play trailer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
@@ -531,6 +533,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק.", wDone: "סיום",
       wData: "נתוני זמינות: JustWatch",
+      rViewers: "דיווחי צופים", rAsk: "ראיתם את זה בשירות אחר?", rPickH: "איפה ראיתם את זה?", rPickP: "סמנו כל שירות שבו ראיתם את זה בישראל. אחרים רואים רק את הסיכום.",
+      rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
       wOrig: "שודר במקור ב", wFreeOn: n => `צפייה חינם ב${n}`, wSubOn: n => `במנוי ${n}`, wLoading: "בודק איפה זה זמין…",
       trailer: "טריילר", trailerHe: "טריילר · מתורגם לעברית", playTrailer: "נגן טריילר",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
@@ -902,7 +906,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     d.dataset.id = id; d.hidden = false; if (push) d.scrollTop = 0;
     if (sb) loadCredits(id);
     if (sb && !it.f) fillDetails(id);
-    if (it.wa === undefined || !PROV) loadWatch(id);
+    if (it.wa === undefined || !PROV) loadWatch(id); else loadReports(id);
     document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
   }
@@ -1211,13 +1215,56 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
         : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
       ${orig.length ? `<div class="watch-row"><dt>${t("wOrig")}</dt><dd>${orig.join("")}</dd></div>` : ""}
+      <div id="reports"></div>
       <span class="watch-note"><a href="https://www.justwatch.com/il" target="_blank" rel="noopener">${t("wData")}</a></span></section>`;
   }
   async function loadWatch(id) {
     const w = await getWatch(id);
     const el = $("#detail").dataset.id === id ? $("#watch") : null;
-    if (el) { if (w === "unknown") el.remove(); else el.innerHTML = watchHtml(w); }
+    if (el) { if (w === "unknown") el.remove(); else { el.innerHTML = watchHtml(w); loadReports(id); } }
   }
+  // ---------- Viewer reports: "I saw this on…" (shown only once the watch_reports table exists) ----------
+  const REPORT_SVC = {
+    yes: ["yes", "yes"], hot: ["HOT", "HOT"], partner: ["Partner TV", "פרטנר TV"], cellcom: ["Cellcom tv", "סלקום tv"], sting: ["STINGTV", "STINGTV"],
+    freetv: ["FreeTV", "FreeTV"], disney: ["Disney+", "דיסני+"], netflix: ["Netflix", "נטפליקס"], prime: ["Prime Video", "פריים וידאו"], apple: ["Apple TV+", "Apple TV+"],
+    hbo: ["HBO Max", "HBO Max"], kan: ["Kan BOX", "כאן BOX"], mako: ["mako", "mako"], "13": ["13+", "13+"], "14": ["Now14", "עכשיו 14"],
+  };
+  const svcName = k => (REPORT_SVC[k] || [k, k])[lang === "he" ? 1 : 0];
+  let reportsOn = true; const myReports = {};
+  async function loadReports(id) {
+    if (!sb || !reportsOn) return;
+    const { data, error } = await sb.rpc("report_counts", { t: id });
+    if (error) { reportsOn = false; return; }            // table not set up yet: keep the feature hidden
+    if (user && !myReports[id]) { const r = await sb.from("watch_reports").select("service").eq("title_id", id); myReports[id] = new Set((r.data || []).map(x => x.service)); }
+    const slot = $("#detail").dataset.id === id ? $("#reports") : null; if (!slot) return;
+    const counts = data || [];
+    slot.innerHTML = `<div class="watch-row"><dt>${t("rViewers")}</dt><dd>${counts.length ? counts.map(c => `<span class="chip">${esc(svcName(c.service))} · ${c.n}</span>`).join("") : `<span class="watch-note">${t("rNone")}</span>`}</dd></div>
+      <div><button class="switch" type="button" data-report="${id}" style="font-size:13px">${t("rAsk")}</button></div>`;
+  }
+  function openReport(id) {
+    if (!user) { openAuth("in"); toast(t("rSignIn")); return; }
+    const mine = myReports[id] || new Set();
+    let m = $("#svc-modal");
+    if (!m) { m = document.createElement("div"); m.id = "svc-modal"; m.className = "modal"; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); document.body.appendChild(m); }
+    m.innerHTML = `<div class="sheet" style="max-width:560px"><h2>${t("rPickH")}</h2><p>${t("rPickP")}</p>
+      <div class="svc-grid">${Object.keys(REPORT_SVC).map(k => `<button class="svc" type="button" data-rep-svc="${k}" data-rep-title="${id}" aria-pressed="${mine.has(k)}">${esc(svcName(k))}</button>`).join("")}</div>
+      <button class="btn primary" type="button" data-rep-done="${id}">${t("wDone")}</button></div>`;
+    m.hidden = false;
+  }
+  document.addEventListener("click", async e => {
+    const r = e.target.closest("[data-report]"); if (r) { openReport(r.dataset.report); return; }
+    const sv = e.target.closest("[data-rep-svc]");
+    if (sv) {
+      const id = sv.dataset.repTitle, k = sv.dataset.repSvc, mine = (myReports[id] = myReports[id] || new Set()), on = !mine.has(k);
+      sv.setAttribute("aria-pressed", on); on ? mine.add(k) : mine.delete(k);
+      const q = on ? sb.from("watch_reports").insert({ title_id: id, user_id: user.id, service: k }) : sb.from("watch_reports").delete().eq("title_id", id).eq("user_id", user.id).eq("service", k);
+      const { error } = await q; if (error) { toast(t("genericErr")); sv.setAttribute("aria-pressed", !on); on ? mine.delete(k) : mine.add(k); }
+      return;
+    }
+    const d = e.target.closest("[data-rep-done]");
+    if (d) { $("#svc-modal").hidden = true; toast(t("rThanks")); loadReports(d.dataset.repDone); }
+  });
+
   function servicesView() {
     if (!PROV) return `<div class="loading">…</div>`;
     const list = Object.entries(PROV).filter(([, v]) => v[2] >= 10).sort((a, b) => b[1][2] - a[1][2]).slice(0, 12);   // real services, most titles first

@@ -69,3 +69,23 @@ begin
   limit least(coalesce(lim, 20), 100);
 end;
 $$;
+
+-- ---------- Viewer reports: "I saw this on…" (for services JustWatch doesn't cover in Israel) ----------
+create table if not exists public.watch_reports (
+  title_id   text not null references public.titles (id) on delete cascade,
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  service    text not null check (service in ('yes', 'hot', 'partner', 'cellcom', 'sting', 'disney', 'netflix', 'prime', 'apple', 'hbo', 'kan', 'mako', '13', '14', 'freetv')),
+  created_at timestamptz not null default now(),
+  primary key (title_id, user_id, service)
+);
+alter table public.watch_reports enable row level security;
+drop policy if exists "Own reports" on public.watch_reports;
+create policy "Own reports" on public.watch_reports for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Everyone can see how many viewers reported each service for a title (never who)
+create or replace function public.report_counts(t text)
+returns table (service text, n integer)
+language sql stable security definer set search_path = public as $$
+  select service, count(*)::int from public.watch_reports where title_id = t group by service order by count(*) desc;
+$$;
+grant execute on function public.report_counts(text) to anon, authenticated;
