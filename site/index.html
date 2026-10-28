@@ -518,7 +518,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
     rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url, tr: r.trailer_en, trh: r.trailer_he,
-    b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
+    b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", f: 1, imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
   async function ensureItems(ids) {
     const missing = ids.filter(id => !C.items[id]);
     if (!sb || !missing.length) return;
@@ -828,6 +828,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       </div></div>`;
     d.dataset.id = id; d.hidden = false; if (push) d.scrollTop = 0;
     if (sb) loadCredits(id);
+    if (sb && !it.f) fillDetails(id);
     document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
   }
@@ -836,6 +837,18 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
 
   // Cast: home-page titles carry it in the catalog; others are fetched once and cached.
   // Fetching starts as soon as a poster is touched, before the details page opens.
+  // Titles from the background search list carry card fields only; fetch the rest when one is opened.
+  const filling = {};
+  async function fillDetails(id) {
+    if (filling[id]) return; filling[id] = true;
+    try {
+      const { data } = await sb.from("titles").select("*").eq("id", id).maybeSingle();
+      if (!data) return;
+      C.items[id] = { ...C.items[id], ...fromRow(data) };
+      const top = hist[hist.length - 1];
+      if (top && top.k === "t" && top.id === id && !$("#detail").hidden) openDetail(id, false);
+    } catch (e) { /* keep what's shown */ } finally { delete filling[id]; }
+  }
   const creditsCache = {};
   function getCredits(id) {
     if (creditsCache[id]) return creditsCache[id];
@@ -853,7 +866,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   }
   const prefetch = e => {
     const el = e.target.closest && e.target.closest("[data-id], [data-open]");
-    if (el && sb && C) getCredits(el.dataset.id || el.dataset.open);
+    if (el && sb && C) { const id = el.dataset.id || el.dataset.open; getCredits(id); if (C.items[id] && !C.items[id].f) fillDetails(id); }
   };
   document.addEventListener("pointerdown", prefetch, { passive: true });
   document.addEventListener("focusin", prefetch);
@@ -1288,8 +1301,18 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
 
   setLang(lang);
-  fetch("catalog.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => { C = data; render(); if (user) { await ensureItems([...list, ...watched]); refresh(); } })
-    .catch(() => { $("#main").innerHTML = `<div class="loading">The catalog didn’t load. Refresh the page to try again.</div>`; });
+  // First screen: home.json (rows + home titles). Then, in the background, index.json (6,000 popular titles for instant search).
+  fetch("home.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => {
+    C = { ...data, index: [] }; render();
+    if (user) { await ensureItems([...list, ...watched]); refresh(); }
+    const idle = window.requestIdleCallback || (f => setTimeout(f, 300));
+    idle(() => fetch("index.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(ix => {
+      for (const [id, it] of Object.entries(ix.items)) if (!C.items[id]) C.items[id] = it;
+      C.index = ix.ids.filter(id => C.items[id]);
+      peopleIndex = null;
+      const q = $("#q").value.trim(); if (q.length >= 2 && !$("#suggest").hidden) suggestNow(q);
+    }).catch(() => {}));
+  }).catch(() => { $("#main").innerHTML = `<div class="loading">The catalog didn’t load. Refresh the page to try again.</div>`; });
 })();
 </script>
 </body>

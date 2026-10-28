@@ -109,5 +109,20 @@ else:
 cat = {"shelves": [{"key": k, "en": en, "he": he, "ids": ids} for k, en, he, ids in shelves],
        "hero": hero, "items": items, "genres_he": HE_GENRE, "index": index_ids}
 os.makedirs(os.path.dirname(out), exist_ok=True)
-json.dump(cat, open(out, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-print(out, len(items), "items", round(os.path.getsize(out) / 1e6, 1), "MB")
+if mode == "site":
+    # Split for a light first load:
+    #   home.json  – rows, hero and full details of the home-page titles (what the first screen needs)
+    #   index.json – the 6,000 most popular titles with card fields only, loaded in the background for instant search
+    # Everything else (synopsis, trailer, cast of other titles) is fetched from the database when a title is opened.
+    CARD = ("t", "th", "ty", "y", "ye", "il", "g", "rt", "v", "p", "ph", "rs", "ms")
+    home_items = {i: {**items[i], "f": 1} for i in shelf_ids if i in items}
+    home = {k: v for k, v in cat.items() if k not in ("items", "index")}
+    home["items"] = home_items
+    index = {"ids": index_ids, "items": {i: {k: items[i].get(k) for k in CARD if items[i].get(k) not in (None, "", [])} for i in index_ids if i not in home_items}}
+    for name, obj in (("site/home.json", home), ("site/index.json", index)):
+        json.dump(obj, open(name, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+        print(name, round(os.path.getsize(name) / 1e6, 2), "MB")
+    if os.path.exists("site/catalog.json"): os.remove("site/catalog.json")
+else:
+    json.dump(cat, open(out, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    print(out, len(items), "items", round(os.path.getsize(out) / 1e6, 1), "MB")

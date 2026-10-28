@@ -2,7 +2,7 @@
 // The page and catalog: network first (always the newest version online), cached copy when offline.
 // Library and icons: cached. Posters and photos: cached as you browse, capped at 400 images.
 // Never touches the database, the AI or anything else.
-const SHELL = "w2w-shell-v1", IMG = "w2w-img-v1", IMG_MAX = 400;
+const SHELL = "w2w-shell-v2", IMG = "w2w-img-v1", IMG_MAX = 400;
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(["./", "vendor/supabase.js", "manifest.webmanifest", "icons/icon-192.png"])).then(() => self.skipWaiting()));
 });
@@ -29,7 +29,7 @@ self.addEventListener("fetch", e => {
   const u = new URL(req.url);
   if (u.origin === location.origin) {
     if (u.pathname.startsWith("/api/")) return;
-    if (req.mode === "navigate" || u.pathname.endsWith(".html") || u.pathname.endsWith("catalog.json") || u.pathname.endsWith("sw.js")) return e.respondWith(networkFirst(req));
+    if (req.mode === "navigate" || u.pathname.endsWith(".html") || u.pathname.endsWith(".json") || u.pathname.endsWith("sw.js")) return e.respondWith(networkFirst(req));
     if (u.pathname.includes("/vendor/") || u.pathname.includes("/icons/")) return e.respondWith(cacheFirst(req, SHELL));
     return e.respondWith(networkFirst(req));
   }

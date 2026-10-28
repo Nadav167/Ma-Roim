@@ -19,7 +19,16 @@
       ]
     },
     {
-      "source": "/catalog.json",
+      "source": "/index.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/home.json",
       "headers": [
         {
           "key": "Cache-Control",
