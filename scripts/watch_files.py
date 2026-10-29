@@ -8,7 +8,7 @@ os.makedirs("site/watch", exist_ok=True)
 prov, stream_count, shards = {}, collections.Counter(), collections.defaultdict(dict)
 for r in rows:
     w = r.get("watch_il") or {}
-    if not w and not r.get("network_il"): continue
+    if not w and not r.get("network_il") and not r.get("stream_us"): continue
     e = {"k": f"{r['tmdb_type']}/{r['tmdb_id']}"} if r.get("tmdb_id") else {}
     if r.get("network_il"): e["o"] = r["network_il"]          # original channel(s): [en, he, service key]
     for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
@@ -18,7 +18,10 @@ for r in rows:
             if pid not in ids: ids.append(pid)
             if src == "stream": stream_count[pid] += 1
         if ids: e[dst] = ids
+    if r.get("stream_us"): e["u"] = r["stream_us"]                # Disney+ / Hulu, from the US catalog (scripts/us_services.py)
     shards[(int(r["wikidata_id"][1:]) % 64)][r["wikidata_id"]] = e
+for pid, (n, l) in json.load(open("raw/us_providers.json")).items():
+    prov[int(pid)] = [n, l]; stream_count[int(pid)] = sum(1 for r in rows if int(pid) in (r.get("stream_us") or []))
 json.dump({pid: [n, l, stream_count[pid]] for pid, (n, l) in prov.items()}, open("site/watch/providers.json", "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 for i in range(64):
     json.dump(shards.get(i, {}), open(f"site/watch/{i}.json", "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

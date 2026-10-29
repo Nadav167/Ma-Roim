@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e0c18">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -43,6 +43,10 @@ html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area
 body { margin: 0; }
 img { max-width: 100%; }
 html, body { background: var(--bg); color: var(--fg); }
+/* the page never moves sideways on a phone; rows of posters still scroll on their own */
+html, body { max-width: 100%; overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; }
+/* iPhone zooms in on text fields under 16px, which lets the page slide sideways */
+@media (max-width: 720px) { input, textarea, select { font-size: 16px !important; } }
 body {
   font-family: var(--font-ui); font-size: 15px; line-height: 1.45;
   -webkit-font-smoothing: antialiased; overflow-x: hidden;
@@ -492,7 +496,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check, and you can show only what’s on them.", wDone: "Done",
-      onlyMine: "On my services", mineEmpty: "Nothing here is on your services. Where to watch is known for about 11,000 popular titles, mostly on Netflix, HBO Max, Prime Video and Apple TV.",
+      onlyMine: "On my services", mineEmpty: "Nothing here is on your services. Where to watch is known for about 13,000 popular titles.",
+      wUS: "In the US", wUSNote: "Disney+ and Hulu are based on their US catalog (what’s available in Israel may differ; Hulu needs a US account).",
       wData: "Availability data by JustWatch",
       rViewers: "Viewers report", rAsk: "Seen it on another service?", rPickH: "Where did you see it?", rPickP: "Tap every service you saw it on in Israel. Others see only the totals.",
       rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
@@ -540,7 +545,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק, ואפשר להציג רק אותם.", wDone: "סיום",
-      onlyMine: "בשירותים שלי", mineEmpty: "אין כאן כותרים שזמינים בשירותים שלכם. המידע איפה לצפות קיים לכ-11,000 כותרים פופולריים, בעיקר בנטפליקס, HBO Max, פריים וידאו ו-Apple TV.",
+      onlyMine: "בשירותים שלי", mineEmpty: "אין כאן כותרים שזמינים בשירותים שלכם. המידע איפה לצפות קיים לכ-13,000 כותרים פופולריים.",
+      wUS: "בארה״ב", wUSNote: "דיסני+ ו-Hulu לפי הקטלוג שלהם בארה״ב (בישראל הזמינות עשויה להיות שונה; ל-Hulu צריך חשבון אמריקאי).",
       wData: "נתוני זמינות: JustWatch",
       rViewers: "דיווחי צופים", rAsk: "ראיתם את זה בשירות אחר?", rPickH: "איפה ראיתם את זה?", rPickP: "סמנו כל שירות שבו ראיתם את זה בישראל. אחרים רואים רק את הסיכום.",
       rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
@@ -586,7 +592,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.1720";
+  const BUILD = "2026-10-29.1740";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -1215,7 +1221,9 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   };
   // Home titles carry it in home.json; others come from small static files (watch/NN.json), 64 of them.
   let PROV = null; const shardCache = {};
-  let myServices = new Set(store.get("services", []));
+  // The services in the picker: Netflix, HBO Max, Prime Video, Apple TV, Disney+, Hulu (Disney+ and Hulu from the US catalog)
+  const PICK = [8, 1899, 119, 350, 337, 15], US_SVC = new Set([337, 15]);
+  let myServices = new Set(store.get("services", []).filter(p => PICK.includes(p)));
   const provLogo = pid => PROV && PROV[pid] ? `https://image.tmdb.org/t/p/w92${PROV[pid][1]}` : "";
   const provName = pid => PROV && PROV[pid] ? PROV[pid][0] : "";
   const loadProv = async () => { if (!PROV) PROV = await fetch("watch/providers.json?v=" + BUILD).then(r => r.ok ? r.json() : {}).catch(() => ({})); return PROV; };
@@ -1232,16 +1240,17 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   }
   function watchHtml(w) {
     if (w === undefined) return `<div class="watch"><div class="watch-head"><h2>${t("whereH")}</h2></div><span class="watch-note">${t("wLoading")}</span></div>`;
-    const rows = [["s", t("wStream")], ["f", t("wFree")], ["r", t("wRent")], ["b", t("wBuy")]].filter(([k]) => w && w[k] && w[k].length);
+    const rows = [["s", t("wStream")], ["f", t("wFree")], ["u", t("wUS")], ["r", t("wRent")], ["b", t("wBuy")]].filter(([k]) => w && w[k] && w[k].length);
     const orig = (w && w.o || []).map(([en, he, key]) => {
       const L = key && LOCAL[key], nm = lang === "he" ? he : en;
       return L ? `<a class="chip" href="${L.url}" target="_blank" rel="noopener" style="text-decoration:none">${esc(nm)} · ${esc(L.free ? t("wFreeOn")(L[lang]) : t("wSubOn")(L[lang]))}</a>` : `<span class="chip">${esc(nm)}</span>`;
     });
     const link = w && w.k ? `https://www.themoviedb.org/${w.k}/watch?locale=IL` : "https://www.justwatch.com/il";
-    const mine = w ? [...new Set([...(w.s || []), ...(w.f || [])])].filter(p => myServices.has(p)).map(provName) : [];
-    const tile = p => `<a class="prov ${myServices.has(p) ? "mine" : ""}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(provName(p))}"><img src="${provLogo(p)}" alt="${esc(provName(p))}" loading="lazy"></a>`;
+    const mine = w ? [...new Set([...(w.s || []), ...(w.f || []), ...(w.u || [])])].filter(p => myServices.has(p)).map(provName) : [];
+    const usLink = w && w.k ? `https://www.themoviedb.org/${w.k}/watch?locale=US` : "https://www.justwatch.com/us";
+    const tile = p => `<a class="prov ${myServices.has(p) ? "mine" : ""}" href="${esc(US_SVC.has(p) ? usLink : link)}" target="_blank" rel="noopener" title="${esc(provName(p))}"><img src="${provLogo(p)}" alt="${esc(provName(p))}" loading="lazy"></a>`;
     return `<section class="watch"><div class="watch-head"><h2>${t("whereH")}</h2><button type="button" data-services>${t("wPick")}</button></div>
-      ${mine.length ? `<div class="watch-mine">✓ ${esc(t("wMine")(mine.join(", ")))}</div>` : ""}
+      ${mine.length ? `<div class="watch-mine">✓ ${esc(t("wMine")(mine.map(n => "\u2068" + n + "\u2069").join(", ")))}</div>` : ""}
       ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
         : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
       ${orig.length ? `<div class="watch-row"><dt>${t("wOrig")}</dt><dd>${orig.join("")}</dd></div>` : ""}
@@ -1297,9 +1306,10 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
 
   function servicesView() {
     if (!PROV) return `<div class="loading">…</div>`;
-    const list = Object.entries(PROV).filter(([, v]) => v[2] >= 10).sort((a, b) => b[1][2] - a[1][2]).slice(0, 12);   // real services, most titles first
+    const list = PICK.filter(p => PROV[p]).map(p => [p, PROV[p]]);
     return `<div class="sheet" style="max-width:640px"><h2>${t("wPickH")}</h2><p>${t("wPickP")}</p>
-      <div class="svc-grid">${list.map(([pid, [name, logo]]) => `<button class="svc" type="button" data-svc="${pid}" aria-pressed="${myServices.has(+pid)}"><img src="https://image.tmdb.org/t/p/w92${logo}" alt="">${esc(name)}</button>`).join("")}</div>
+      <div class="svc-grid">${list.map(([pid, [name, logo]]) => `<button class="svc" type="button" data-svc="${pid}" aria-pressed="${myServices.has(+pid)}"><img src="https://image.tmdb.org/t/p/w92${logo}" alt=""><bdi>${esc(name)}</bdi></button>`).join("")}</div>
+      <p class="watch-note" style="margin:0">${t("wUSNote")}</p>
       <button class="btn primary" type="button" data-svc-done>${t("wDone")}</button></div>`;
   }
   let pendingMine = false, savedServices = null;
@@ -1593,7 +1603,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       list = new Set((a.data || []).map(r => r.title_id));
       watched = new Set((b.data || []).map(r => r.title_id));
       const sv = pr.data && pr.data.services;
-      if (sv && sv.length) { myServices = new Set(sv); store.set("services", sv); savedServices = [...sv].sort((a, b) => a - b).join(); }
+      if (sv && sv.length) { myServices = new Set(sv.filter(p => PICK.includes(p))); store.set("services", sv); savedServices = [...sv].sort((a, b) => a - b).join(); }
       else if (myServices.size) { savedServices = null; saveServices(); }   // first sign-in on this device: keep what was picked here
       if (C) await ensureItems([...list, ...watched]);
       if (C) refresh();   // the language stays what this device shows (Hebrew unless English was picked here)

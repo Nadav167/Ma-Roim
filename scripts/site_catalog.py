@@ -121,12 +121,13 @@ if mode == "site":
     for i, it in home_items.items():
         w = by_id[i].get("watch_il") or {}
         if "watch_il" not in by_id[i]: continue
-        if not w and not by_id[i].get("network_il"): it["wa"] = None; continue
+        if not w and not by_id[i].get("network_il") and not by_id[i].get("stream_us"): it["wa"] = None; continue
         e = {"k": f"{by_id[i]['tmdb_type']}/{by_id[i]['tmdb_id']}"} if by_id[i].get("tmdb_id") else {}
         if by_id[i].get("network_il"): e["o"] = by_id[i]["network_il"]
         for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
             ids = list(dict.fromkeys(p[0] for p in (w.get(src) or [])))
             if ids: e[dst] = ids
+        if by_id[i].get("stream_us"): e["u"] = by_id[i]["stream_us"]
         it["wa"] = e
     home = {k: v for k, v in cat.items() if k not in ("items", "index")}
     home["items"] = home_items

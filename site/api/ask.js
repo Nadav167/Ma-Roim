@@ -13,7 +13,8 @@ const DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 40);
 const MAX_ROUNDS = 6;
 
 // Streaming services in Israel the catalog knows (TMDB / JustWatch provider ids)
-const SERVICES = { "Netflix": 8, "HBO Max": 1899, "Amazon Prime Video": 119, "Apple TV": 350, "MUBI": 11 };
+// Disney+ and Hulu come from their US catalog (not tracked for Israel)
+const SERVICES = { "Netflix": 8, "HBO Max": 1899, "Amazon Prime Video": 119, "Apple TV": 350, "Disney+": 337, "Hulu": 15 };
 const SERVICE_NAME = Object.fromEntries(Object.entries(SERVICES).map(([n, id]) => [id, n]));
 
 const TOOLS = [
@@ -135,7 +136,7 @@ Find titles that fit what the user asks for, using only the catalog tools. Never
 - "After 2020" means min_year 2021. "Rated 8 or above on IMDb" means min_imdb 8.
 - If the strict search finds nothing, loosen one condition at a time and say clearly which condition the suggestions don't meet.
 - For "something like X", look X up with search_by_name, then search by its genres and similar filters.
-- Streaming in Israel: the user's services are ${names.length ? names.join(", ") : myServices.length ? "set (smaller services)" : "not picked yet"}. When they ask for something they can watch now, on their services, or on a named service, use on_my_services or service. That data covers about 11,000 popular titles, so if it finds too little, also search without it and say which picks aren't on their services.
+- Streaming in Israel: the user's services are ${names.length ? names.join(", ") : myServices.length ? "set (smaller services)" : "not picked yet"}. When they ask for something they can watch now, on their services, or on a named service, use on_my_services or service. That data covers about 13,000 popular titles (Disney+ and Hulu from their US catalog), so if it finds too little, also search without it and say which picks aren't on their services.
 - Prefer well-known titles (use min_votes around 2000+) unless the user wants hidden gems.
 - Reply in ${lang === "he" ? "Hebrew" : "English"} (or in the language the user writes in). Use Hebrew titles when replying in Hebrew if they exist.
 - Keep the message short and concrete. No markdown headings or tables.
