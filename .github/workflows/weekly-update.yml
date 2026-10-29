@@ -57,7 +57,7 @@ jobs:
         run: |
           git config user.name "Nadav167"
           git config user.email "173299564+Nadav167@users.noreply.github.com"
-          git add site/home.json site/index.json site/watch site/review data
+          git add site/home.json site/index.json site/watch data
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git commit -m "Weekly catalog update $(date -u +%F)"
           git push origin HEAD:main
@@ -66,7 +66,7 @@ jobs:
         if: always()
         run: |
           [ -d raw/tmdb ] || exit 0
-          files=$(ls raw/tmdb/*.jsonl 2>/dev/null | grep -v providers || true); [ -d raw/hewiki ] && files="$files raw/hewiki"
+          files=$(ls raw/tmdb/*.jsonl 2>/dev/null | grep -v providers || true); [ -d raw/hewiki ] && files="$files raw/hewiki"; [ -d raw/enwiki ] && files="$files raw/enwiki"
           [ -n "$files" ] || exit 0
           tar czf /tmp/cache.tar.gz $files
           cd "$(mktemp -d)"

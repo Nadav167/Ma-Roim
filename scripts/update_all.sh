@@ -22,14 +22,12 @@ fi
 step "Wikidata titles";          python3 scripts/stage1.py; python3 scripts/stage2.py
 step "IMDb join";                python3 scripts/build.py; cp out/ma_roim_titles.json raw/base_titles.json
 step "TMDB details";             python3 scripts/tmdb_enrich.py; python3 scripts/tmdb_search_fill.py; python3 scripts/merge_tmdb.py
-step "More posters";             python3 scripts/hewiki_posters.py; python3 scripts/hewiki_apply.py; python3 scripts/wikidata_posters.py
-step "Review decisions";         python3 scripts/apply_fixes.py
+step "More posters";             python3 scripts/hewiki_posters.py; python3 scripts/hewiki_apply.py; python3 scripts/wikidata_posters.py; python3 scripts/enwiki_posters.py
 step "Critics' scores";          python3 scripts/scores.py
 step "Cast and crew";            python3 scripts/cast.py; python3 scripts/people_he.py; python3 scripts/people_photos.py
 step "Tags and trailers";        python3 scripts/tags.py; python3 scripts/trailers.py
 step "Where to watch";           python3 scripts/providers.py; python3 scripts/networks.py; python3 scripts/us_services.py
 step "Site files";               python3 scripts/watch_files.py; python3 scripts/site_catalog.py
-step "Review lists";             python3 scripts/poster_candidates.py; python3 scripts/review_files.py
 step "Dataset copies"
 gzip -9 -c out/ma_roim_titles.json > data/titles.json.gz
 gzip -9 -c out/ma_roim_titles.csv > data/titles.csv.gz

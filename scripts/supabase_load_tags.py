@@ -12,14 +12,14 @@ if "--with-stream" in sys.argv:   # needs supabase/008_where_to_watch.sql
     for o in out:
         w = by[o["id"]].get("watch_il") or {}
         o["stream_il"] = sorted({p[0] for p in (w.get("stream") or []) + (w.get("free") or [])} | set(by[o["id"]].get("stream_us") or []))
-# Listing rule: no poster and under 100 IMDb votes, or no poster and a short/web episode -> searchable only
+# Listing rule (owner's choice): a title without any poster is not shown on the site
 has_listed = requests.get(f"{URL}/rest/v1/titles?select=listed&limit=1", headers=H, timeout=60).ok
 if has_listed:
     by = {r["wikidata_id"]: r for r in rows}
     for o in out:
         r = by[o["id"]]
-        o["listed"] = bool(r["poster_en"]) or ((r["imdb_votes"] or 0) >= 100 and "Short" not in (r["genres"] or ""))
-    print("listed:", sum(o["listed"] for o in out), "| searchable only:", sum(not o["listed"] for o in out), flush=True)
+        o["listed"] = bool(r["poster_en"] or r["poster_he"])
+    print("shown:", sum(o["listed"] for o in out), "| hidden (no poster):", sum(not o["listed"] for o in out), flush=True)
 for i in range(0, len(out), 500):
     for a in range(8):
         x = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(out[i:i + 500]), timeout=180)

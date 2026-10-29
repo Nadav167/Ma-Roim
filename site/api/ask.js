@@ -91,11 +91,11 @@ async function runTool(name, input, token, myServices) {
     if (svc.length) args.on_services = [...new Set(svc)];
     else if (input.on_my_services) return { count: 0, results: [], note: "The user hasn't picked their services. Search without this filter and tell them they can pick services under Where to watch on any title." };
     args.lim = Math.min(Math.max(Number(input.limit) || 15, 1), 40);
-    const rows = await rpc("find_titles", args, token);
+    const rows = (await rpc("find_titles", args, token)).filter(t => t.poster_en || t.poster_he);   // the site doesn't show titles without a poster
     return { count: rows.length, results: rows.map(slim) };
   }
   if (name === "search_by_name") {
-    const rows = await rpc("search_titles", { q: String(input.name || ""), lim: 8 }, token);
+    const rows = (await rpc("search_titles", { q: String(input.name || ""), lim: 8 }, token)).filter(t => t.poster_en || t.poster_he);
     return { count: rows.length, results: rows.map(slim) };
   }
   return { error: "unknown tool" };
