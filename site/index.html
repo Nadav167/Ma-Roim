@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -385,10 +385,12 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   :root { --poster: 118px; }
   .rail { inset: auto 0 0 0; width: auto; height: auto; flex-direction: row; justify-content: space-around; gap: 0;
     border-inline-end: 0; border-top: 1px solid var(--line);
-    padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    padding-block: 6px max(6px, calc(env(safe-area-inset-bottom, 0px) - 16px));
     padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .brand { display: none; }
-  .nav-btn { width: auto; flex: 1; font-size: 10px; padding-block: 6px; }
+  .rail { align-items: stretch; }
+  .nav-btn { width: auto; flex: 1 1 0; min-width: 0; font-size: 10px; padding: 6px 1px; justify-content: flex-start; line-height: 1.15; text-align: center; }
+  .nav-btn span { display: block; overflow-wrap: anywhere; }
   .app { margin-inline-start: 0; }
   main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
   .top { flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -581,10 +583,10 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     get(k, d) { try { const v = localStorage.getItem("w2w:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem("w2w:" + k, JSON.stringify(v)); } catch {} },
   };
-  let lang = store.get("lang", "en");
+  let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.0100";
+  const BUILD = "2026-10-29.1720";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -705,7 +707,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   const onBrowse = () => (view === "browse" || PAGES[view]) && !searchQ;
   function openBrowse(name, f, from) {
     if (from) prevView = from;
-    browse = { name, f, key: JSON.stringify(f), ids: [], total: null, done: false, loading: false, err: false, rows: null };
+    browse = { name, f, key: JSON.stringify(f), ids: [], total: null, counting: false, done: false, loading: false, err: false, rows: null };
     view = "browse"; clearSearch(); render(); window.scrollTo(0, 0);
   }
   function titlesQuery(f, count) {
@@ -724,21 +726,30 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   const bf = f => onlyMine && myServices.size ? { ...f, mine: [...myServices] } : f;
   function resetBrowse() {
     // a fresh object, so answers to requests made before the change are ignored
-    if (browse) browse = { ...browse, ids: [], total: null, done: false, err: false, rows: null, loading: false };
+    if (browse) browse = { ...browse, ids: [], total: null, counting: false, done: false, err: false, rows: null, loading: false };
   }
   function sorted(x, sort) {
     if (sort === "old") return x.order("year", { ascending: true, nullsFirst: false }).order("imdb_votes", { ascending: false });
     if (sort === "az") return lang === "he" ? x.order("title_he", { ascending: true, nullsFirst: false }).order("title") : x.order("title");
     return x.order("year", { ascending: false, nullsFirst: false }).order("imdb_votes", { ascending: false });
   }
+  async function loadCount(b) {   // the total is fetched on its own so a slow count never holds up the titles
+    try {
+      const { count, error } = await titlesQuery(bf(b.f)).select("id", { count: "exact", head: true });
+      if (error || count == null || browse !== b) return;
+      b.total = count; const c = $("#browse-count"); if (c) c.textContent = t("nTitles")(count);
+    } catch (e) { /* no count shown */ }
+  }
   async function loadMore() {
     const b = browse; if (!b || b.done || b.loading || browseSort === "genre") return;
     b.loading = true; updateFoot();
+    if (b.total == null && !b.counting) { b.counting = true; loadCount(b); }
     try {
-      const { data, error, count } = await sorted(titlesQuery(bf(b.f), b.total == null), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
+      const page = () => sorted(titlesQuery(bf(b.f)), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
+      let { data, error } = await page();
+      if (error && browse === b) { await new Promise(r => setTimeout(r, 600)); ({ data, error } = await page()); }   // the first query after a quiet spell can time out
       if (error) throw error;
       if (browse !== b) return;
-      if (count != null) b.total = count;
       (data || []).forEach(r => { C.items[r.id] = fromRow(r); b.ids.push(r.id); });
       if (!data || data.length < PAGE) b.done = true;
       b.err = false;
@@ -753,7 +764,9 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     render();
     await Promise.all(b.rows.map(async row => {
       try {
-        const { data } = await sorted(titlesQuery(bf({ ...b.f, genres: [row.g] })), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
+        const q = () => sorted(titlesQuery(bf({ ...b.f, genres: [row.g] })), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
+        let { data, error } = await q();
+        if (error) ({ data } = await q());
         (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
         row.ids = (data || []).map(r => r.id);
       } catch (e) { row.ids = []; }
@@ -822,7 +835,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       heroTimer = setInterval(() => { if (!document.hidden && $("#detail").hidden) { heroIdx = (heroIdx + 1) % C.hero.length; swapHero(); } }, 9000);
     } else if (PAGES[view] || view === "browse") {
       if (PAGES[view]) {   // nav pages are browse pages with a fixed filter
-        if (!browse || viewKey !== view) { viewKey = view; prevView = null; const pg = PAGES[view]; browse = { name: pg.name, f: pg.f, key: view, ids: [], total: null, done: false, loading: false, err: false, rows: null }; }
+        if (!browse || viewKey !== view) { viewKey = view; prevView = null; const pg = PAGES[view]; browse = { name: pg.name, f: pg.f, key: view, ids: [], total: null, counting: false, done: false, loading: false, err: false, rows: null }; }
       } else viewKey = "browse";
       main.innerHTML = browseView();
       if (browseSort === "genre") { if (!browse.rows) loadGenreRows(); }
@@ -1027,8 +1040,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let toastT;
   function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 1800); }
 
-  function setLang(l) {
-    lang = l; store.set("lang", l);
+  function setLang(l, picked) {
+    lang = l; if (picked) store.set("langPick", l);
     document.documentElement.lang = l; document.documentElement.dir = l === "he" ? "rtl" : "ltr";
     $("#lang-en").setAttribute("aria-pressed", l === "en"); $("#lang-he").setAttribute("aria-pressed", l === "he");
     document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
@@ -1036,8 +1049,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     $("#wordmark").innerHTML = t("word");
     $("#q").placeholder = t("search");
     renderAcct();
-    if (browse && browseSort === "az") { browse.ids = []; browse.total = null; browse.done = false; }   // A–Z order depends on language
-    if (user && sb) sb.from("profiles").update({ lang: l }).eq("id", user.id).then(() => {}, () => {});
+    if (browse && browseSort === "az") resetBrowse();   // A–Z order depends on language
+    if (picked && user && sb) sb.from("profiles").update({ lang: l }).eq("id", user.id).then(() => {}, () => {});
     if (!C) return;
     render();
     if (!$("#detail").hidden) reopen();
@@ -1078,8 +1091,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     browseSort = e.target.value;
     resetBrowse(); render();
   });
-  $("#lang-en").onclick = () => setLang("en");
-  $("#lang-he").onclick = () => setLang("he");
+  $("#lang-en").onclick = () => setLang("en", true);
+  $("#lang-he").onclick = () => setLang("he", true);
   // ---------- Search: suggestions while typing, full results on Enter ----------
   let searchQ = "", qT, sgSeq = 0, sgItems = [], sgIndex = -1;
   function clearSearch() { searchQ = ""; $("#q").value = ""; hideSuggest(); }
@@ -1575,7 +1588,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       const [a, b, pr] = await Promise.all([
         sb.from("watchlist").select("title_id, added_at").order("added_at", { ascending: false }),
         sb.from("watched").select("title_id"),
-        sb.from("profiles").select("lang, services").eq("id", user.id).maybeSingle(),
+        sb.from("profiles").select("services").eq("id", user.id).maybeSingle(),
       ]);
       list = new Set((a.data || []).map(r => r.title_id));
       watched = new Set((b.data || []).map(r => r.title_id));
@@ -1583,7 +1596,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       if (sv && sv.length) { myServices = new Set(sv); store.set("services", sv); savedServices = [...sv].sort((a, b) => a - b).join(); }
       else if (myServices.size) { savedServices = null; saveServices(); }   // first sign-in on this device: keep what was picked here
       if (C) await ensureItems([...list, ...watched]);
-      if (pr.data && pr.data.lang && pr.data.lang !== lang) setLang(pr.data.lang); else if (C) refresh();
+      if (C) refresh();   // the language stays what this device shows (Hebrew unless English was picked here)
     } catch (e) { /* keep what's on screen */ }
   }
   function refresh() { if (!$("#detail").hidden) reopen(); else render(); }
