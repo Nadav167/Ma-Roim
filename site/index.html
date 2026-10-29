@@ -628,7 +628,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.2200";
+  const BUILD = "2026-10-29.2230";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -763,10 +763,11 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (f.minYear) x = x.gte("year", f.minYear);
     if (f.minVotes) x = x.gte("imdb_votes", f.minVotes);
     if (f.mine) x = x.overlaps("stream_il", f.mine);   // streaming in Israel on one of my services
+    if (!f.ids && listedCol) x = x.eq("listed", true);  // obscure titles without a poster: search only
     return x;
   }
   // "On my services" applies to every browse page while it's on
-  let onlyMine = store.get("onlyMine", false);
+  let onlyMine = store.get("onlyMine", false), listedCol = true;   // listedCol: false until supabase/010 adds the column
   const bf = f => onlyMine && myServices.size ? { ...f, mine: [...myServices] } : f;
   function resetBrowse() {
     // a fresh object, so answers to requests made before the change are ignored
@@ -791,6 +792,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     try {
       const page = () => sorted(titlesQuery(bf(b.f)), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
       let { data, error } = await page();
+      if (error && listedCol && /listed/.test(error.message || "")) { listedCol = false; ({ data, error } = await page()); }
       if (error && browse === b) { await new Promise(r => setTimeout(r, 600)); ({ data, error } = await page()); }   // the first query after a quiet spell can time out
       if (error) throw error;
       if (browse !== b) return;
@@ -810,6 +812,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       try {
         const q = () => sorted(titlesQuery(bf({ ...b.f, genres: [row.g] })), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
         let { data, error } = await q();
+        if (error && listedCol && /listed/.test(error.message || "")) listedCol = false;
         if (error) ({ data } = await q());
         (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
         row.ids = (data || []).map(r => r.id);

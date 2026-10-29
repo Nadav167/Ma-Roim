@@ -10,12 +10,14 @@ def c(r):
 pairs = []
 for p in csv.DictReader(open("out/same_name_review.csv", encoding="utf-8-sig")):
     u, i = rows.get(p["us_id"]), rows.get(p["il_id"])
-    if u and i: pairs.append({"on": "he" if p["matched_on"].startswith("Hebrew") else "en", "us": c(u), "il": c(i)})
+    # owner's rule: only pairs where both titles are popular (1,000+ votes) need a look; the rest are fine
+    if u and i and min(u["imdb_votes"] or 0, i["imdb_votes"] or 0) >= 1000: pairs.append({"on": "he" if p["matched_on"].startswith("Hebrew") else "en", "us": c(u), "il": c(i)})
 cand = {}
 if os.path.exists("raw/tmdb/candidates.jsonl"):
     for line in open("raw/tmdb/candidates.jsonl", encoding="utf-8"):
         x = json.loads(line); cand[x["q"]] = x["c"]
-posters = [{**c(rows[q]), "c": cand[q]} for q in sorted(cand, key=lambda q: -(rows[q]["imdb_votes"] or 0) if q in rows else 0) if q in rows and not rows[q]["poster_en"]]
+listed = lambda r: (r["imdb_votes"] or 0) >= 100 and "Short" not in (r["genres"] or "")   # hidden ones don't need a poster
+posters = [{**c(rows[q]), "c": cand[q]} for q in sorted(cand, key=lambda q: -(rows[q]["imdb_votes"] or 0) if q in rows else 0) if q in rows and not rows[q]["poster_en"] and listed(rows[q])]
 json.dump(pairs, open("site/review/pairs.json", "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 json.dump(posters, open("site/review/posters.json", "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print("review: pairs", len(pairs), "| posters", len(posters))

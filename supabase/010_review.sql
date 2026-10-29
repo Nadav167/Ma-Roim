@@ -38,3 +38,7 @@ drop policy if exists "Owner edits titles" on public.titles;
 create policy "Owner edits titles" on public.titles for update using (public.is_admin()) with check (public.is_admin());
 drop policy if exists "Owner removes titles" on public.titles;
 create policy "Owner removes titles" on public.titles for delete using (public.is_admin());
+
+-- Titles shown in lists. Titles with no poster and under 100 IMDb votes, and posterless short/web episodes,
+-- stay searchable by name but are left out of the browse lists (owner's rule). Set by the weekly update.
+alter table public.titles add column if not exists listed boolean not null default true;
