@@ -1,5 +1,5 @@
 // AI helper: POST /api/ask
-// Body: { messages: [{role: "user"|"assistant", content: string}], lang: "en"|"he" }
+// Body: { messages: [{role: "user"|"assistant", content: string}], lang: "en"|"he", services: [TMDB provider ids the user has] }
 // Header: Authorization: Bearer <Supabase access token of a signed-in user>
 // Returns: { message: string, ids: [title ids] }
 //
@@ -11,6 +11,10 @@ const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM"; // public key; 
 const MODEL = process.env.AI_MODEL || "claude-sonnet-5-5";
 const DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 40);
 const MAX_ROUNDS = 6;
+
+// Streaming services in Israel the catalog knows (TMDB / JustWatch provider ids)
+const SERVICES = { "Netflix": 8, "HBO Max": 1899, "Amazon Prime Video": 119, "Apple TV": 350, "MUBI": 11 };
+const SERVICE_NAME = Object.fromEntries(Object.entries(SERVICES).map(([n, id]) => [id, n]));
 
 const TOOLS = [
   {
@@ -32,6 +36,8 @@ const TOOLS = [
         min_mc: { type: "integer", description: "Minimum Metacritic score, 0–100 (mostly available for movies)" },
         israeli: { type: "boolean", description: "true for Israeli titles only, false for non-Israeli only" },
         min_votes: { type: "integer", description: "Minimum number of IMDb votes, to skip obscure titles (e.g. 5000)" },
+        on_my_services: { type: "boolean", description: "true to return only titles streaming in Israel on the user's own streaming services" },
+        service: { type: "string", enum: Object.keys(SERVICES), description: "Only titles streaming in Israel on this service" },
         limit: { type: "integer", description: "Max results, default 15, max 40" },
       },
     },
@@ -73,11 +79,16 @@ async function rpc(fn, args, token) {
   return r.json();
 }
 
-async function runTool(name, input, token) {
+async function runTool(name, input, token, myServices) {
   if (name === "find_titles") {
     const args = {};
     for (const k of ["person", "person_role", "genre", "tag", "title_type", "min_year", "max_year", "min_imdb", "min_rt", "min_mc", "israeli", "min_votes"])
       if (input[k] !== undefined && input[k] !== null && input[k] !== "") args[k] = input[k];
+    const svc = [];
+    if (input.on_my_services) svc.push(...myServices);
+    if (input.service && SERVICES[input.service]) svc.push(SERVICES[input.service]);
+    if (svc.length) args.on_services = [...new Set(svc)];
+    else if (input.on_my_services) return { count: 0, results: [], note: "The user hasn't picked their services. Search without this filter and tell them they can pick services under Where to watch on any title." };
     args.lim = Math.min(Math.max(Number(input.limit) || 15, 1), 40);
     const rows = await rpc("find_titles", args, token);
     return { count: rows.length, results: rows.map(slim) };
@@ -113,7 +124,8 @@ async function callClaude(body) {
   return r.json();
 }
 
-function system(lang) {
+function system(lang, myServices) {
+  const names = myServices.map(id => SERVICE_NAME[id]).filter(Boolean);
   const today = new Date().toISOString().slice(0, 10);
   return `You are the recommendation helper on "Ma Roim" (Hebrew for "what are we watching?"), a site listing US and Israeli movies and TV series from 1980 to today. Today is ${today}.
 Find titles that fit what the user asks for, using only the catalog tools. Never recommend a title that did not come back from a tool.
@@ -123,6 +135,7 @@ Find titles that fit what the user asks for, using only the catalog tools. Never
 - "After 2020" means min_year 2021. "Rated 8 or above on IMDb" means min_imdb 8.
 - If the strict search finds nothing, loosen one condition at a time and say clearly which condition the suggestions don't meet.
 - For "something like X", look X up with search_by_name, then search by its genres and similar filters.
+- Streaming in Israel: the user's services are ${names.length ? names.join(", ") : myServices.length ? "set (smaller services)" : "not picked yet"}. When they ask for something they can watch now, on their services, or on a named service, use on_my_services or service. That data covers about 11,000 popular titles, so if it finds too little, also search without it and say which picks aren't on their services.
 - Prefer well-known titles (use min_votes around 2000+) unless the user wants hidden gems.
 - Reply in ${lang === "he" ? "Hebrew" : "English"} (or in the language the user writes in). Use Hebrew titles when replying in Hebrew if they exist.
 - Keep the message short and concrete. No markdown headings or tables.
@@ -141,6 +154,7 @@ module.exports = async function handler(req, res) {
     if ((await usedToday(token, user.id)) >= DAILY_LIMIT) return res.status(429).json({ error: "limit" });
 
     const lang = body.lang === "he" ? "he" : "en";
+    const myServices = (Array.isArray(body.services) ? body.services : []).map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 30);
     const history = (Array.isArray(body.messages) ? body.messages : [])
       .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
       .slice(-10).map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
@@ -151,7 +165,7 @@ module.exports = async function handler(req, res) {
     for (let round = 0; round < MAX_ROUNDS && !result; round++) {
       const lastRound = round === MAX_ROUNDS - 1;
       const resp = await callClaude({
-        model: MODEL, max_tokens: 1000, system: system(lang), tools: TOOLS, messages,
+        model: MODEL, max_tokens: 1000, system: system(lang, myServices), tools: TOOLS, messages,
         tool_choice: lastRound ? { type: "tool", name: "present_results" } : { type: "auto" },
       });
       messages.push({ role: "assistant", content: resp.content });
@@ -169,7 +183,7 @@ module.exports = async function handler(req, res) {
       // Run all searches from this turn at the same time
       const outputs = await Promise.all(uses.map(async u => {
         let out;
-        try { out = await runTool(u.name, u.input || {}, token); }
+        try { out = await runTool(u.name, u.input || {}, token, myServices); }
         catch (e) { out = { error: String(e.message || e) }; }
         return { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(out) };
       }));

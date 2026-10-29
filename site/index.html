@@ -260,6 +260,11 @@ html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
 .sort select { border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; outline: none; cursor: pointer; padding-inline-end: 4px; }
 .sort select option { background: var(--surface); color: var(--fg); }
 .sort:focus-within { border-color: var(--accent); }
+.browse-ctrl { display: flex; flex-wrap: wrap; gap: 8px; }
+.mine-tog { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding-inline: 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.mine-tog svg { width: 15px; height: 15px; opacity: .35; }
+.mine-tog[aria-pressed="true"] { border-color: #2fbf71; background: rgba(47,191,113,.14); }
+.mine-tog[aria-pressed="true"] svg { opacity: 1; color: #2fbf71; }
 .list-foot { display: grid; place-items: center; padding-block: 28px 8px; color: var(--muted); }
 .back-row { margin-bottom: 14px; }
 .detail-inner .row { padding-left: 0; padding-right: 0; }
@@ -484,7 +489,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       dLoading: "Loading titles…", dKeys: "Tip: ← and → keys pick, ↓ skips", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
-      wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check.", wDone: "Done",
+      wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check, and you can show only what’s on them.", wDone: "Done",
+      onlyMine: "On my services", mineEmpty: "Nothing here is on your services. Where to watch is known for about 11,000 popular titles, mostly on Netflix, HBO Max, Prime Video and Apple TV.",
       wData: "Availability data by JustWatch",
       rViewers: "Viewers report", rAsk: "Seen it on another service?", rPickH: "Where did you see it?", rPickP: "Tap every service you saw it on in Israel. Others see only the totals.",
       rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
@@ -531,7 +537,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       dLoading: "טוען כותרים…", dKeys: "טיפ: מקשי ← ו-→ בוחרים, ↓ מדלג", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
-      wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק.", wDone: "סיום",
+      wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק, ואפשר להציג רק אותם.", wDone: "סיום",
+      onlyMine: "בשירותים שלי", mineEmpty: "אין כאן כותרים שזמינים בשירותים שלכם. המידע איפה לצפות קיים לכ-11,000 כותרים פופולריים, בעיקר בנטפליקס, HBO Max, פריים וידאו ו-Apple TV.",
       wData: "נתוני זמינות: JustWatch",
       rViewers: "דיווחי צופים", rAsk: "ראיתם את זה בשירות אחר?", rPickH: "איפה ראיתם את זה?", rPickP: "סמנו כל שירות שבו ראיתם את זה בישראל. אחרים רואים רק את הסיכום.",
       rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
@@ -577,7 +584,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("lang", "en");
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-26.0153";
+  const BUILD = "2026-10-29.0100";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -709,7 +716,15 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (f.genres) x = x.overlaps("genres", f.genres);
     if (f.minYear) x = x.gte("year", f.minYear);
     if (f.minVotes) x = x.gte("imdb_votes", f.minVotes);
+    if (f.mine) x = x.overlaps("stream_il", f.mine);   // streaming in Israel on one of my services
     return x;
+  }
+  // "On my services" applies to every browse page while it's on
+  let onlyMine = store.get("onlyMine", false);
+  const bf = f => onlyMine && myServices.size ? { ...f, mine: [...myServices] } : f;
+  function resetBrowse() {
+    // a fresh object, so answers to requests made before the change are ignored
+    if (browse) browse = { ...browse, ids: [], total: null, done: false, err: false, rows: null, loading: false };
   }
   function sorted(x, sort) {
     if (sort === "old") return x.order("year", { ascending: true, nullsFirst: false }).order("imdb_votes", { ascending: false });
@@ -720,7 +735,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const b = browse; if (!b || b.done || b.loading || browseSort === "genre") return;
     b.loading = true; updateFoot();
     try {
-      const { data, error, count } = await sorted(titlesQuery(b.f, b.total == null), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
+      const { data, error, count } = await sorted(titlesQuery(bf(b.f), b.total == null), browseSort).range(b.ids.length, b.ids.length + PAGE - 1);
       if (error) throw error;
       if (browse !== b) return;
       if (count != null) b.total = count;
@@ -738,7 +753,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     render();
     await Promise.all(b.rows.map(async row => {
       try {
-        const { data } = await sorted(titlesQuery({ ...b.f, genres: [row.g] }), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
+        const { data } = await sorted(titlesQuery(bf({ ...b.f, genres: [row.g] })), "new").gte("imdb_votes", b.f.person ? 0 : 200).range(0, ROW - 1);
         (data || []).forEach(r => { C.items[r.id] = fromRow(r); });
         row.ids = (data || []).map(r => r.id);
       } catch (e) { row.ids = []; }
@@ -750,9 +765,11 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const sel = `<div class="sort"><label for="sort-sel">${t("sortL")}</label><select id="sort-sel">
       ${[["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")]].map(([v, l]) => `<option value="${v}" ${browseSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}
       </select></div>`;
+    const mineOn = onlyMine && myServices.size > 0;
+    const tog = `<button class="mine-tog" type="button" data-only-mine aria-pressed="${mineOn}">${icon.check}${esc(t("onlyMine"))}</button>`;
     const back = prevView && !PAGES[viewKey] ? `<button class="btn back-row" type="button" data-back-browse>${icon.back}${t("back")}</button>` : "";
     const headHtml = `<div class="pad">${back}<div class="browse-head"><div class="view-head"><h1>${esc(b.name())}</h1>
-      <p id="browse-count">${b.total != null ? t("nTitles")(b.total) : "&nbsp;"}</p></div>${sel}</div></div>`;
+      <p id="browse-count">${b.total != null ? t("nTitles")(b.total) : "&nbsp;"}</p></div><div class="browse-ctrl">${tog}${sel}</div></div></div>`;
     if (browseSort === "genre") {
       moreTargets = [];
       const rows = (b.rows || []).filter(r => r.ids === null || r.ids.length).map(r => {
@@ -769,6 +786,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (b.err) return `<span>${t("listErr")}</span><button class="btn" type="button" data-load-more style="margin-top:10px">${t("loadMore")}</button>`;
     if (b.loading) return `<span>${t("loadingMore")}</span>`;
     if (!b.done) return `<button class="btn" type="button" data-load-more>${t("loadMore")}</button>`;
+    if (!b.ids.length && onlyMine && myServices.size) return `<span>${esc(t("mineEmpty"))}</span>`;
     return "";
   }
   function updateFoot() { const f = $("#browse-foot"); if (f) f.innerHTML = footHtml(); }
@@ -1058,8 +1076,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   document.addEventListener("change", e => {
     if (e.target.id !== "sort-sel") return;
     browseSort = e.target.value;
-    if (browse) { browse.ids = []; browse.total = null; browse.done = false; browse.err = false; browse.rows = null; }
-    render();
+    resetBrowse(); render();
   });
   $("#lang-en").onclick = () => setLang("en");
   $("#lang-he").onclick = () => setLang("he");
@@ -1272,6 +1289,12 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       <div class="svc-grid">${list.map(([pid, [name, logo]]) => `<button class="svc" type="button" data-svc="${pid}" aria-pressed="${myServices.has(+pid)}"><img src="https://image.tmdb.org/t/p/w92${logo}" alt="">${esc(name)}</button>`).join("")}</div>
       <button class="btn primary" type="button" data-svc-done>${t("wDone")}</button></div>`;
   }
+  let pendingMine = false, savedServices = null;
+  function saveServices() {   // keep the choice with the account too
+    const now = [...myServices].sort((a, b) => a - b), key = now.join();
+    if (key === savedServices) return; savedServices = key;
+    if (user && sb) sb.from("profiles").update({ services: now }).eq("id", user.id).then(() => {}, () => {});
+  }
   async function openServices() {
     await loadProv();
     let m = $("#svc-modal");
@@ -1282,7 +1305,18 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (e.target.closest("[data-services]")) { openServices(); return; }
     const sv = e.target.closest("[data-svc]");
     if (sv) { const p = +sv.dataset.svc; myServices.has(p) ? myServices.delete(p) : myServices.add(p); store.set("services", [...myServices]); sv.setAttribute("aria-pressed", myServices.has(p)); return; }
-    if (e.target.closest("[data-svc-done]") || e.target.id === "svc-modal") { $("#svc-modal").hidden = true; if (!$("#detail").hidden) reopen(); }
+    if (e.target.closest("[data-svc-done]") || e.target.id === "svc-modal") {
+      $("#svc-modal").hidden = true;
+      saveServices();
+      if (pendingMine && myServices.size) { onlyMine = true; store.set("onlyMine", true); }
+      pendingMine = false;
+      if (!$("#detail").hidden) reopen(); else if (onBrowse() && onlyMine) { resetBrowse(); render(); }
+      return;
+    }
+    if (e.target.closest("[data-only-mine]")) {
+      if (!myServices.size) { pendingMine = true; openServices(); return; }   // pick services first, then turn it on
+      onlyMine = !onlyMine; store.set("onlyMine", onlyMine); resetBrowse(); render();
+    }
   });
 
   // ---------- Trailers ----------
@@ -1419,7 +1453,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
-        body: JSON.stringify({ lang, messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
+        body: JSON.stringify({ lang, services: [...myServices], messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
       const j = await r.json().catch(() => ({}));
       if (r.ok) { await ensureItems(j.ids || []); disc.result = { message: j.message, ids: j.ids || [] }; }
       else disc.result = { err: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("dSignIn") : t("aiErr") };
@@ -1506,7 +1540,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
-        body: JSON.stringify({ lang, messages: aiMsgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.role === "assistant" ? (m.content + (m.ids && m.ids.length ? "\n[Recommended: " + m.ids.map(id => C.items[id] ? C.items[id].t : id).join(", ") + "]" : "")) : m.content })) }) });
+        body: JSON.stringify({ lang, services: [...myServices], messages: aiMsgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.role === "assistant" ? (m.content + (m.ids && m.ids.length ? "\n[Recommended: " + m.ids.map(id => C.items[id] ? C.items[id].t : id).join(", ") + "]" : "")) : m.content })) }) });
       const j = await r.json().catch(() => ({}));
       if (r.ok) { await ensureItems(j.ids || []); reply = { role: "assistant", content: j.message || "", ids: j.ids || [] }; }
       else reply = { role: "assistant", err: true, content: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("aiSignIn") : t("aiErr") };
@@ -1541,10 +1575,13 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       const [a, b, pr] = await Promise.all([
         sb.from("watchlist").select("title_id, added_at").order("added_at", { ascending: false }),
         sb.from("watched").select("title_id"),
-        sb.from("profiles").select("lang").eq("id", user.id).maybeSingle(),
+        sb.from("profiles").select("lang, services").eq("id", user.id).maybeSingle(),
       ]);
       list = new Set((a.data || []).map(r => r.title_id));
       watched = new Set((b.data || []).map(r => r.title_id));
+      const sv = pr.data && pr.data.services;
+      if (sv && sv.length) { myServices = new Set(sv); store.set("services", sv); savedServices = [...sv].sort((a, b) => a - b).join(); }
+      else if (myServices.size) { savedServices = null; saveServices(); }   // first sign-in on this device: keep what was picked here
       if (C) await ensureItems([...list, ...watched]);
       if (pr.data && pr.data.lang && pr.data.lang !== lang) setLang(pr.data.lang); else if (C) refresh();
     } catch (e) { /* keep what's on screen */ }
