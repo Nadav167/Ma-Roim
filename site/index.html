@@ -233,6 +233,7 @@ a.score:hover { border-color: var(--muted); }
 .shelf-head span { color: var(--muted); font-size: 13px; }
 .row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x proximity; padding-block: 14px 22px; margin-block: -8px -10px;   /* room for the hover lift and glow, which a sideways-scrolling row would otherwise clip */
   padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  scroll-padding-inline: max(24px, env(safe-area-inset-left, 0px)) max(24px, env(safe-area-inset-right, 0px));   /* snap to the padding, not the screen edge */
   scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .row::-webkit-scrollbar { height: 6px; } .row::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 
@@ -431,7 +432,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   .pad, .row { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .hero { margin-inline: max(16px, env(safe-area-inset-left, 0px)); margin-top: 16px; min-height: 340px; }
   .hero-body { padding: 20px; }
-  .row { gap: 10px; }
+  .row { gap: 10px; scroll-padding-inline: 16px; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
   .detail-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .facts { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
@@ -599,7 +600,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.1750";
+  const BUILD = "2026-10-29.1800";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
