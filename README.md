@@ -25,7 +25,11 @@ About 58,000 titles: ~42,000 movies and ~16,000 TV series. Each has English and 
 
 ## Pipeline
 
-Run from the repo root, in order:
+**Everything at once:** `bash scripts/update_all.sh` rebuilds the catalog from the sources, writes the site files and loads the database. It runs every Sunday on GitHub Actions (`.github/workflows/weekly-update.yml`, needs the `TMDB_TOKEN` and `SUPABASE_SECRET` repository secrets) and commits the new site files; Vercel then redeploys. Cached TMDB answers are kept on the `pipeline-cache` branch.
+
+Extra steps it runs besides the list below: `tmdb_search_fill.py` (name-and-year TMDB match for titles the IMDb lookup missed), `wikidata_posters.py` (official posters from Wikidata), `apply_fixes.py` (the owner's review decisions), `providers.py` / `networks.py` / `us_services.py` / `watch_files.py` (where to watch), `poster_candidates.py` / `review_files.py` (lists for the owner's review screen).
+
+The individual steps, in order:
 
 1. `scripts/stage1.py` — Wikidata: IDs and dates of US/Israeli films and series
 2. `scripts/stage2.py` — Wikidata: titles (EN/HE), IMDb/Metacritic IDs, Wikipedia links, genres

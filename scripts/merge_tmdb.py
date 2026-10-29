@@ -6,11 +6,19 @@ rows = json.load(open("raw/base_titles.json", encoding="utf-8"))
 tm = {}
 for line in open("raw/tmdb/results.jsonl", encoding="utf-8"):
     x = json.loads(line); tm[x["imdb"]] = x
+# matches found by name and year (scripts/tmdb_search_fill.py) for titles the IMDb lookup missed
+import os
+found = {}
+if os.path.exists("raw/tmdb/search.jsonl"):
+    for line in open("raw/tmdb/search.jsonl", encoding="utf-8"):
+        x = json.loads(line)
+        if x.get("tmdb_id"): found[x["q"]] = x
 
 out = []
 for r in rows:
     imdb = r["imdb_url"].rstrip("/").rsplit("/", 1)[1] if r["imdb_url"] else None
     t = tm.get(imdb, {})
+    if not (t.get("tmdb_id") and t.get("poster_en")) and r["wikidata_id"] in found: t = found[r["wikidata_id"]]
     title_he = t.get("title_he") or r["title_he"]
     o = {
         "title": r["title"],
@@ -66,13 +74,13 @@ for o in out:
     # What the Hebrew site shows: own Hebrew title/poster if it exists, else the English one
     o["display_title_he"] = o["title_he"] or o["title"]
     o["display_poster_he"] = o["poster_he"] or o["poster_en"]
-rev_fields = ["both_tv", "matched_on", "us_title", "us_title_he", "us_type", "us_year", "us_poster_en", "us_poster_he", "us_imdb",
+rev_fields = ["us_id", "il_id", "both_tv", "matched_on", "us_title", "us_title_he", "us_type", "us_year", "us_poster_en", "us_poster_he", "us_imdb",
               "il_title", "il_title_he", "il_type", "il_year", "il_poster_en", "il_poster_he", "il_imdb", "decision"]
 pairs.sort(key=lambda p: (not (p[1]["type"] == p[2]["type"] == "TV series"), -((p[1]["imdb_votes"] or 0) + (p[2]["imdb_votes"] or 0))))
 with open("out/same_name_review.csv", "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.writer(fh); w.writerow(rev_fields)
     for key, u, i in pairs:
-        w.writerow(["yes" if u["type"] == i["type"] == "TV series" else "", key, u["title"], u["title_he"], u["type"], u["year"], u["poster_en"], u["poster_he"], u["imdb_url"],
+        w.writerow([u["wikidata_id"], i["wikidata_id"], "yes" if u["type"] == i["type"] == "TV series" else "", key, u["title"], u["title_he"], u["type"], u["year"], u["poster_en"], u["poster_he"], u["imdb_url"],
                     i["title"], i["title_he"], i["type"], i["year"], i["poster_en"], i["poster_he"], i["imdb_url"], ""])
 print("same-name pairs:", len(pairs), "| TV-TV pairs:", sum(1 for _, u, i in pairs if u["type"] == i["type"] == "TV series"))
 

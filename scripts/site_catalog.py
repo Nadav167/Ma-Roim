@@ -2,7 +2,7 @@
 #   site/catalog.json            – real site: poster/backdrop URLs from TMDB, top titles + search index
 #   build/preview/catalog.json   – artifact preview: same shape, images embedded as data: URIs
 #                                  (artifact pages can't load images from other hosts)
-import json, os, base64, sys, requests
+import json, os, base64, sys, requests, datetime
 from concurrent.futures import ThreadPoolExecutor
 
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
@@ -40,7 +40,7 @@ def top(pred, n=20):
 def g(r, *names): return any(n in (r["genres"] or "") for n in names)
 
 shelves = [
-    ("new", "New and popular", "חדש ופופולרי", top(lambda r: r["year"] >= 2024)),
+    ("new", "New and popular", "חדש ופופולרי", top(lambda r: r["year"] >= datetime.date.today().year - 2)),
     ("movies", "Popular movies", "סרטים פופולריים", top(lambda r: r["type"] == "Movie")),
     ("series", "Popular series", "סדרות פופולריות", top(lambda r: r["type"] == "TV series")),
     ("il-series", "Israeli series", "סדרות ישראליות", top(lambda r: "Israel" in r["country"] and r["type"] == "TV series")),

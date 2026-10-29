@@ -12,9 +12,9 @@ if "--with-stream" in sys.argv:   # needs supabase/008_where_to_watch.sql
     for o in out:
         w = by[o["id"]].get("watch_il") or {}
         o["stream_il"] = sorted({p[0] for p in (w.get("stream") or []) + (w.get("free") or [])} | set(by[o["id"]].get("stream_us") or []))
-for i in range(0, len(out), 2000):
-    for a in range(5):
-        x = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(out[i:i + 2000]), timeout=180)
+for i in range(0, len(out), 500):
+    for a in range(8):
+        x = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(out[i:i + 500]), timeout=180)
         if x.status_code < 300: break
         print("retry", i, x.status_code, x.text[:200], flush=True); time.sleep(3 * (a + 1))
     else: sys.exit(f"failed at {i}")

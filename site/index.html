@@ -221,6 +221,28 @@ a.score:hover { border-color: var(--muted); }
 .chip { border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 12px; color: var(--fg); }
 
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.rv-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.rv-help { color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 0 0 14px; }
+.rv-list { display: grid; gap: 14px; max-width: 900px; }
+.rv-pair { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 12px; }
+.rv-pair.done { opacity: .6; }
+.rv-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.rv-card { display: flex; gap: 10px; text-align: start; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px; cursor: pointer; color: var(--fg); font: inherit; }
+.rv-poster { width: 64px; aspect-ratio: 2/3; border-radius: 8px; background: var(--surface-2); overflow: hidden; flex: none; }
+.rv-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rv-info { display: grid; gap: 3px; align-content: start; min-width: 0; }
+.rv-info .chip { justify-self: start; }
+.rv-info small { color: var(--muted); }
+.rv-info em { color: #ff8a8a; font-style: normal; font-weight: 700; font-size: 13px; }
+.rv-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rv-actions .btn { font-size: 13px; padding-block: 8px; }
+.rv-cands { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.rv-cand { flex: none; width: 92px; display: grid; gap: 4px; background: none; border: 2px solid transparent; border-radius: 10px; padding: 0; cursor: pointer; color: var(--muted); font: inherit; text-align: center; }
+.rv-cand:hover { border-color: var(--accent); }
+.rv-cand img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; display: block; }
+.rv-cand small { font-size: 11px; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rv-url { display: flex; gap: 8px; flex-wrap: wrap; }
+.rv-url input { flex: 1 1 200px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding-inline: 12px; }
 .wa-btn { background: #1fa855; border-color: #1fa855; color: #fff; }
 .wa-btn:hover { background: #22b85d; }
 .btn { height: 44px; padding-inline: 18px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface-2);
@@ -606,7 +628,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.2030";
+  const BUILD = "2026-10-29.2200";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -864,6 +886,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       else { updateFoot(); watchFoot(); if (!browse.ids.length && !browse.done) loadMore(); }
     } else if (view === "discover") {
       main.innerHTML = discView();
+    } else if (view === "review") {
+      main.innerHTML = reviewView(); if (isAdmin()) loadReview();
     } else if (view === "about") {
       main.innerHTML = aboutView();
     } else if (view === "list") {
@@ -1531,6 +1555,129 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (e.key === "ArrowLeft") { e.preventDefault(); choose(rtl ? 1 : 0); } else if (e.key === "ArrowRight") { e.preventDefault(); choose(rtl ? 0 : 1); } else if (e.key === "ArrowDown") { e.preventDefault(); choose(-1); }
   });
 
+  // ---------- Owner's review screen: same-name US/Israeli titles and titles without a poster ----------
+  // Shown only to the site owner's account. Decisions go to title_fixes / pair_reviews (supabase/010_review.sql),
+  // change the titles table at once, and are applied to the catalog files by the weekly update.
+  const ADMIN = "nadav167@gmail.com";
+  const isAdmin = () => !!(user && user.email === ADMIN);
+  const L = (he, en) => lang === "he" ? he : en;
+  let fixes = {};   // title_id -> decision, applied for every visitor
+  function applyFix(id, f) {
+    const it = C && C.items[id]; if (!it) return;
+    if (f.hide) {
+      delete C.items[id];
+      C.shelves.forEach(sh => sh.ids = sh.ids.filter(x => x !== id));
+      C.hero = C.hero.filter(x => x !== id); C.index = (C.index || []).filter(x => x !== id);
+      return;
+    }
+    if (f.no_title_he) it.th = null;
+    if (f.no_poster_he) it.ph = null;
+    if (f.poster_url) it.p = f.poster_url;
+  }
+  async function loadFixes() {
+    if (!sb) return;
+    try {
+      const { data, error } = await sb.from("title_fixes").select("*");
+      if (error || !data || !data.length) return;
+      data.forEach(f => { fixes[f.title_id] = f; applyFix(f.title_id, f); });
+      if (view === "home" || onBrowse()) render();
+    } catch (e) { /* not set up yet */ }
+  }
+  const rv = { tab: "pairs", pairs: null, posters: null, done: {}, showDone: false, err: null };
+  async function loadReview() {
+    if (rv.pairs) return;
+    try {
+      const [p, q, d] = await Promise.all([
+        fetch("review/pairs.json?v=" + BUILD).then(r => r.json()),
+        fetch("review/posters.json?v=" + BUILD).then(r => r.json()),
+        sb.from("pair_reviews").select("us_id, il_id, decision"),
+      ]);
+      if (d.error) throw d.error;
+      rv.pairs = p; rv.posters = q;
+      (d.data || []).forEach(x => rv.done[x.us_id + "|" + x.il_id] = x.decision);
+    } catch (e) { rv.err = true; }
+    if (view === "review") render();
+  }
+  async function saveFix(id, patch) {
+    const f = { ...(fixes[id] || { title_id: id, hide: false, no_title_he: false, no_poster_he: false, poster_url: null }), ...patch, updated_at: new Date().toISOString() };
+    const { error } = await sb.from("title_fixes").upsert(f);
+    if (error) { toast(t("genericErr")); return false; }
+    fixes[id] = f;
+    // the change shows on the site straight away
+    if (patch.hide) await sb.from("titles").delete().eq("id", id);
+    else {
+      const upd = {};
+      if (patch.no_title_he) upd.title_he = null;
+      if (patch.no_poster_he) upd.poster_he = null;
+      if (patch.poster_url) upd.poster_en = patch.poster_url;
+      if (Object.keys(upd).length) await sb.from("titles").update(upd).eq("id", id);
+    }
+    applyFix(id, f);
+    return true;
+  }
+  const flag = il => il ? L("🇮🇱 ישראלי", "🇮🇱 Israeli") : L("🇺🇸 אמריקאי", "🇺🇸 US");
+  function miniCard(c, il) {
+    const fx = fixes[c.id] || {};
+    const pst = lang === "he" && !fx.no_poster_he ? (c.ph || c.p) : (fx.poster_url || c.p);
+    return `<button class="rv-card" type="button" data-id="${c.id}">
+      <span class="rv-poster">${pst ? `<img src="${esc(pst)}" alt="" loading="lazy">` : ""}</span>
+      <span class="rv-info"><span class="chip">${flag(il)}</span><b>${esc(c.t)}</b>${c.th && !fx.no_title_he ? `<span>${esc(c.th)}</span>` : ""}
+        <small>${c.y ?? ""} · ${c.ty === "tv" ? t("tv") : t("movie")} · ${compact(c.v)} ${L("מדרגים", "votes")}</small>
+        ${fx.hide ? `<em>${L("הוסתר", "Hidden")}</em>` : ""}</span></button>`;
+  }
+  function reviewView() {
+    if (!isAdmin()) return head(L("בדיקה", "Review"), L("העמוד הזה זמין רק לבעל האתר.", "This page is for the site owner."));
+    const tabs = `<div class="rv-tabs">
+      <button class="btn ${rv.tab === "pairs" ? "primary" : ""}" type="button" data-rv-tab="pairs">${L("שמות זהים", "Same names")}${rv.pairs ? ` (${rv.pairs.filter(p => !rv.done[p.us.id + "|" + p.il.id]).length})` : ""}</button>
+      <button class="btn ${rv.tab === "posters" ? "primary" : ""}" type="button" data-rv-tab="posters">${L("פוסטרים חסרים", "Missing posters")}${rv.posters ? ` (${rv.posters.filter(p => !(fixes[p.id] && (fixes[p.id].poster_url || fixes[p.id].hide || fixes[p.id].no_poster))).length})` : ""}</button></div>`;
+    const top = head(L("בדיקה", "Review"), "") + `<div class="pad">${tabs}`;
+    if (rv.err) return top + `<div class="empty"><strong>${L("עוד לא מוכן", "Not set up yet")}</strong><span>${L("צריך להריץ ב-Supabase את הקובץ supabase/010_review.sql.", "Run supabase/010_review.sql in Supabase.")}</span></div></div>`;
+    if (!rv.pairs) return top + `<div class="loading">…</div></div>`;
+    if (rv.tab === "pairs") {
+      const list = rv.pairs.filter(p => rv.showDone || !rv.done[p.us.id + "|" + p.il.id]).slice(0, 40);
+      return top + `<p class="rv-help">${L("כותר אמריקאי וכותר ישראלי עם אותו שם. מה לעשות?", "A US and an Israeli title with the same name. What should happen?")}
+        <label><input type="checkbox" data-rv-done ${rv.showDone ? "checked" : ""}> ${L("להציג גם מה שכבר נבדק", "Show reviewed too")}</label></p>
+        <div class="rv-list">${list.map(p => { const k = p.us.id + "|" + p.il.id, d = rv.done[k];
+          return `<div class="rv-pair ${d ? "done" : ""}"><div class="rv-two">${miniCard(p.us, false)}${miniCard(p.il, true)}</div>
+          <div class="rv-actions">${[["ok", L("שניהם תקינים", "Both fine")], ["hide_us", L("להסתיר את האמריקאי", "Hide the US one")], ["hide_il", L("להסתיר את הישראלי", "Hide the Israeli one")],
+            ["he_us", L("השם/הפוסטר העברי של האמריקאי שגוי", "US one's Hebrew name/poster is wrong")]].map(([v, l]) =>
+            `<button class="btn ${d === v ? "on" : ""}" type="button" data-pair="${k}" data-decide="${v}">${esc(l)}</button>`).join("")}</div></div>`; }).join("")
+          || `<div class="empty"><strong>${L("הכל נבדק 🎉", "All reviewed 🎉")}</strong></div>`}</div></div>`;
+    }
+    const list = rv.posters.filter(p => !(fixes[p.id] && (fixes[p.id].poster_url || fixes[p.id].hide))).slice(0, 30);
+    return top + `<p class="rv-help">${L("כותרים פופולריים בלי פוסטר. לחצו על הפוסטר הנכון, הדביקו קישור לתמונה, או הסתירו את הכותר.", "Popular titles with no poster. Tap the right poster, paste an image link, or hide the title.")}</p>
+      <div class="rv-list">${list.map(p => `<div class="rv-pair"><div class="rv-two">${miniCard(p, p.il)}</div>
+        <div class="rv-cands">${(p.c || []).map(([k, n, y, path]) => `<button class="rv-cand" type="button" data-poster-for="${p.id}" data-poster="https://image.tmdb.org/t/p/w500${esc(path)}" title="${esc(n)} ${esc(y)}"><img src="https://image.tmdb.org/t/p/w154${esc(path)}" alt="" loading="lazy"><small>${esc(n)} ${esc(y)}</small></button>`).join("") || `<span class="rv-help">${L("לא נמצאו הצעות", "No suggestions")}</span>`}</div>
+        <form class="rv-url" data-url-for="${p.id}"><input type="url" placeholder="${L("קישור לתמונה של הפוסטר", "Link to a poster image")}" required><button class="btn" type="submit">${L("שמירה", "Save")}</button>
+          <button class="btn" type="button" data-hide-title="${p.id}">${L("להסתיר", "Hide")}</button></form></div>`).join("")
+        || `<div class="empty"><strong>${L("אין עוד פוסטרים לבדוק 🎉", "Nothing left to check 🎉")}</strong></div>`}</div></div>`;
+  }
+  document.addEventListener("click", async e => {
+    const tb = e.target.closest("[data-rv-tab]"); if (tb) { rv.tab = tb.dataset.rvTab; render(); return; }
+    const d = e.target.closest("[data-decide]");
+    if (d) {
+      const [us, il] = d.dataset.pair.split("|"), v = d.dataset.decide;
+      if (v === "hide_us" || v === "hide_il") { if (!confirm(L("להסתיר את הכותר מהאתר?", "Hide this title from the site?"))) return; }
+      const ok = v === "hide_us" ? await saveFix(us, { hide: true }) : v === "hide_il" ? await saveFix(il, { hide: true })
+        : v === "he_us" ? await saveFix(us, { no_title_he: true, no_poster_he: true }) : true;
+      if (!ok) return;
+      const { error } = await sb.from("pair_reviews").upsert({ us_id: us, il_id: il, decision: v, decided_at: new Date().toISOString() });
+      if (error) { toast(t("genericErr")); return; }
+      rv.done[d.dataset.pair] = v; render(); return;
+    }
+    const c = e.target.closest("[data-poster]");
+    if (c) { if (await saveFix(c.dataset.posterFor, { poster_url: c.dataset.poster })) { toast(L("נשמר", "Saved")); render(); } return; }
+    const h = e.target.closest("[data-hide-title]");
+    if (h) { if (confirm(L("להסתיר את הכותר מהאתר?", "Hide this title from the site?")) && await saveFix(h.dataset.hideTitle, { hide: true })) render(); }
+  });
+  document.addEventListener("change", e => { if (e.target.matches("[data-rv-done]")) { rv.showDone = e.target.checked; render(); } });
+  document.addEventListener("submit", async e => {
+    const f = e.target.closest("[data-url-for]"); if (!f) return;
+    e.preventDefault();
+    const url = f.querySelector("input").value.trim();
+    if (/^https:\/\/\S+$/.test(url) && await saveFix(f.dataset.urlFor, { poster_url: url })) { toast(L("נשמר", "Saved")); render(); }
+  });
+
   // ---------- About ----------
   const ABOUT = {
     en: [
@@ -1653,6 +1800,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     w.innerHTML = `<button class="btn acct" type="button" id="acct-btn" aria-expanded="${menuOpen}"><span class="avatar">${esc(email[0] || "?")}</span><span class="label">${t("mylist")}</span></button>
       ${menuOpen ? `<div class="menu" role="menu"><div class="who">${esc(email)}</div>
         <button type="button" role="menuitem" data-view="list">${t("mylist")}</button>
+        ${isAdmin() ? `<button type="button" role="menuitem" data-view="review">${L("בדיקה", "Review")}</button>` : ""}
         <button type="button" role="menuitem" id="sign-out">${t("signOut")}</button></div>` : ""}`;
   }
   function openAuth(mode) {
@@ -1721,7 +1869,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   setLang(lang);
   // First screen: home.json (rows + home titles). Then, in the background, index.json (6,000 popular titles for instant search).
   fetch("home.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => {
-    C = { ...data, index: [] }; render();
+    C = { ...data, index: [] }; render(); loadFixes();
     const shared = new URLSearchParams(location.search).get("t");   // arrived from a shared /t/<id> link
     if (shared && /^Q\d+$/.test(shared)) {
       history.replaceState(null, "", location.pathname);
@@ -1732,6 +1880,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const idle = window.requestIdleCallback || (f => setTimeout(f, 300));
     idle(() => fetch("index.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(ix => {
       for (const [id, it] of Object.entries(ix.items)) if (!C.items[id]) C.items[id] = it;
+      Object.values(fixes).forEach(f => applyFix(f.title_id, f));
       C.index = ix.ids.filter(id => C.items[id]);
       peopleIndex = null;
       if (view === "discover") render();

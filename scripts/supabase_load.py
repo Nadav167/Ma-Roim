@@ -38,10 +38,10 @@ for r in rows:
     })
 print("rows to load", len(out), flush=True)
 
-B = 1000
+B = 250   # small batches stay under the database time limit (each title row updates several indexes)
 for i in range(0, len(out), B):
     batch = out[i:i + B]
-    for a in range(5):
+    for a in range(8):
         r = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(batch), timeout=120)
         if r.status_code < 300: break
         print("retry", i, r.status_code, r.text[:300], flush=True); time.sleep(3 * (a + 1))

@@ -1,0 +1,77 @@
+# Rebuilds the Ma Roim catalog every week from Wikidata, IMDb, TMDB and Hebrew Wikipedia,
+# updates the database, and commits the new site files (Vercel then redeploys).
+# Needs two repository secrets: TMDB_TOKEN (TMDB API Read Access Token) and SUPABASE_SECRET (Supabase secret key).
+name: Weekly catalog update
+
+on:
+  schedule:
+    - cron: "23 1 * * 0"   # Sundays 01:23 UTC (03:23 / 04:23 in Israel)
+  workflow_dispatch:       # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install requests
+
+      - name: Keys
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+          SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}
+        run: |
+          if [ -z "$TMDB_TOKEN" ] || [ -z "$SUPABASE_SECRET" ]; then echo "::error::Add the TMDB_TOKEN and SUPABASE_SECRET repository secrets"; exit 1; fi
+          mkdir -p .secrets
+          printf %s "$TMDB_TOKEN" > .secrets/tmdb_token
+          printf %s "$SUPABASE_SECRET" > .secrets/supabase_secret
+          printf %s "https://prnfnqvjirwuyafvsulk.supabase.co" > .secrets/supabase_url
+
+      - name: Previous data and caches
+        run: |
+          mkdir -p out
+          gunzip -c data/titles.json.gz > out/ma_roim_titles.json
+          if git fetch --depth 1 origin pipeline-cache; then
+            git show origin/pipeline-cache:cache.tar.gz > cache.tar.gz && tar xzf cache.tar.gz && rm cache.tar.gz
+          else
+            echo "No cache yet; the first run fetches everything (slower)"
+          fi
+
+      - name: Rebuild the catalog
+        run: bash scripts/update_all.sh
+
+      - name: Publish the site files
+        run: |
+          git config user.name "Nadav167"
+          git config user.email "173299564+Nadav167@users.noreply.github.com"
+          git add site/home.json site/index.json site/watch site/review data
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Weekly catalog update $(date -u +%F)"
+          git push origin HEAD:main
+
+      - name: Save caches for next week
+        if: always()
+        run: |
+          [ -d raw/tmdb ] || exit 0
+          files=$(ls raw/tmdb/*.jsonl 2>/dev/null | grep -v providers || true); [ -d raw/hewiki ] && files="$files raw/hewiki"
+          [ -n "$files" ] || exit 0
+          tar czf /tmp/cache.tar.gz $files
+          cd "$(mktemp -d)"
+          git init -q -b pipeline-cache
+          cp /tmp/cache.tar.gz .
+          printf "Cached TMDB and Hebrew Wikipedia answers for the weekly update. Replaced every week.\n" > README.md
+          git add . && git -c user.name=Nadav167 -c user.email=173299564+Nadav167@users.noreply.github.com commit -q -m "Pipeline cache $(date -u +%F)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" pipeline-cache

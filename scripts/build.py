@@ -1,5 +1,6 @@
 # Stage 3: merge Wikidata details with IMDb basics/ratings, filter, write CSV + JSON
-import json, glob, gzip, csv, collections
+import json, glob, gzip, csv, collections, datetime
+LAST = datetime.date.today().year   # newest year in scope: this year
 
 items = json.load(open("raw/items.json"))
 det = {}
@@ -47,11 +48,11 @@ for q, it in items.items():
         sy, ey = nn(b[5]), nn(b[6])
         if year is None and sy: year = int(sy)
         if end is None and ey and kind == "TV series": end = int(ey)
-    # Scope: released/started 1980–2026; TV that started earlier counts if it ran into 1980+
+    # Scope: released/started 1980 to this year; TV that started earlier counts if it ran into 1980+
     if kind == "TV series":
-        ok = (year and 1980 <= year <= 2026) or (year and year < 1980 and (end is None or end >= 1980) and (end is not None or (b and nn(b[6]) is None)))
+        ok = (year and 1980 <= year <= LAST) or (year and year < 1980 and (end is None or end >= 1980) and (end is not None or (b and nn(b[6]) is None)))
     else:
-        ok = year is not None and 1980 <= year <= 2026
+        ok = year is not None and 1980 <= year <= LAST
     if not ok:
         stats["drop_year"] += 1; continue
     title = d.get("en") or (b[2] if b else None) or d.get("he")
