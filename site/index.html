@@ -221,6 +221,8 @@ a.score:hover { border-color: var(--muted); }
 .chip { border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 12px; color: var(--fg); }
 
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.wa-btn { background: #1fa855; border-color: #1fa855; color: #fff; }
+.wa-btn:hover { background: #22b85d; }
 .btn { height: 44px; padding-inline: 18px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface-2);
   font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
 .btn:hover { border-color: var(--muted); }
@@ -518,6 +520,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
+      share: "Share", linkCopied: "Link copied", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} on Ma Roim:`,
       markWatched: "Mark watched", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + "h " : ""}${m % 60}m`, results: n => `${n} results`, noResults: "Nothing found",
       noResultsHint: "Try the English or the Hebrew title, or fewer words.", year: "Year", runtime: "Runtime", rating: "IMDb rating",
@@ -567,6 +570,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
+      share: "שיתוף", linkCopied: "הקישור הועתק", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} ב"מה רואים":`,
       markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + " ש׳ " : ""}${m % 60} ד׳`, results: n => `${n} תוצאות`, noResults: "לא נמצא כלום",
       noResultsHint: "נסו את השם בעברית או באנגלית, או פחות מילים.", year: "שנה", runtime: "אורך", rating: "דירוג IMDb",
@@ -602,7 +606,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.1910";
+  const BUILD = "2026-10-29.2030";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -659,6 +663,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
     info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>',
   };
 
@@ -944,6 +950,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
             <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
+            <button class="btn wa-btn" type="button" data-wa="${id}">${icon.chat}WhatsApp</button>
+            <button class="btn" type="button" data-share="${id}">${icon.share}${t("share")}</button>
           </div>
           <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
           <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
@@ -1352,6 +1360,22 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     }
   });
 
+  // ---------- Sharing: /t/<id> links show a poster preview in WhatsApp and open the title ----------
+  const shareUrl = id => `${location.origin}/t/${id}?l=${lang}`;
+  const shareMsg = id => { const it = C.items[id] || {}; return t("shareText")(title(it), it.y); };
+  async function copyLink(id) {
+    try { await navigator.clipboard.writeText(shareUrl(id)); toast(t("linkCopied")); }
+    catch (e) { prompt("", shareUrl(id)); }
+  }
+  document.addEventListener("click", async e => {
+    const w = e.target.closest("[data-wa]");
+    if (w) { window.open(`https://wa.me/?text=${encodeURIComponent(shareMsg(w.dataset.wa) + "\n" + shareUrl(w.dataset.wa))}`, "_blank", "noopener"); return; }
+    const s = e.target.closest("[data-share]"); if (!s) return;
+    const id = s.dataset.share;
+    if (navigator.share) { try { await navigator.share({ title: title(C.items[id] || {}), text: shareMsg(id), url: shareUrl(id) }); } catch (err) { /* closed */ } }
+    else copyLink(id);
+  });
+
   // ---------- Trailers ----------
   // Hebrew site: the Hebrew (usually Hebrew-subtitled) trailer first; otherwise the English one with YouTube asked to
   // turn on Hebrew subtitles if the video has them. English site: the English trailer, else whatever exists.
@@ -1698,6 +1722,12 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   // First screen: home.json (rows + home titles). Then, in the background, index.json (6,000 popular titles for instant search).
   fetch("home.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => {
     C = { ...data, index: [] }; render();
+    const shared = new URLSearchParams(location.search).get("t");   // arrived from a shared /t/<id> link
+    if (shared && /^Q\d+$/.test(shared)) {
+      history.replaceState(null, "", location.pathname);
+      await ensureItems([shared]);
+      if (C.items[shared]) openDetail(shared);
+    }
     if (user) { await ensureItems([...list, ...watched]); refresh(); }
     const idle = window.requestIdleCallback || (f => setTimeout(f, 300));
     idle(() => fetch("index.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(ix => {

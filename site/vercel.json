@@ -49,5 +49,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/t/:id",
+      "destination": "/api/t?id=:id"
+    }
   ]
 }
