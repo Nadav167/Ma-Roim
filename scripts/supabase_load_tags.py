@@ -20,6 +20,9 @@ if has_listed:
         r = by[o["id"]]
         o["listed"] = bool(r["poster_en"] or r["poster_he"])
     print("shown:", sum(o["listed"] for o in out), "| hidden (no poster):", sum(not o["listed"] for o in out), flush=True)
+if requests.get(f"{URL}/rest/v1/titles?select=search_alias&limit=1", headers=H, timeout=60).ok:   # US/Israeli versions (scripts/versions.py)
+    by = {r["wikidata_id"]: r for r in rows}
+    for o in out: o["search_alias"] = by[o["id"]].get("search_alias") or None
 for i in range(0, len(out), 500):
     for a in range(8):
         x = requests.post(f"{URL}/rest/v1/titles?on_conflict=id", headers=H, data=json.dumps(out[i:i + 500]), timeout=180)

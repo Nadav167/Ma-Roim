@@ -606,7 +606,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.2330";
+  const BUILD = "2026-10-30.0000";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -1146,7 +1146,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   function rankTitles(q, ids) {
     const nq = norm(q), seen = new Set();
     return ids.filter(id => C.items[id] && (C.items[id].p || C.items[id].ph) && !seen.has(id) && seen.add(id))
-      .map(id => { const it = C.items[id]; return [sgRank(nq, [it.t, it.th]), -(it.v || 0), id]; })
+      .map(id => { const it = C.items[id]; return [sgRank(nq, [it.t, it.th, ...(it.sa ? it.sa.split(" | ") : [])]), -(it.v || 0), id]; })
       .filter(r => r[0] < 9).sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, 5).map(r => r[2]);
   }
   function rankPeople(q, list) {
@@ -1157,7 +1157,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   }
   function localSuggest(q) {
     const nq = norm(q), words = nq.split(" ");
-    const ids = C.index.filter(id => { const it = C.items[id], hay = norm(it.t) + " " + norm(it.th); return words.every(w => hay.includes(w)); });
+    const ids = C.index.filter(id => { const it = C.items[id], hay = norm(it.t) + " " + norm(it.th) + " " + norm(it.sa); return words.every(w => hay.includes(w)); });
     if (!peopleIndex) buildPeopleIndex();
     const ppl = peopleIndex.filter(p => { const hay = norm(p.name) + " " + norm(p.name_he); return words.every(w => hay.includes(w)); });
     return { ids, ppl };

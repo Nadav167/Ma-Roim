@@ -14,6 +14,12 @@ if os.path.exists("raw/tmdb/search.jsonl"):
         x = json.loads(line)
         if x.get("tmdb_id"): found[x["q"]] = x
 
+import re
+NOT_ADULT = {"From Straight A's to XXX", "Thinking XXX", "Mommy XXX"}   # a TV drama and documentaries about the industry
+def is_adult_parody(t):
+    if t in NOT_ADULT: return False
+    return bool(re.search(r"XXX", t, re.I) and re.search(r"parody|porn|orgasm", t, re.I)) \
+        or bool(re.search(r"(?<!^)\bXXX\b", t)) or "XXXorcist" in t
 out = []
 for r in rows:
     imdb = r["imdb_url"].rstrip("/").rsplit("/", 1)[1] if r["imdb_url"] else None
@@ -40,6 +46,8 @@ for r in rows:
         "tmdb_id": t.get("tmdb_id") or "", "tmdb_type": t.get("tmdb_type") or "",
         "wikidata_id": r["wikidata_id"], "all_countries": r["all_countries"],
     }
+    # adult parodies ("Batman XXX: A Porn Parody", "This Ain't Glee XXX") aren't always tagged: mark them Adult so the site skips them
+    if is_adult_parody(o["title"]): o["genres"] = ", ".join([g for g in o["genres"].split(", ") if g] + ["Adult"])
     out.append(o)
 
 # Hebrew-site rule: each title uses only its OWN Hebrew title/poster (matched by its own IMDb ID).

@@ -27,6 +27,7 @@ step "Critics' scores";          python3 scripts/scores.py
 step "Cast and crew";            python3 scripts/cast.py; python3 scripts/people_he.py; python3 scripts/people_photos.py
 step "Tags and trailers";        python3 scripts/tags.py; python3 scripts/trailers.py
 step "Where to watch";           python3 scripts/providers.py; python3 scripts/networks.py; python3 scripts/us_services.py
+step "Versions of the same show"; python3 scripts/versions.py
 step "Site files";               python3 scripts/watch_files.py; python3 scripts/site_catalog.py
 step "Dataset copies"
 gzip -9 -c out/ma_roim_titles.json > data/titles.json.gz

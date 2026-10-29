@@ -30,7 +30,7 @@ def slim(r):
         "p": r["poster_en"] or None, "ph": r["poster_he"] or None, "b": r["backdrop"] or None,
         "o": r["overview_en"] or "", "oh": r["overview_he"] or "",
         "imdb": r["imdb_url"] or None, "we": r["wikipedia_en"] or None, "wh": r["wikipedia_he"] or None,
-        "mc": r["metacritic_url"] or None,
+        "mc": r["metacritic_url"] or None, "sa": r.get("search_alias") or None,
     }
 
 has_poster = [r for r in rows if r["poster_en"]]
@@ -114,7 +114,7 @@ if mode == "site":
     #   home.json  – rows, hero and full details of the home-page titles (what the first screen needs)
     #   index.json – the 6,000 most popular titles with card fields only, loaded in the background for instant search
     # Everything else (synopsis, trailer, cast of other titles) is fetched from the database when a title is opened.
-    CARD = ("t", "th", "ty", "y", "ye", "il", "g", "rt", "v", "p", "ph", "rs", "ms")
+    CARD = ("t", "th", "ty", "y", "ye", "il", "g", "rt", "v", "p", "ph", "rs", "ms", "sa")
     home_items = {i: {**items[i], "f": 1} for i in shelf_ids if i in items}
     # where to watch in Israel for home titles (same compact shape as site/watch/NN.json; null = not available)
     by_id = {r["wikidata_id"]: r for r in rows}
