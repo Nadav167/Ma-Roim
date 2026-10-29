@@ -18,7 +18,7 @@ for r in rows:
             if pid not in ids: ids.append(pid)
             if src == "stream": stream_count[pid] += 1
         if ids: e[dst] = ids
-    if r.get("stream_us"): e["u"] = r["stream_us"]                # Disney+ / Hulu, from the US catalog (scripts/us_services.py)
+    if r.get("stream_us"): e["u"] = r["stream_us"]                # Disney+, from the US catalog (scripts/us_services.py)
     shards[(int(r["wikidata_id"][1:]) % 64)][r["wikidata_id"]] = e
 for pid, (n, l) in json.load(open("raw/us_providers.json")).items():
     prov[int(pid)] = [n, l]; stream_count[int(pid)] = sum(1 for r in rows if int(pid) in (r.get("stream_us") or []))

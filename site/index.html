@@ -44,12 +44,14 @@ body { margin: 0; }
 img { max-width: 100%; }
 html, body { background: var(--bg); color: var(--fg); }
 /* the page never moves sideways on a phone; rows of posters still scroll on their own */
-html, body { max-width: 100%; overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; }
+/* (html's setting goes to the window itself; body uses clip, which unlike hidden doesn't make body its own scroll area and keeps the top bar pinned) */
+html { overflow-x: hidden; overscroll-behavior-x: none; }
+body { max-width: 100%; overflow-x: clip; }
 /* iPhone zooms in on text fields under 16px, which lets the page slide sideways */
 @media (max-width: 720px) { input, textarea, select { font-size: 16px !important; } }
 body {
   font-family: var(--font-ui); font-size: 15px; line-height: 1.45;
-  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
 button, input { font: inherit; color: inherit; }
@@ -393,11 +395,16 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .brand { display: none; }
   .rail { align-items: stretch; }
+  /* iPhone Safari can leave a strip under a bar pinned to the bottom: carry the bar's colour down through it */
+  .rail::after { content: ""; position: absolute; inset-inline: 0; top: 100%; height: 160px; background: var(--surface); pointer-events: none; }
+  html { background: var(--surface); }
+  body { min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
   .nav-btn { width: auto; flex: 1 1 0; min-width: 0; font-size: 10px; padding: 6px 1px; justify-content: flex-start; line-height: 1.15; text-align: center; }
   .nav-btn span { display: block; overflow-wrap: anywhere; }
   .app { margin-inline-start: 0; }
   main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
-  .top { flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  /* the search sits on its own line here, so the bar needs a solid background or content shows through under it */
+  .top { background: var(--bg); box-shadow: 0 1px 0 var(--line); flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
@@ -497,7 +504,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check, and you can show only what’s on them.", wDone: "Done",
       onlyMine: "On my services", mineEmpty: "Nothing here is on your services. Where to watch is known for about 13,000 popular titles.",
-      wUS: "In the US", wUSNote: "Disney+ and Hulu are based on their US catalog (what’s available in Israel may differ; Hulu needs a US account).",
+      wUS: "In the US", wUSNote: "Disney+ is based on its US catalog, so what’s available in Israel may differ.",
       wData: "Availability data by JustWatch",
       rViewers: "Viewers report", rAsk: "Seen it on another service?", rPickH: "Where did you see it?", rPickP: "Tap every service you saw it on in Israel. Others see only the totals.",
       rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
@@ -546,7 +553,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק, ואפשר להציג רק אותם.", wDone: "סיום",
       onlyMine: "בשירותים שלי", mineEmpty: "אין כאן כותרים שזמינים בשירותים שלכם. המידע איפה לצפות קיים לכ-13,000 כותרים פופולריים.",
-      wUS: "בארה״ב", wUSNote: "דיסני+ ו-Hulu לפי הקטלוג שלהם בארה״ב (בישראל הזמינות עשויה להיות שונה; ל-Hulu צריך חשבון אמריקאי).",
+      wUS: "בארה״ב", wUSNote: "דיסני+ לפי הקטלוג שלו בארה״ב, כך שבישראל הזמינות עשויה להיות שונה.",
       wData: "נתוני זמינות: JustWatch",
       rViewers: "דיווחי צופים", rAsk: "ראיתם את זה בשירות אחר?", rPickH: "איפה ראיתם את זה?", rPickP: "סמנו כל שירות שבו ראיתם את זה בישראל. אחרים רואים רק את הסיכום.",
       rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
@@ -592,7 +599,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-29.1740";
+  const BUILD = "2026-10-29.1745";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -1221,8 +1228,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   };
   // Home titles carry it in home.json; others come from small static files (watch/NN.json), 64 of them.
   let PROV = null; const shardCache = {};
-  // The services in the picker: Netflix, HBO Max, Prime Video, Apple TV, Disney+, Hulu (Disney+ and Hulu from the US catalog)
-  const PICK = [8, 1899, 119, 350, 337, 15], US_SVC = new Set([337, 15]);
+  // The services in the picker: Netflix, HBO Max, Prime Video, Apple TV, Disney+ (Disney+ from its US catalog)
+  const PICK = [8, 1899, 119, 350, 337], US_SVC = new Set([337]);
   let myServices = new Set(store.get("services", []).filter(p => PICK.includes(p)));
   const provLogo = pid => PROV && PROV[pid] ? `https://image.tmdb.org/t/p/w92${PROV[pid][1]}` : "";
   const provName = pid => PROV && PROV[pid] ? PROV[pid][0] : "";

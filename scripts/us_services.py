@@ -1,8 +1,7 @@
-# Disney+ and Hulu aren't in the Israel data (JustWatch doesn't track Disney+ in Israel; Hulu is US-only),
-# so the site uses their US catalog. Adds "stream_us": [provider ids] to out/ma_roim_titles.json
+# Disney+ isn't in the Israel data (JustWatch doesn't track it in Israel), so the site uses its US catalog. Adds "stream_us": [provider ids] to out/ma_roim_titles.json
 # and writes raw/us_providers.json {id: [name, logo]}.
 import json
-US = {337: "Disney+", 15: "Hulu"}
+US = {337: "Disney+"}
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 got, logos = {}, {}
 for line in open("raw/tmdb/providers.jsonl", encoding="utf-8"):
