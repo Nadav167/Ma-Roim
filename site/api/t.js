@@ -11,7 +11,7 @@ const clip = (s, n) => (s && s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/,
 module.exports = async function handler(req, res) {
   const id = String((req.query && req.query.id) || "");
   const lang = req.query && req.query.l === "en" ? "en" : "he";
-  if (!/^Q\d{1,12}$/.test(id)) { res.statusCode = 302; res.setHeader("Location", "/"); return res.end(); }
+  if (!/^[QMS]\d{1,12}$/.test(id)) { res.statusCode = 302; res.setHeader("Location", "/"); return res.end(); }
   const app = `/?t=${id}`;
 
   let t = null;

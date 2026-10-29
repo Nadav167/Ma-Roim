@@ -5,7 +5,7 @@ import json, csv, time, urllib.parse, requests
 EP = "https://query.wikidata.org/sparql"
 H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
-need = [r["wikidata_id"] for r in rows if not r["poster_en"]]
+need = [r["wikidata_id"] for r in rows if not r["poster_en"] and r["wikidata_id"].startswith("Q")]
 found = {}
 for i in range(0, len(need), 400):
     vals = " ".join("wd:" + q for q in need[i:i + 400])

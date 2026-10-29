@@ -9,7 +9,7 @@ rows = json.load(open(src, encoding="utf-8") if src.endswith(".json") else gzip.
 recent = [r for r in rows if (r.get("year") or 0) >= recent_year or (r.get("type") == "TV series" and not r.get("end_year"))]
 q = {r["wikidata_id"] for r in recent}
 imdb = {r["imdb_url"].rstrip("/").rsplit("/", 1)[1] for r in recent if r.get("imdb_url")}
-for name, key, keep in (("results", "imdb", imdb), ("keywords", "q", q), ("videos", "q", q), ("credits", "q", q)):
+for name, key, keep in (("results", "imdb", imdb), ("keywords", "q", q), ("videos", "q", q), ("credits", "q", q), ("extra", "q", q)):
     f = f"raw/tmdb/{name}.jsonl"
     if not os.path.exists(f): continue
     lines = open(f, encoding="utf-8").read().splitlines()

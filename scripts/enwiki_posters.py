@@ -20,6 +20,10 @@ def call(params):
     raise RuntimeError("rate limited")
 for i in range(0, len(todo), 50):
     batch = todo[i:i + 50]
+    try:
+        requests.head(API, headers=H, timeout=15) if i == 0 else None
+    except requests.exceptions.RequestException:
+        print("English Wikipedia isn't reachable from here; skipping (uses what's cached)", flush=True); break
     t2r = {page_title(r["wikipedia_en"]): r for r in batch}
     d = call({"action": "query", "format": "json", "formatversion": 2, "prop": "pageimages", "piprop": "original|thumbnail|name",
               "pithumbsize": 500, "pilicense": "any", "redirects": 1, "titles": "|".join(t2r)})

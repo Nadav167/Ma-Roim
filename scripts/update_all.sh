@@ -20,7 +20,8 @@ if [ "$FRESH" = 1 ]; then
 fi
 
 step "Wikidata titles";          python3 scripts/stage1.py; python3 scripts/stage2.py
-step "IMDb join";                python3 scripts/build.py; cp out/ma_roim_titles.json raw/base_titles.json
+step "IMDb join";                python3 scripts/build.py
+step "Israeli titles from TMDB"; python3 scripts/tmdb_israeli.py; cp out/ma_roim_titles.json raw/base_titles.json
 step "TMDB details";             python3 scripts/tmdb_enrich.py; python3 scripts/tmdb_search_fill.py; python3 scripts/merge_tmdb.py
 step "More posters";             python3 scripts/hewiki_posters.py; python3 scripts/hewiki_apply.py; python3 scripts/wikidata_posters.py; python3 scripts/enwiki_posters.py
 step "Critics' scores";          python3 scripts/scores.py

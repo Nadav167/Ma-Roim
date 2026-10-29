@@ -22,7 +22,7 @@ def ask(q):
         except requests.exceptions.RequestException: time.sleep(10 * (a + 1))
     return []
 links = collections.defaultdict(set)
-ids = sorted(us | il)
+ids = sorted(q for q in us | il if q.startswith("Q"))   # titles added from TMDB have no Wikidata item
 for prop in ("P144", "P4969"):        # based on / has derivative work
     for i in range(0, len(ids), 400):
         vals = " ".join("wd:" + q for q in ids[i:i + 400])
@@ -40,7 +40,8 @@ wd = len(pairs)
 n = lambda s: re.sub(r"[^\w ]", "", (s or "").lower()).strip()
 for v in csv.DictReader(open("data/versions.csv", encoding="utf-8")):
     U = [q for q in us if n(by[q]["title"]) == n(v["us_title"])]
-    I = [q for q in il if n(v["il_title_he"]) and n(by[q]["title_he"]).startswith(n(v["il_title_he"]))]
+    I = [q for q in il if (n(v["il_title_he"]) and n(by[q]["title_he"]).startswith(n(v["il_title_he"])))
+         or n(by[q]["title"]) in (n(v["us_title"]) + " israel", n(v["us_title"]).replace("the ", "", 1) + " israel")]
     pairs |= {(u, i) for u in U for i in I if u != i}
 
 alias = collections.defaultdict(set)

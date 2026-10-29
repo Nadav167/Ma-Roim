@@ -1727,7 +1727,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   fetch("home.json?v=" + BUILD, { cache: "no-cache" }).then(r => r.json()).then(async data => {
     C = { ...data, index: [] }; render();
     const shared = new URLSearchParams(location.search).get("t");   // arrived from a shared /t/<id> link
-    if (shared && /^Q\d+$/.test(shared)) {
+    if (shared && /^[QMS]\d+$/.test(shared)) {   // Q: Wikidata titles; M/S: Israeli titles added from TMDB
       history.replaceState(null, "", location.pathname);
       await ensureItems([shared]);
       if (C.items[shared]) openDetail(shared);

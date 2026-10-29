@@ -21,7 +21,7 @@ for line in open("raw/tmdb/results.jsonl", encoding="utf-8"):
     except Exception: pass
 rows = json.load(open("raw/base_titles.json", encoding="utf-8"))
 imdb_of = lambda r: r["imdb_url"].rstrip("/").rsplit("/", 1)[1] if r["imdb_url"] else None
-todo = [r for r in rows if imdb_of(r) not in matched and "Adult" not in (r.get("genres") or "")]
+todo = [r for r in rows if imdb_of(r) not in matched and "Adult" not in (r.get("genres") or "") and r["wikidata_id"].startswith("Q")]   # M/S ids come from TMDB already
 done = set()
 if os.path.exists(OUT):
     for line in open(OUT, encoding="utf-8"):

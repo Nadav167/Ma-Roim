@@ -9,10 +9,11 @@ for line in open("raw/tmdb/results.jsonl", encoding="utf-8"):
 # matches found by name and year (scripts/tmdb_search_fill.py) for titles the IMDb lookup missed
 import os
 found = {}
-if os.path.exists("raw/tmdb/search.jsonl"):
-    for line in open("raw/tmdb/search.jsonl", encoding="utf-8"):
-        x = json.loads(line)
-        if x.get("tmdb_id"): found[x["q"]] = x
+for f in ("raw/tmdb/search.jsonl", "raw/tmdb/extra.jsonl"):   # extra: Israeli titles added from TMDB (tmdb_israeli.py)
+    if os.path.exists(f):
+        for line in open(f, encoding="utf-8"):
+            x = json.loads(line)
+            if x.get("tmdb_id"): found[x["q"]] = x
 
 import re
 NOT_ADULT = {"From Straight A's to XXX", "Thinking XXX", "Mommy XXX"}   # a TV drama and documentaries about the industry
