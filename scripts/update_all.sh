@@ -23,7 +23,7 @@ step "Wikidata titles";          python3 scripts/stage1.py; python3 scripts/stag
 step "IMDb join";                python3 scripts/build.py
 step "Israeli titles from TMDB"; python3 scripts/tmdb_israeli.py; cp out/ma_roim_titles.json raw/base_titles.json
 step "TMDB details";             python3 scripts/tmdb_enrich.py; python3 scripts/tmdb_search_fill.py; python3 scripts/merge_tmdb.py
-step "More posters";             python3 scripts/hewiki_posters.py; python3 scripts/hewiki_apply.py; python3 scripts/wikidata_posters.py; python3 scripts/enwiki_posters.py
+step "More posters";             python3 scripts/hewiki_posters.py; python3 scripts/hewiki_apply.py; python3 scripts/wikidata_posters.py; python3 scripts/enwiki_posters.py; python3 scripts/drop_unknown.py
 step "Critics' scores";          python3 scripts/scores.py
 step "Cast and crew";            python3 scripts/cast.py; python3 scripts/people_he.py; python3 scripts/people_photos.py
 step "Tags and trailers";        python3 scripts/tags.py; python3 scripts/trailers.py
@@ -40,5 +40,6 @@ if [ "$LOAD" = 1 ]; then
   python3 scripts/supabase_load.py
   python3 scripts/supabase_load_cast.py
   python3 scripts/supabase_load_tags.py --with-stream
+  python3 scripts/supabase_remove_dropped.py
 fi
 step "Done: $(python3 -c 'import json;print(len(json.load(open("out/ma_roim_titles.json"))))') titles"
