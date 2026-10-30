@@ -133,7 +133,7 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .imdb b { background: var(--gold); color: #1a1500; font-size: 10px; font-weight: 800; padding: 2px 4px; border-radius: 3px; letter-spacing: .02em; }
 .chat { display: grid; gap: 18px; }
 /* Discover: this-or-that */
-.disc { max-width: 900px; display: grid; gap: 18px; }
+.disc { display: grid; gap: 18px; }
 .disc-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
 .disc-top h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
 .disc-top .count { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -156,8 +156,8 @@ body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px
 .ai-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 8px 20px; }
 .ai-mode .composer { position: static; flex: none; background: var(--bg); border-top: 1px solid var(--line); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
 .ai-mode .composer form { max-width: none; }
-.ai-mode .bubble { max-width: min(760px, 85%); }
-.ai-intro { display: grid; gap: 18px; padding-top: 12px; max-width: 760px; }
+.ai-mode .bubble { max-width: 85%; }
+.ai-intro { display: grid; gap: 18px; padding-top: 12px; }
 /* Speech bubbles, taken from the logo: the question is the dark bubble, the answer the bright one.
    Used only in Discover and Ask AI, so the shape stays the site's signature rather than decoration. */
 .bubble { position: relative; max-width: 640px; padding: 12px 16px; border-radius: 20px; line-height: 1.55; overflow-wrap: anywhere; }
@@ -1632,17 +1632,23 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const likes = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([f]) => featLabel(f));
     const less = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([f]) => featLabel(f));
     const kind = type === "movie" ? (lang === "he" ? "סרטים" : "movies") : (lang === "he" ? "סדרות" : "TV series");
+    // Candidates: well-known titles not shown in the game yet, best taste match first. The AI picks from these
+    // (one quick call); if it fails, the best matches show on their own.
+    const shown = new Set([...disc.seen[type], ...disc.picks[type], ...disc.passes[type]]), minV = type === "movie" ? 100000 : 20000;
+    const cands = Object.keys(C.items).filter(id => { const it = C.items[id]; return it.ty === type && it.p && it.rt && (it.v || 0) >= minV && !shown.has(id); })
+      .map(id => [score(id, w) + Math.log10(C.items[id].v) * 0.01, id]).sort((x, y) => y[0] - x[0]).slice(0, 60).map(([, id]) => id);
+    const fallback = () => ({ message: lang === "he" ? "אלה הכותרים שהכי מתאימים לטעם שלכם:" : "These fit your taste best:", ids: cands.slice(0, 10) });
     const msg = lang === "he"
-      ? `שיחקתי "זה או זה" כדי לגלות מה אני אוהב. המלץ לי על 10 ${kind} שיתאימו לטעם שלי. בחרתי: ${picks.join(", ")}. ויתרתי על: ${passes.join(", ")}. אני נמשך ל: ${likes.join(", ")}. פחות בשבילי: ${less.join(", ")}. אל תמליץ על כותרים מהרשימות האלה. המלץ רק על כותרים מוכרים ומפורסמים, לא נישתיים (min_votes לפחות ${type === "movie" ? 100000 : 20000}). התחל במשפט קצר שמתאר את הטעם שלי.`
-      : `I played a this-or-that game to find what I like. Recommend 10 ${kind} that fit my taste. I picked: ${picks.join(", ")}. I passed on: ${passes.join(", ")}. I lean toward: ${likes.join(", ")}. Less my thing: ${less.join(", ")}. Don't recommend titles from these lists. Only recommend well-known, popular titles, nothing niche (min_votes at least ${type === "movie" ? 100000 : 20000}). Start with one short sentence describing my taste.`;
+      ? `שיחקתי "זה או זה" כדי לגלות מה אני אוהב. המלץ לי על 10 ${kind} שיתאימו לטעם שלי. בחרתי: ${picks.join(", ")}. ויתרתי על: ${passes.join(", ")}. אני נמשך ל: ${likes.join(", ")}. פחות בשבילי: ${less.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת. התחל במשפט קצר שמתאר את הטעם שלי.`
+      : `I played a this-or-that game to find what I like. Recommend 10 ${kind} that fit my taste. I picked: ${picks.join(", ")}. I passed on: ${passes.join(", ")}. I lean toward: ${likes.join(", ")}. Less my thing: ${less.join(", ")}. Choose the 10 best fits from the attached list. Start with one short sentence describing my taste.`;
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
-        body: JSON.stringify({ lang, services: [...myServices], messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
+        body: JSON.stringify({ lang, services: [...myServices], pick_from: cands, messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok) { await ensureItems(j.ids || []); disc.result = { message: j.message, ids: j.ids || [] }; }
-      else disc.result = { err: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("dSignIn") : t("aiErr") };
-    } catch (e) { disc.result = { err: t("aiErr") }; }
+      if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); disc.result = { message: j.message, ids: j.ids }; }
+      else disc.result = j.error === "limit" ? { err: t("aiLimit") } : fallback();
+    } catch (e) { disc.result = fallback(); }
     if (view === "discover") render();
   }
   document.addEventListener("click", e => {

@@ -161,6 +161,26 @@ module.exports = async function handler(req, res) {
       .slice(-10).map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
     if (!history.length || history[history.length - 1].role !== "user") return res.status(400).json({ error: "empty" });
 
+    // Discover sends the candidates itself (famous titles that fit the taste): one quick call that picks from them, no searching
+    const pickFrom = (Array.isArray(body.pick_from) ? body.pick_from : []).map(String).filter(id => /^[QMS]\d+$/.test(id)).slice(0, 80);
+    if (pickFrom.length) {
+      const r = await fetch(`${SB_URL}/rest/v1/titles?select=*&id=in.(${pickFrom.join(",")})`, { headers: sbHeaders(token) });
+      const rows = r.ok ? await r.json() : [];
+      const ok = new Set(rows.map(t => t.id));
+      const resp = await callClaude({
+        model: MODEL, max_tokens: 1500, system: system(lang, myServices), tools: TOOLS.filter(t => t.name === "present_results"),
+        tool_choice: { type: "tool", name: "present_results" },
+        messages: [...history.slice(0, -1), { role: "user", content: `${history[history.length - 1].content}\n\nPick only from these titles (use their ids):\n${JSON.stringify(rows.map(slim))}` }],
+      });
+      const present = resp.content.find(b => b.type === "tool_use" && b.name === "present_results");
+      const result = present ? { message: String(present.input.message || ""), ids: (present.input.title_ids || []).map(String).filter(id => ok.has(id)).slice(0, 12) } : { message: "", ids: [] };
+      await fetch(`${SB_URL}/rest/v1/ai_suggestions`, {
+        method: "POST", headers: { ...sbHeaders(token), Prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: user.id, prompt: history[history.length - 1].content.slice(0, 2000), title_ids: result.ids, answer: result.message.slice(0, 4000) }),
+      }).catch(() => {});
+      return res.status(200).json(result);
+    }
+
     const messages = [...history];
     let result = null;
     for (let round = 0; round < MAX_ROUNDS && !result; round++) {
