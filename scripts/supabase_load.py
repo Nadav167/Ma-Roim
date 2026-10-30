@@ -13,6 +13,19 @@ def num(v, cast):
     try: return cast(v) if v not in ("", None) else None
     except (TypeError, ValueError): return None
 
+def main_countries(r):
+    # Up to two: the countries of origin (US first), then the US if it co-produced, then the other production countries
+    origin = [c for c in (r["country"] or "").split(" & ") if c]
+    rest = [c for c in (r.get("all_countries") or "").split(", ") if c]
+    same = {"IL": "Israel", "US": "United States", "United States of America": "United States"}
+    origin, rest = [same.get(c, c) for c in origin], [same.get(c, c) for c in rest]
+    order = origin + (["United States"] if "United States" in rest else []) + rest
+    return list(dict.fromkeys(order))[:2] or None
+
+# The countries column comes from supabase/011_countries.sql; until that has been run, load without it
+has_countries = requests.get(f"{URL}/rest/v1/titles?select=countries&limit=1", headers=H, timeout=60).status_code == 200
+if not has_countries: print("note: run supabase/011_countries.sql to load countries", flush=True)
+
 out, seen_imdb = [], set()
 for r in rows:
     if "Adult" in (r["genres"] or ""):
@@ -35,6 +48,7 @@ for r in rows:
         "metacritic_url": r["metacritic_url"] or None,
         "rt_score": num(r.get("rt_score"), int), "mc_score": num(r.get("mc_score"), int), "rt_url": r.get("rt_url") or None,
         "same_name_flag": r["same_name_flag"] or None,
+        **({"countries": main_countries(r)} if has_countries else {}),
     })
 print("rows to load", len(out), flush=True)
 

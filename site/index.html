@@ -692,7 +692,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
     rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url, tr: r.trailer_en, trh: r.trailer_he,
-    b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", f: 1, imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
+    c: r.countries || null, b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", f: 1, imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
   async function ensureItems(ids) {
     const missing = ids.filter(id => !C.items[id]);
     if (!sb || !missing.length) return;
@@ -705,6 +705,16 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const t = k => T[lang][k];
+  // Up to two countries per title (origin first) come from the database in English
+  const COUNTRY_HE = { "Canada": "קנדה", "United Kingdom": "בריטניה", "France": "צרפת", "Germany": "גרמניה", "Australia": "אוסטרליה", "Italy": "איטליה",
+    "Mexico": "מקסיקו", "Japan": "יפן", "Belgium": "בלגיה", "Ireland": "אירלנד", "Spain": "ספרד", "Czech Republic": "צ׳כיה", "Denmark": "דנמרק",
+    "Argentina": "ארגנטינה", "People's Republic of China": "סין", "India": "הודו", "South Africa": "דרום אפריקה", "Austria": "אוסטריה", "Russia": "רוסיה",
+    "South Korea": "דרום קוריאה", "Poland": "פולין", "Netherlands": "הולנד", "Brazil": "ברזיל", "New Zealand": "ניו זילנד", "Bulgaria": "בולגריה",
+    "Colombia": "קולומביה", "Ukraine": "אוקראינה", "Hungary": "הונגריה", "Finland": "פינלנד", "Romania": "רומניה", "Hong Kong": "הונג קונג",
+    "Chile": "צ׳ילה", "Sweden": "שוודיה", "Iceland": "איסלנד", "Philippines": "הפיליפינים", "Switzerland": "שווייץ", "Norway": "נורווגיה",
+    "Thailand": "תאילנד", "Peru": "פרו", "Venezuela": "ונצואלה", "Iran": "איראן", "Greece": "יוון", "Jordan": "ירדן", "Malta": "מלטה",
+    "Morocco": "מרוקו", "Luxembourg": "לוקסמבורג", "Portugal": "פורטוגל", "Turkey": "טורקיה", "Egypt": "מצרים", "Lebanon": "לבנון", "Palestine": "פלסטין" };
+  const countryName = c => c === "United States" ? t("us") : c === "Israel" ? t("il") : lang === "he" ? COUNTRY_HE[c] || c : c;
   // Names copied from Wikipedia sometimes end in "(סדרת טלוויזיה)", "(סרט, 2005)", "(TV series)": the page already says what it is
   const KIND_TAG = /s*((?:d{4} )?(?:סרט|סדרת טלוויזיה|מיני-סדרה|מיני סדרה|סדרה|סדרת אנימציה|סדרה אנימציה|סדרת אנימה|סדרת רשת|סדרה תיעודית|תוכנית טלוויזיה(?: אמריקאית)?|שעשועון|TV series|miniseries|film)(?:, d{4})?)s*$/i;
   const clean = s => s && s.replace(KIND_TAG, "");
@@ -1061,7 +1071,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
           <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
           <div class="meta d-meta"><span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
             <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}
-            <span>${it.il ? t("il") : t("us")}</span></div>
+            <span>${it.c && it.c.length ? it.c.map(countryName).join(" · ") : it.il ? t("il") : t("us")}</span></div>
           <div id="watch">${it.wa !== undefined && PROV ? watchHtml(it.wa) : watchHtml(undefined)}</div>
         </div>
         <div class="detail-text">
