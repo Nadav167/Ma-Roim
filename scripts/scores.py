@@ -2,7 +2,7 @@
 # Keeps the most recent value per source when several are recorded.
 # Writes raw/scores.json {wikidata_id: {"rt": int, "mc": int}} and adds rt_score / mc_score
 # to out/ma_roim_titles.{json,csv}.
-import requests, json, csv, re, collections
+import requests, json, csv, re, collections, gzip, time
 
 EP = "https://query.wikidata.org/sparql"
 H = {"User-Agent": "MaRoimDataset/0.1 (nadav167@gmail.com)", "Accept": "application/sparql-results+json"}
@@ -15,11 +15,20 @@ Q = """SELECT ?item ?by ?score ?method ?date WHERE {
   OPTIONAL { ?st pq:P459 ?method } OPTIONAL { ?st pq:P585 ?date }
 }"""
 
+def sparql(q):
+    # Wikidata's query service often answers 502/504 for a while; wait and try again
+    for a in range(6):
+        try:
+            r = requests.post(EP, data={"query": q}, headers=H, timeout=300); r.raise_for_status()
+            return r.json()["results"]["bindings"]
+        except Exception as e:
+            print("retry", a + 1, e, flush=True); time.sleep(60 * (a + 1))
+    raise RuntimeError("Wikidata is not answering")
+
 best = collections.defaultdict(dict)  # qid -> {"rt": (date, val), "mc": (date, val)}
-for country in ("Q30", "Q801"):
-    r = requests.post(EP, data={"query": Q % country}, headers=H, timeout=300)
-    r.raise_for_status()
-    for b in r.json()["results"]["bindings"]:
+def fetch():
+  for country in ("Q30", "Q801"):
+    for b in sparql(Q % country):
         qid = b["item"]["value"].rsplit("/", 1)[1]
         by = b["by"]["value"].rsplit("/", 1)[1]
         method = b.get("method", {}).get("value", "").rsplit("/", 1)[-1]
@@ -34,14 +43,25 @@ for country in ("Q30", "Q801"):
         if 0 <= val <= 100 and (key not in best[qid] or date >= best[qid][key][0]):
             best[qid][key] = (date, val)
 
-scores = {q: {k: v[1] for k, v in d.items()} for q, d in best.items()}
+  scores = {q: {k: v[1] for k, v in d.items()} for q, d in best.items()}
 # Rotten Tomatoes page IDs (P1258), e.g. "m/the_dark_knight" or "tv/fauda"
-QR = """SELECT ?item (SAMPLE(?rid) AS ?rid) WHERE { ?item wdt:P495 wd:%s ; wdt:P1258 ?rid } GROUP BY ?item"""
-for country in ("Q30", "Q801"):
-    r = requests.post(EP, data={"query": QR % country}, headers=H, timeout=300); r.raise_for_status()
-    for b in r.json()["results"]["bindings"]:
+  QR = """SELECT ?item (SAMPLE(?rid) AS ?rid) WHERE { ?item wdt:P495 wd:%s ; wdt:P1258 ?rid } GROUP BY ?item"""
+  for country in ("Q30", "Q801"):
+    for b in sparql(QR % country):
         scores.setdefault(b["item"]["value"].rsplit("/", 1)[1], {})["rid"] = b["rid"]["value"].strip("/")
-json.dump(scores, open("raw/scores.json", "w"))
+  return scores
+
+try:
+    scores = fetch()
+    json.dump(scores, open("raw/scores.json", "w"))
+except RuntimeError as e:
+    # keep last week's scores rather than stopping the whole update
+    print(e, "- keeping last week's scores", flush=True)
+    scores = {}
+    for r in json.load(gzip.open("data/titles.json.gz", "rt", encoding="utf-8")):
+        d = {k: r[f] for k, f in (("rt", "rt_score"), ("mc", "mc_score")) if r.get(f) != ""}
+        if r.get("rt_url"): d["rid"] = r["rt_url"].split("rottentomatoes.com/", 1)[-1]
+        scores[r["wikidata_id"]] = d
 
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 for r in rows:
