@@ -226,15 +226,15 @@ html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
 .person-head .face { width: 96px; height: 96px; box-shadow: 0 0 0 2px var(--line); }
 .person-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.02em; }
 .scores { display: flex; flex-wrap: wrap; gap: 10px; }
-.score { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; row-gap: 1px; min-width: 150px;
-  padding: 10px 14px 10px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
-html[dir="rtl"] .score { padding: 10px 10px 10px 14px; }
+.score { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; row-gap: 1px; min-width: 120px;
+  padding: 7px 12px 7px 7px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
+html[dir="rtl"] .score { padding: 7px 7px 7px 12px; }
 a.score:hover { border-color: var(--muted); }
-.score .val { min-width: 48px; height: 48px; padding-inline: 6px; border-radius: 10px; display: grid; place-items: center;
-  font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.score .val { min-width: 40px; height: 38px; padding-inline: 5px; border-radius: 8px; display: grid; place-items: center;
+  font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .score .src { grid-row: 2; grid-column: 1; justify-self: center; display: flex; align-items: center; height: 18px; }
 .score .src svg { display: block; }
-.score .verdict { grid-row: 1 / span 2; grid-column: 2; font-size: 14px; font-weight: 700; }
+.score .verdict { grid-row: 1 / span 2; grid-column: 2; font-size: 13px; font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .val.imdb-v { background: var(--gold); color: #1a1500; }
 .val.fresh { background: #fa320a; color: #fff; }      /* Tomatometer 60%+ */
@@ -295,7 +295,7 @@ a.score:hover { border-color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 22px 16px; }
 .card.more .poster { display: grid; place-items: center; align-content: center; gap: 10px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--fg); font-weight: 700; }
 .card.more .poster svg { width: 34px; height: 34px; padding: 7px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
-html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
+html[dir="rtl"] .card.more .poster svg, html[dir="rtl"] [data-close] svg, html[dir="rtl"] [data-back-browse] svg { transform: scaleX(-1); }
 .browse-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin: 8px 0 22px; }
 .browse-head .view-head { margin: 0; }
 .sort { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding-inline: 14px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
@@ -468,8 +468,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   .cast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .person-head .face { width: 76px; height: 76px; }
   .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 5px; }
-  .score .val { height: 40px; min-width: 44px; font-size: 17px; }
+  .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 8px; row-gap: 4px; }
+  .score .val { height: 34px; min-width: 38px; font-size: 15px; }
   .score .src { grid-row: auto; grid-column: auto; justify-self: start; }
   .score .verdict { grid-row: auto; grid-column: auto; font-size: 12px; line-height: 1.25; }
   /* title page: poster beside the title, then facts, scores, actions and where to watch, all before the summary */
@@ -503,6 +503,22 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   .row { gap: 10px; scroll-padding-inline: 16px; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
   .detail-inner { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+/* Computer: rows don't scroll with the mouse; arrows on the sides move them a screen at a time. Phones keep swiping. */
+.row-wrap { position: relative; }
+.row-arrow { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .row-wrap .row { overflow-x: hidden; }
+  .row-arrow { display: grid; place-items: center; position: absolute; z-index: 3; top: calc(6px + var(--poster) * .75 - 22px); width: 44px; height: 44px;
+    border-radius: 50%; border: 1px solid var(--line); background: rgba(16, 12, 30, .88); color: #fff; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,.5); transition: background .15s, opacity .15s; }
+  .people-row + .row-arrow, .people-row ~ .row-arrow { top: 50%; transform: translateY(-50%); }
+  .row-arrow:hover { background: var(--accent); }
+  .row-arrow[hidden] { display: none; }
+  .row-arrow.prev { inset-inline-start: 6px; }
+  .row-arrow.next { inset-inline-end: 6px; }
+  .row-arrow svg { width: 22px; height: 22px; }
+  html[dir="rtl"] .row-arrow svg { transform: scaleX(-1); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
@@ -569,7 +585,6 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check, and you can show only what’s on them.", wDone: "Done",
       onlyMine: "On my services", mineEmpty: "Nothing here is on your services. Where to watch is known for about 13,000 popular titles.",
       wUS: "In the US", wUSNote: "Disney+ is based on its US catalog, so what’s available in Israel may differ.",
-      wData: "Availability data by JustWatch",
       rViewers: "Viewers report", rAsk: "Seen it on another service?", rPickH: "Where did you see it?", rPickP: "Tap every service you saw it on in Israel. Others see only the totals.",
       rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
       wOrig: "Originally on", wFreeOn: n => `Watch free on ${n}`, wSubOn: n => `With a ${n} subscription`, wLoading: "Checking where it’s available…",
@@ -588,13 +603,12 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       moviesH: "Movies", moviesP: "The most watched US and Israeli films since 1980.",
       seriesH: "Series", seriesP: "The most watched US and Israeli series since 1980.",
       ilH: "Israeli", ilP: "Israeli movies and series, from Waltz with Bashir to Fauda.",
-      listH: "My list", aiH: "Ask AI", aiP: "Describe what you’re in the mood for. It searches all 57,000 titles by cast, genre, year and scores.",
-      aiEx: ["A horror film after 2020 with James McAvoy rated 8+ on IMDb", "A tense Israeli series like Fauda", "A feel-good 90s comedy for tonight", "Christopher Nolan movies with 90%+ on Rotten Tomatoes"],
+      listH: "My list", aiH: "Ask AI", aiP: "Describe what you’re in the mood for. It searches tens of thousands of titles by cast, genre, year and scores.",
       aiPh: "What do you feel like watching?", aiSend: "Ask", aiThinking: "Searching the catalog…", aiNew: "New chat",
       aiSignIn: "Sign in to use the AI helper. It’s free.", aiLimit: "You’ve reached today’s limit. Try again tomorrow.",
       aiNotReady: "The AI helper isn’t switched on yet.", aiErr: "That didn’t work. Try again in a moment.", aiNone: "No titles to show for this one.",
       toastAdd: "Added to my list", toastRem: "Removed from my list", toastW: "Marked as watched", toastUW: "Marked as not watched",
-      wiki: "Wikipedia", wikiHe: "Wikipedia (Hebrew)", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      wiki: "Wikipedia", footer: "Data: Wikidata, IMDb, TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
       word: 'Ma <span>Roim</span>', titles: "titles", ongoing: "present",
       signIn: "Sign in", signUp: "Create account", signOut: "Sign out", email: "Email", password: "Password", cancel: "Cancel",
       inTitle: "Sign in", inSub: "Your list and watched titles follow you to every device.", upTitle: "Create your account",
@@ -619,7 +633,6 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק, ואפשר להציג רק אותם.", wDone: "סיום",
       onlyMine: "בשירותים שלי", mineEmpty: "אין כאן כותרים שזמינים בשירותים שלכם. המידע איפה לצפות קיים לכ-13,000 כותרים פופולריים.",
       wUS: "בארה״ב", wUSNote: "דיסני+ לפי הקטלוג שלו בארה״ב, כך שבישראל הזמינות עשויה להיות שונה.",
-      wData: "נתוני זמינות: JustWatch",
       rViewers: "דיווחי צופים", rAsk: "ראיתם את זה בשירות אחר?", rPickH: "איפה ראיתם את זה?", rPickP: "סמנו כל שירות שבו ראיתם את זה בישראל. אחרים רואים רק את הסיכום.",
       rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
       wOrig: "שודר במקור ב", wFreeOn: n => `צפייה חינם ב${n}`, wSubOn: n => `במנוי ${n}`, wLoading: "בודק איפה זה זמין…",
@@ -638,13 +651,12 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       moviesH: "סרטים", moviesP: "הסרטים האמריקאיים והישראליים הנצפים ביותר מאז 1980.",
       seriesH: "סדרות", seriesP: "הסדרות האמריקאיות והישראליות הנצפות ביותר מאז 1980.",
       ilH: "ישראלי", ilP: "סרטים וסדרות ישראליים, מוואלס עם באשיר ועד פאודה.",
-      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בכל 57,000 הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
-      aiEx: ["סרט אימה מאחרי 2020 עם ג׳יימס מקאבוי, ציון מעל 8", "סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "סרטים של כריסטופר נולאן שהמבקרים הכי אהבו"],
+      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בין עשרות אלפי הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
       aiPh: "מה בא לכם לראות?", aiSend: "שאל", aiThinking: "מחפש בקטלוג…", aiNew: "שיחה חדשה",
       aiSignIn: "התחברו כדי להשתמש בעוזר ה-AI. זה בחינם.", aiLimit: "הגעתם למגבלה היומית. נסו שוב מחר.",
       aiNotReady: "עוזר ה-AI עוד לא הופעל.", aiErr: "זה לא עבד. נסו שוב בעוד רגע.", aiNone: "אין כותרים להציג הפעם.",
       toastAdd: "נוסף לרשימה", toastRem: "הוסר מהרשימה", toastW: "סומן כנצפה", toastUW: "הסימון בוטל",
-      wiki: "ויקיפדיה (אנגלית)", wikiHe: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      wiki: "ויקיפדיה", footer: "נתונים: Wikidata, ‏IMDb, ‏TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
       word: 'מה <span>רואים</span>', titles: "כותרים", ongoing: "היום",
       signIn: "התחברות", signUp: "יצירת חשבון", signOut: "התנתקות", email: "אימייל", password: "סיסמה", cancel: "ביטול",
       inTitle: "התחברות", inSub: "הרשימה והכותרים שצפיתם בהם יופיעו בכל מכשיר.", upTitle: "יצירת חשבון",
@@ -693,8 +705,11 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const t = k => T[lang][k];
-  const title = it => lang === "he" ? (it.th || it.t) : it.t;
-  const altTitle = it => lang === "he" ? (it.th && it.th !== it.t ? it.t : "") : (it.th && it.th !== it.t ? it.th : "");
+  // Names copied from Wikipedia sometimes end in "(סדרת טלוויזיה)", "(סרט, 2005)", "(TV series)": the page already says what it is
+  const KIND_TAG = /s*((?:d{4} )?(?:סרט|סדרת טלוויזיה|מיני-סדרה|מיני סדרה|סדרה|סדרת אנימציה|סדרה אנימציה|סדרת אנימה|סדרת רשת|סדרה תיעודית|תוכנית טלוויזיה(?: אמריקאית)?|שעשועון|TV series|miniseries|film)(?:, d{4})?)s*$/i;
+  const clean = s => s && s.replace(KIND_TAG, "");
+  const title = it => clean(lang === "he" ? (it.th || it.t) : it.t);
+  const altTitle = it => { const a = clean(it.t), b = clean(it.th); return lang === "he" ? (b && b !== a ? a : "") : (b && b !== a ? b : ""); };
   const poster = it => lang === "he" ? (it.ph || it.p) : it.p;
   const overview = it => lang === "he" ? (it.oh || it.o) : (it.o || it.oh);
   const genre = g => lang === "he" ? (C.genres_he[g] || g) : g;
@@ -912,6 +927,40 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     footObserver = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) loadMore(); }, { rootMargin: "800px 0px" });
     footObserver.observe(f);
   }
+  // ---------- Row arrows (computer only) ----------
+  // Each arrow moves the row by what fits on screen minus one title, so one title stays in view from the last "page".
+  const fineMouse = matchMedia("(hover: hover) and (pointer: fine)");
+  const arrowSvg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  function wrapRows() {
+    for (const row of document.querySelectorAll(".row")) {
+      if (row.parentNode.classList.contains("row-wrap")) continue;
+      const wrap = document.createElement("div"); wrap.className = "row-wrap";
+      row.parentNode.insertBefore(wrap, row);
+      wrap.innerHTML = `<button class="row-arrow prev" type="button" data-row-move="-1" aria-label="${lang === "he" ? "הקודמים" : "Previous"}" hidden>${arrowSvg("M15 5l-7 7 7 7")}</button>`
+        + `<button class="row-arrow next" type="button" data-row-move="1" aria-label="${lang === "he" ? "הבאים" : "Next"}" hidden>${arrowSvg("M9 5l7 7-7 7")}</button>`;
+      wrap.insertBefore(row, wrap.firstChild);
+      updateArrows(row);
+    }
+  }
+  function updateArrows(row) {
+    const wrap = row.parentNode; if (!wrap.classList.contains("row-wrap")) return;
+    const max = row.scrollWidth - row.clientWidth, at = Math.abs(row.scrollLeft);
+    wrap.querySelector(".prev").hidden = at < 4;
+    wrap.querySelector(".next").hidden = at > max - 4 || max < 4;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-row-move]"); if (!b) return;
+    const row = b.parentNode.querySelector(".row"), cards = row.children; if (cards.length < 2) return;
+    const step = cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left;   // one title plus the gap
+    const per = Math.abs(step), fit = Math.max(1, Math.floor((row.clientWidth + 1) / per) - 1);
+    const rtl = document.documentElement.dir === "rtl";
+    row.scrollBy({ left: +b.dataset.rowMove * fit * per * (rtl ? -1 : 1), behavior: "smooth" });
+  });
+  document.addEventListener("scroll", e => { if (e.target.classList && e.target.classList.contains("row")) updateArrows(e.target); }, true);
+  addEventListener("resize", () => document.querySelectorAll(".row-wrap > .row").forEach(updateArrows));
+  new MutationObserver(() => { if (fineMouse.matches) wrapRows(); document.querySelectorAll(".row-wrap > .row").forEach(updateArrows); })
+    .observe(document.body, { childList: true, subtree: true });
+
   let viewKey = "home";
   function render() {
     const main = $("#main");
@@ -1000,8 +1049,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     if (push) watchOpen = false;
     // RT and Metacritic already link from their score tiles
     const links = [
-      it.imdb && ["IMDb", it.imdb], it.wh && lang === "he" && [t("wikiHe"), it.wh], it.we && [t("wiki"), it.we],
-      it.wh && lang === "en" && [t("wikiHe"), it.wh],
+      it.imdb && ["IMDb", it.imdb], (lang === "he" ? it.wh || it.we : it.we) && [t("wiki"), lang === "he" ? it.wh || it.we : it.we],
     ].filter(Boolean);
     const bg = it.b ? `<img class="sharp" src="${it.b}" alt="">` : (p ? `<img src="${p}" alt="">` : "");
     // Computer: poster, facts and where to watch on one side, everything else on the other.
@@ -1364,8 +1412,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
         : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
       ${orig.length ? `<div class="watch-row"><dt>${t("wOrig")}</dt><dd>${orig.join("")}</dd></div>` : ""}
-      <div id="reports"></div>
-      <span class="watch-note"><a href="https://www.justwatch.com/il" target="_blank" rel="noopener">${t("wData")}</a></span></section>`;
+      <div id="reports"></div></section>`;
   }
   async function loadWatch(id) {
     const w = await getWatch(id);
@@ -1668,13 +1715,14 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   // ---------- About ----------
   const ABOUT = {
     en: [
-      ["What is Ma Roim?", `<p>“Ma roim?” is Hebrew for “what are we watching?” It’s a catalog of about 57,000 American and Israeli movies and TV series from 1980 to today, in English and Hebrew, with an AI helper that suggests what to watch.</p>`],
+      ["What is Ma Roim?", `<p>“Ma roim?” is Hebrew for “what are we watching?” It’s a catalog of tens of thousands of American and Israeli movies and TV series from 1980 to today, in English and Hebrew, with an AI helper that suggests what to watch.</p>`],
       ["Where does the information come from?", `<ul>
         <li><b>Wikidata</b>: the list of titles, Hebrew titles, links to Wikipedia, IMDb and Metacritic, and detailed genres.</li>
         <li><b>IMDb</b>: ratings, number of votes, running times, and cast and crew.</li>
         <li><b>TMDB</b>: posters (English and Hebrew), synopses, cast photos, seasons and keywords.</li>
         <li><b>Rotten Tomatoes and Metacritic</b>: critics’ scores, as recorded on Wikidata.</li>
-        <li><b>Hebrew Wikipedia</b>: some Hebrew posters.</li></ul>
+        <li><b>Hebrew Wikipedia</b>: some Hebrew posters.</li>
+        <li><b>JustWatch</b> (through TMDB): where each title streams in Israel.</li></ul>
         <p><small>This product uses the TMDB API but is not endorsed or certified by TMDB. Information courtesy of IMDb (<a href="https://www.imdb.com" target="_blank" rel="noopener">imdb.com</a>), used with permission for non-commercial use. Not affiliated with IMDb, TMDB, Rotten Tomatoes or Metacritic.</small></p>`],
       ["How does the AI helper work?", `<p>Describe what you’re in the mood for, in English or Hebrew. It searches the catalog by actors and directors, genres and themes, years and scores, and only suggests titles that are actually here.</p><p>You need to be signed in to use it, with up to 40 questions a day.</p>`],
       ["Why is a title shown in English on the Hebrew site?", `<p>Each title uses only its own Hebrew name and Hebrew poster. When it doesn’t have one, the English name or poster is shown instead, rather than borrowing one from another title, for example an Israeli remake with the same name.</p>`],
@@ -1682,13 +1730,14 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ["How up to date is it?", `<p>The catalog was collected in October 2026. Ratings and scores are as they were then.</p><p><small>Version ${BUILD}</small></p>`],
     ],
     he: [
-      ["מה זה „מה רואים”?", `<p>קטלוג של כ-57,000 סרטים וסדרות אמריקאיים וישראליים מ-1980 ועד היום, בעברית ובאנגלית, עם עוזר AI שממליץ מה לראות.</p>`],
+      ["מה זה „מה רואים”?", `<p>קטלוג של עשרות אלפי סרטים וסדרות אמריקאיים וישראליים מ-1980 ועד היום, בעברית ובאנגלית, עם עוזר AI שממליץ מה לראות.</p>`],
       ["מאיפה מגיע המידע?", `<ul>
         <li><b>Wikidata</b>: רשימת הכותרים, השמות בעברית, קישורים לוויקיפדיה, ל-IMDb ול-Metacritic, וז׳אנרים מפורטים.</li>
         <li><b>IMDb</b>: דירוגים, מספר המדרגים, אורך, שחקנים ואנשי צוות.</li>
         <li><b>TMDB</b>: פוסטרים (בעברית ובאנגלית), תקצירים, תמונות שחקנים, עונות ומילות מפתח.</li>
         <li><b>Rotten Tomatoes ו-Metacritic</b>: ציוני המבקרים, כפי שמופיעים ב-Wikidata.</li>
-        <li><b>ויקיפדיה העברית</b>: חלק מהפוסטרים בעברית.</li></ul>
+        <li><b>ויקיפדיה העברית</b>: חלק מהפוסטרים בעברית.</li>
+        <li><b>JustWatch</b> (דרך TMDB): איפה כל כותר זמין לצפייה בישראל.</li></ul>
         <p dir="ltr" style="text-align:left"><small>This product uses the TMDB API but is not endorsed or certified by TMDB. Information courtesy of IMDb (<a href="https://www.imdb.com" target="_blank" rel="noopener">imdb.com</a>), used with permission for non-commercial use. Not affiliated with IMDb, TMDB, Rotten Tomatoes or Metacritic.</small></p>`],
       ["איך עובד עוזר ה-AI?", `<p>ספרו מה בא לכם לראות, בעברית או באנגלית. הוא מחפש בקטלוג לפי שחקנים ובמאים, ז׳אנרים ונושאים, שנים וציונים, וממליץ רק על כותרים שבאמת נמצאים כאן.</p><p>כדי להשתמש בו צריך להתחבר, ואפשר לשאול עד 40 שאלות ביום.</p>`],
       ["למה כותר מוצג באנגלית באתר בעברית?", `<p>כל כותר מוצג רק עם השם והפוסטר העבריים שלו עצמו. כשאין לו כאלה, מוצגים השם או הפוסטר באנגלית, ולא נלקחים מכותר אחר, למשל גרסה ישראלית באותו שם.</p>`],
@@ -1714,8 +1763,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const turns = aiMsgs.map(m => m.role === "user"
       ? `<div class="bubble user q te"><p>${esc(m.content)}</p></div>`
       : m.err ? `<div class="bubble ai err ts">${esc(m.content)}</div>` : answerBubble(m.content, m.ids)).join("");
-    const intro = `<div class="ai-intro"><div class="view-head" style="margin:0"><h1>${esc(t("aiH"))}</h1><p>${esc(t("aiP"))}</p></div>
-      <div class="examples">${t("aiEx").map(x => `<button type="button" data-ask="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>`;
+    const intro = `<div class="ai-intro"><div class="view-head" style="margin:0"><h1>${esc(t("aiH"))}</h1><p>${esc(t("aiP"))}</p></div></div>`;
     return `<div class="ai-scroll pad" id="ai-scroll"><div class="chat">
         ${aiMsgs.length ? turns : intro}
         ${aiBusy ? `<div class="bubble ai a wait ts">${t("aiThinking")}</div>` : ""}

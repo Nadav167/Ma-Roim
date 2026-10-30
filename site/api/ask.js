@@ -140,6 +140,7 @@ Find titles that fit what the user asks for, using only the catalog tools. Never
 - Prefer well-known titles (use min_votes around 2000+) unless the user wants hidden gems.
 - Reply in ${lang === "he" ? "Hebrew" : "English"} (or in the language the user writes in). Use Hebrew titles when replying in Hebrew if they exist.
 - Keep the message short and concrete. No markdown headings or tables.
+- Don't comment on what you left out, e.g. don't note that a title the user mentioned isn't in the list.
 Finish by calling present_results exactly once.`;
 }
 

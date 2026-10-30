@@ -1,7 +1,7 @@
 # YouTube trailers from TMDB, in English and Hebrew. Picks per language: official Trailer > Trailer > Teaser,
-# newest first. Hebrew = videos TMDB marks as Hebrew (usually Hebrew-subtitled trailers from Israeli distributors).
+# newest first; for a series, its first season's trailer (oldest, skipping ones named for later seasons). Hebrew = videos TMDB marks as Hebrew (usually Hebrew-subtitled trailers from Israeli distributors).
 # Resumable: raw/tmdb/videos.jsonl. Output: adds trailer_en / trailer_he (YouTube keys) to out/ma_roim_titles.json.
-import json, os, time, threading, requests
+import json, os, re, time, threading, requests
 from concurrent.futures import ThreadPoolExecutor
 
 T = open(".secrets/tmdb_token").read().strip()
@@ -40,8 +40,15 @@ def work(t):
 with ThreadPoolExecutor(12) as ex: list(ex.map(work, todo))
 fh.close()
 
-def best(vids, lang):
+LATER_SEASON = re.compile(r"season\s*([2-9]|\d\d)|seasons?\s*\d+\s*[-–&]|final season|last season|העונה\s*(?:ה?[2-9]|השנייה|השלישית|הרביעית|החמישית|האחרונה|הסופית)|עונה\s*([2-9]|\d\d)", re.I)
+
+def best(vids, lang, tv=False):
     c = [v for v in vids if v[1] == lang]
+    if tv:   # series: the first season's trailer, not the latest one
+        first = [v for v in c if not LATER_SEASON.search(v[5] or "")]
+        c = sorted(first or c, key=lambda v: v[4])   # oldest first, then the official trailer among them
+        c.sort(key=lambda v: (v[2] == "Trailer" and v[3], v[2] == "Trailer", v[3]), reverse=True)
+        return c[0][0] if c else None
     c.sort(key=lambda v: (v[2] == "Trailer" and v[3], v[2] == "Trailer", v[3], v[4]), reverse=True)
     return c[0][0] if c else None
 
@@ -50,8 +57,8 @@ for line in open(OUT, encoding="utf-8"):
     x = json.loads(line); vids[x["q"]] = x["v"]
 for r in rows:
     v = vids.get(r["wikidata_id"], [])
-    r["trailer_en"] = best(v, "en") or ""
-    r["trailer_he"] = best(v, "he") or ""
+    r["trailer_en"] = best(v, "en", r["tmdb_type"] == "tv") or ""
+    r["trailer_he"] = best(v, "he", r["tmdb_type"] == "tv") or ""
 json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
 top = rows[:5000]
 for k in ("trailer_en", "trailer_he"):
