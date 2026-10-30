@@ -289,7 +289,11 @@ html[dir="rtl"] .card.more .poster svg { transform: scaleX(-1); }
 .empty strong { color: var(--fg); font-size: 16px; }
 
 /* ---------- detail ---------- */
-.detail { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background: var(--bg); }
+.detail { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background: var(--bg); overscroll-behavior: contain; }
+html.locked { overflow: hidden; }
+/* no visible scrollbars on the page, title pages, dialogs and the AI chat (scrolling works as usual) */
+html, body, .detail, .modal, .ai-scroll { scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar, .detail::-webkit-scrollbar, .modal::-webkit-scrollbar, .ai-scroll::-webkit-scrollbar { display: none; }
 .detail-bg { position: absolute; inset: 0 0 auto; height: 520px; overflow: hidden; z-index: 0; }
 .detail-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.2); opacity: .45; transform: scale(1.15); max-width: none; }
 .detail-bg img.sharp { filter: none; opacity: .5; transform: none; }
@@ -606,7 +610,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-30.0000";
+  const BUILD = "2026-10-30.1215";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -962,14 +966,15 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
           ${sb ? `<section class="credits" id="credits"><div class="cast-grid">${'<div class="skeleton"></div>'.repeat(4)}</div></section>` : ""}
         </div>
       </div></div>`;
-    d.dataset.id = id; d.hidden = false; if (push) d.scrollTop = 0;
+    d.dataset.id = id; d.hidden = false; lockPage(true); if (push) d.scrollTop = 0;
     if (sb) loadCredits(id);
     if (sb && !it.f) fillDetails(id);
     if (it.wa === undefined || !PROV) loadWatch(id); else loadReports(id);
-    document.body.style.overflow = "hidden";
     d.querySelector("[data-close]").focus();
   }
-  function closeDetail() { hist = []; const d = $("#detail"); d.hidden = true; d.innerHTML = ""; document.body.style.overflow = ""; render(); }
+  // while a title or person page is open, the page behind it doesn't scroll (one scroll area, not two)
+  function lockPage(on) { document.documentElement.classList.toggle("locked", on); }
+  function closeDetail() { hist = []; const d = $("#detail"); d.hidden = true; d.innerHTML = ""; lockPage(false); render(); }
   function goBack() { hist.pop(); if (hist.length) reopen(); else closeDetail(); }
 
   // Cast: home-page titles carry it in the catalog; others are fetched once and cached.
@@ -1028,7 +1033,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (!sb) return;
     if (push) hist.push({ k: "p", id: pid });
     const d = $("#detail");
-    d.dataset.id = ""; d.hidden = false; document.body.style.overflow = "hidden";
+    d.dataset.id = ""; d.hidden = false; lockPage(true);
     const shell = (head, body) => `<div class="detail-inner"><button class="btn back" type="button" data-close>${icon.back}${t("back")}</button>${head}${body}</div>`;
     if (!personCache[pid]) d.innerHTML = shell(`<div class="person-head">${face(null)}</div>`, `<div class="grid">${'<div class="skeleton" style="aspect-ratio:2/3;height:auto"></div>'.repeat(6)}</div>`);
     if (push) d.scrollTop = 0;
