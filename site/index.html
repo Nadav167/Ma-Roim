@@ -1507,27 +1507,44 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   });
 
   // ---------- Discover: endless this-or-that that learns your taste ----------
-  // Taste = weights on simple features (genres, decade, Israeli, rating band). Each pick adds the winner's
+  // Taste = weights on simple features (genres, Israeli, lead actors and director/creator, and for series how
+  // many seasons). Not year or rating: those only filter the answer down to nothing. Each pick adds the winner's
   // features and subtracts the loser's. Pairs mix "best match so far" with exploration. Saved on this device.
   const DKEY = "taste";
-  let disc = Object.assign({ stage: "start", type: null, w: { movie: {}, tv: {} }, seen: { movie: [], tv: [] }, picks: { movie: [], tv: [] }, passes: { movie: [], tv: [] }, pair: null, result: null, busy: false, anim: null },
+  let disc = Object.assign({ stage: "start", type: null, w: { movie: {}, tv: {} }, seen: { movie: [], tv: [] }, picks: { movie: [], tv: [] }, passes: { movie: [], tv: [] }, pn: {}, pair: null, result: null, busy: false, anim: null },
     store.get(DKEY, {}), { stage: "start", pair: null, result: null, busy: false, anim: null });
+  const okFeat = f => f === "il" || /^(g|p|s):/.test(f);
+  for (const ty of ["movie", "tv"]) for (const f of Object.keys(disc.w[ty] || {})) if (!okFeat(f)) delete disc.w[ty][f];   // drop old year/rating weights
+  if (!disc.pn) disc.pn = {};
   const MIN_PICKS = 6;
-  const saveDisc = () => store.set(DKEY, { w: disc.w, seen: disc.seen, picks: disc.picks, passes: disc.passes });
-  function feats(it) {
+  const saveDisc = () => store.set(DKEY, { w: disc.w, seen: disc.seen, picks: disc.picks, passes: disc.passes, pn: disc.pn });
+  const discCr = {};   // title id -> the people Discover weighs (top 3 cast + first director or creator), once loaded
+  function loadPairInfo(ids) {
+    if (!sb) return;
+    for (const id of ids) {
+      if (!discCr[id]) getCredits(id).then(cr => {
+        const lead = cr.filter(c => c.role === "cast" && c.people).slice(0, 3);
+        const maker = cr.find(c => c.role === (C.items[id].ty === "tv" ? "creator" : "director") && c.people);
+        discCr[id] = [...lead, ...(maker ? [maker] : [])].map(c => c.people);
+      }).catch(() => {});
+      if (C.items[id].ty === "tv" && !C.items[id].s) fillDetails(id);
+    }
+  }
+  function feats(it, id) {
     const f = (it.g || []).slice(0, 3).map(g => "g:" + g);
-    if (it.y) f.push("d:" + Math.floor(it.y / 10) * 10);
     if (it.il) f.push("il");
-    if (it.rt) f.push(it.rt >= 7.8 ? "r:hi" : it.rt >= 6.8 ? "r:mid" : "r:lo");
+    for (const p of discCr[id] || []) f.push("p:" + p.id);
+    if (it.ty === "tv" && it.s) f.push(it.s === 1 ? "s:1" : it.s <= 3 ? "s:short" : "s:long");
     return f;
   }
   function featLabel(f) {
     if (f.startsWith("g:")) return genre(f.slice(2));
-    if (f.startsWith("d:")) return lang === "he" ? `שנות ה-${f.slice(4, 6) === "00" ? "2000" : f.slice(4)}` : `${f.slice(2)}s`;
+    if (f.startsWith("p:")) { const p = disc.pn[f.slice(2)]; return p ? pname(p) : ""; }
     if (f === "il") return lang === "he" ? "ישראלי" : "Israeli";
-    return { "r:hi": lang === "he" ? "דירוג גבוה מאוד" : "Top rated", "r:mid": lang === "he" ? "דירוג טוב" : "Well rated", "r:lo": lang === "he" ? "דירוג נמוך" : "Lower rated" }[f] || f;
+    return { "s:1": lang === "he" ? "עונה אחת" : "One season", "s:short": lang === "he" ? "סדרות קצרות (2–3 עונות)" : "Short series (2–3 seasons)",
+      "s:long": lang === "he" ? "סדרות ארוכות (4+ עונות)" : "Long series (4+ seasons)" }[f] || "";
   }
-  const score = (it, w) => { const f = feats(it); return f.reduce((a, x) => a + (w[x] || 0), 0) / Math.sqrt(f.length || 1); };
+  const score = (id, w) => { const f = feats(C.items[id], id); return f.reduce((a, x) => a + (w[x] || 0), 0) / Math.sqrt(f.length || 1); };
   function pool(type) {
     const seen = new Set(disc.seen[type]);
     return Object.keys(C.items).filter(id => { const it = C.items[id]; return it.ty === type && it.p && (it.v || 0) >= 15000 && it.rt && !seen.has(id); });
@@ -1542,29 +1559,31 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       a = rnd(ids); const diff = ids.filter(x => x !== a && g1(x) !== g1(a)); b = rnd(diff.length ? diff : ids.filter(x => x !== a));
     } else {                                                      // exploit: a strong match vs. something that tests it
       const sample = Array.from({ length: Math.min(80, ids.length) }, () => rnd(ids));
-      const ranked = [...new Set(sample)].map(id => [score(C.items[id], w) + Math.random() * 0.6, id]).sort((x, y) => y[0] - x[0]);
+      const ranked = [...new Set(sample)].map(id => [score(id, w) + Math.random() * 0.6, id]).sort((x, y) => y[0] - x[0]);
       a = ranked[0][1];
       const rest = ranked.slice(1).filter(([, id]) => g1(id) !== g1(a));
       b = (rest.length ? rest[Math.floor(rest.length * (0.2 + Math.random() * 0.5))] : ranked[1])[1];
     }
     disc.pair = Math.random() < 0.5 ? [a, b] : [b, a];
+    loadPairInfo(disc.pair);
   }
   function choose(winIdx) {
     if (!disc.pair || disc.anim) return;
     const type = disc.type, w = disc.w[type], [a, b] = disc.pair;
-    if (winIdx === -1) { for (const id of [a, b]) for (const f of feats(C.items[id])) w[f] = (w[f] || 0) - 0.5; disc.passes[type].push(a, b); }
+    if (winIdx === -1) { for (const id of [a, b]) for (const f of feats(C.items[id], id)) w[f] = (w[f] || 0) - 0.5; disc.passes[type].push(a, b); }
     else {
       const win = disc.pair[winIdx], lose = disc.pair[1 - winIdx];
-      for (const f of feats(C.items[win])) w[f] = (w[f] || 0) + 1;
-      for (const f of feats(C.items[lose])) w[f] = (w[f] || 0) - 1;
+      for (const f of feats(C.items[win], win)) w[f] = (w[f] || 0) + 1;
+      for (const f of feats(C.items[lose], lose)) w[f] = (w[f] || 0) - 1;
       disc.picks[type].push(win); disc.passes[type].push(lose);
     }
+    for (const id of [a, b]) for (const p of discCr[id] || []) disc.pn[p.id] = { name: p.name, name_he: p.name_he };
     disc.seen[type].push(a, b); saveDisc();
     disc.anim = winIdx; render();
     setTimeout(() => { disc.anim = null; nextPair(); if (view === "discover") render(); }, winIdx === -1 ? 120 : 380);
   }
   function tasteChips(type) {
-    const w = disc.w[type], ent = Object.entries(w).filter(([, v]) => v);
+    const w = disc.w[type], ent = Object.entries(w).filter(([f, v]) => v && featLabel(f));
     const pos = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6), neg = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4);
     return `<div class="taste"><span class="l">${t("dLikes")}</span>${pos.map(([f]) => `<span class="chip pos">${esc(featLabel(f))}</span>`).join("")}</div>
       ${neg.length ? `<div class="taste"><span class="l">${t("dLess")}</span>${neg.map(([f]) => `<span class="chip neg">${esc(featLabel(f))}</span>`).join("")}</div>` : ""}`;
@@ -1616,7 +1635,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     if (!user) return;
     const name = id => C.items[id] ? title(C.items[id]) : id;
     const picks = [...new Set(disc.picks[type])].slice(-25).map(name), passes = [...new Set(disc.passes[type])].filter(id => !disc.picks[type].includes(id)).slice(-15).map(name);
-    const w = disc.w[type], ent = Object.entries(w);
+    const w = disc.w[type], ent = Object.entries(w).filter(([f]) => featLabel(f));
     const likes = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([f]) => featLabel(f));
     const less = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([f]) => featLabel(f));
     const kind = type === "movie" ? (lang === "he" ? "סרטים" : "movies") : (lang === "he" ? "סדרות" : "TV series");
