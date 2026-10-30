@@ -35,7 +35,7 @@ The individual steps, in order:
 2. `scripts/stage2.py` — Wikidata: titles (EN/HE), IMDb/Metacritic IDs, Wikipedia links, genres
 3. `scripts/build.py` — joins IMDb datasets (ratings, votes, runtime), filters scope
 4. `scripts/tmdb_enrich.py` — TMDB: posters (EN/HE), Hebrew titles, synopses, seasons
-5. `scripts/merge_tmdb.py` — merges TMDB data, applies the Hebrew and same-name rules
+5. `scripts/merge_tmdb.py` — merges TMDB data, applies the Hebrew and same-name rules; then `scripts/languages.py` — of the titles connected to Israel, any Hebrew spoken makes it Israeli, otherwise American (TMDB languages)
 6. `scripts/hewiki_posters.py` — Hebrew Wikipedia: lead images for titles still missing a Hebrew poster
 7. `scripts/hewiki_apply.py` — adds those posters where they're clearly Hebrew (Israeli titles, or the file says so) and lists the rest in `data/hewiki_poster_review.csv`
 8. `scripts/scores.py` — Wikidata: Rotten Tomatoes (Tomatometer) and Metacritic scores, and Rotten Tomatoes page links
