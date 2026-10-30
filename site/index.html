@@ -150,10 +150,6 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .pick:focus-visible { outline: none; }
 .disc-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .disc-hint { color: var(--muted); font-size: 12px; text-align: center; }
-.taste { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.taste .chip.pos { border-color: var(--ok); color: var(--ok); }
-.taste .chip.neg { color: var(--muted); text-decoration: line-through; }
-.taste span.l { color: var(--muted); font-size: 13px; margin-inline-end: 4px; }
 /* Ask AI fills the screen between the top bar and the menu; messages scroll, the message box stays at the bottom */
 body.ai-mode { overflow: hidden; }
 body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px) + env(safe-area-inset-top, 0px)); bottom: 0; inset-inline: var(--rail) 0; display: flex; flex-direction: column; padding: 0; }
@@ -1586,12 +1582,6 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     disc.anim = winIdx; render();
     setTimeout(() => { disc.anim = null; nextPair(); if (view === "discover") render(); }, winIdx === -1 ? 120 : 380);
   }
-  function tasteChips(type) {
-    const w = disc.w[type], ent = Object.entries(w).filter(([f, v]) => v && featLabel(f));
-    const pos = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6), neg = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4);
-    return `<div class="taste"><span class="l">${t("dLikes")}</span>${pos.map(([f]) => `<span class="chip pos">${esc(featLabel(f))}</span>`).join("")}</div>
-      ${neg.length ? `<div class="taste"><span class="l">${t("dLess")}</span>${neg.map(([f]) => `<span class="chip neg">${esc(featLabel(f))}</span>`).join("")}</div>` : ""}`;
-  }
   const pickCard = (id, i) => { const it = C.items[id], ps = poster(it);
     const cls = disc.anim === null || disc.anim === undefined ? "" : disc.anim === i ? "won" : disc.anim === -1 ? "lost" : "lost";
     return `<button class="pick ${cls}" type="button" data-pick="${i}"><div class="poster">${ps ? `<img src="${ps}" alt="">` : ""}${it.rt ? `<span class="badge"><i>★</i>${it.rt.toFixed(1)}</span>` : ""}</div>
@@ -1618,7 +1608,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const type = disc.type, n = disc.picks[type].length;
     if (disc.stage === "result") {
       const r = disc.result;
-      return `<div class="pad"><div class="disc"><div class="disc-top"><h2>${esc(t("dTaste"))}</h2><span class="count">${t("dCount")(n)}</span></div>${tasteChips(type)}
+      return `<div class="pad"><div class="disc"><div class="disc-top"><h2>${esc(t("dTaste"))}</h2><span class="count">${t("dCount")(n)}</span></div>
         ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids))
           : user ? `<div class="bubble ai a wait ts">${t("dThinking")}</div>` : ""}
         ${!user && sb ? `<div class="empty"><strong>${t("dSignIn")}</strong><div class="btns"><button class="btn primary" type="button" data-auth="in">${t("signIn")}</button></div></div>` : ""}
@@ -1628,10 +1618,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const left = Math.max(0, MIN_PICKS - n);
     return `<div class="pad"><div class="disc">
       <div class="disc-top"><h2>${esc(t("dQ"))}</h2><span class="count">${t("dCount")(n)}</span></div>
-      <div class="duel">${pickCard(disc.pair[0], 0)}<span class="vs">VS</span>${pickCard(disc.pair[1], 1)}</div>
+      <div class="duel">${pickCard(disc.pair[0], 0)}<span class="vs">${lang === "he" ? "או" : "or"}</span>${pickCard(disc.pair[1], 1)}</div>
       <div class="disc-actions"><button class="btn" type="button" data-pick="-1">${t("dNeither")}</button>
         <button class="btn primary" type="button" data-disc-stop ${left ? "disabled" : ""}>${left ? esc(t("dMin")(left)) : t("dStop")}</button></div>
-      ${n >= 3 ? tasteChips(type) : ""}
       <p class="disc-hint">${t("dKeys")}</p></div></div>`;
   }
   async function discPicks() {
