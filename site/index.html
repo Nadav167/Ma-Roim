@@ -186,8 +186,8 @@ body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px
 .crew-row { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 .crew-row dt { color: var(--muted); font-size: 13px; min-width: 84px; }
 .crew-row dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.name-link { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 600; color: var(--fg); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
-.name-link:hover { text-decoration-color: var(--accent); color: var(--accent); }
+.name-link { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 600; color: var(--fg); text-decoration: none; text-underline-offset: 3px; }
+.name-link:hover { text-decoration: underline; }
 .cast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
 .person { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line);
   background: var(--surface); border-radius: 12px; padding: 8px 10px; cursor: pointer; min-width: 0; }
@@ -206,10 +206,12 @@ body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px
   padding: 10px 14px 10px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; }
 html[dir="rtl"] .score { padding: 10px 10px 10px 14px; }
 a.score:hover { border-color: var(--muted); }
-.score .val { grid-row: span 2; min-width: 48px; height: 48px; padding-inline: 6px; border-radius: 10px; display: grid; place-items: center;
+.score .val { min-width: 48px; height: 48px; padding-inline: 6px; border-radius: 10px; display: grid; place-items: center;
   font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-.score .src { font-size: 12px; color: var(--muted); font-weight: 600; }
-.score .verdict { font-size: 14px; font-weight: 700; }
+.score .src { grid-row: 2; grid-column: 1; justify-self: center; display: flex; align-items: center; height: 18px; }
+.score .src svg { display: block; }
+.score .verdict { grid-row: 1 / span 2; grid-column: 2; font-size: 14px; font-weight: 700; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .val.imdb-v { background: var(--gold); color: #1a1500; }
 .val.fresh { background: #fa320a; color: #fff; }      /* Tomatometer 60%+ */
 .val.rotten { background: #2f8f3a; color: #fff; }     /* below 60% */
@@ -220,9 +222,15 @@ a.score:hover { border-color: var(--muted); }
 .mini i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 .chip { border: 1px solid var(--line); border-radius: 12px; padding: 2px 9px; font-size: 12px; color: var(--fg); }
 
-.btns { display: flex; flex-wrap: wrap; gap: 10px; }
-.wa-btn { background: #1fa855; border-color: #1fa855; color: #fff; }
-.wa-btn:hover { background: #22b85d; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; position: relative; width: fit-content; }
+.share-menu { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 5; display: grid; min-width: 190px; padding: 6px;
+  border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); box-shadow: 0 14px 34px rgba(0,0,0,.45); }
+.share-menu button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 10px; background: none;
+  color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; text-align: start; }
+.share-menu button:hover { background: var(--surface); }
+.share-menu svg { width: 18px; height: 18px; flex: none; }
+.share-menu [data-wa] svg { color: #1fa855; }
+.btn:disabled, .btn.primary:disabled { background: var(--surface); border-color: var(--line); color: var(--muted); cursor: default; filter: none; }
 .btn { height: 44px; padding-inline: 18px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface-2);
   font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
 .btn:hover { border-color: var(--muted); }
@@ -302,9 +310,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .detail::-webkit-scrollbar, .m
   padding-block: calc(20px + env(safe-area-inset-top, 0px)) 60px;
   padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
 .back { margin-bottom: 26px; }
-.detail-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 36px; align-items: start; }
+.detail-grid { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; align-items: start; }
 .detail-grid .poster { box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--line); }
-.detail-text { display: grid; gap: 14px; min-width: 0; }
+.detail-side { display: grid; gap: 14px; min-width: 0; }
+.detail-side .watch { padding: 14px; }
+.detail-side .watch-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.detail-text, .d-head, .d-rest { display: grid; gap: 14px; min-width: 0; }
+.d-head { gap: 10px; }
+.watch-sum { display: none; }
 .detail h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -.02em; text-wrap: balance; }
 .alt-title { color: var(--muted); font-size: 16px; margin-top: -8px; }
 .watch { display: grid; gap: 10px; max-width: 680px; padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
@@ -325,7 +338,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .detail::-webkit-scrollbar, .m
 .svc { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; text-align: start; font-weight: 600; font-size: 14px; }
 .svc img { width: 32px; height: 32px; border-radius: 8px; flex: none; }
 .svc[aria-pressed="true"] { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
-.trailer { position: relative; width: 100%; max-width: 680px; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000;
+.trailer { position: relative; width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000;
   border: 1px solid var(--line); cursor: pointer; padding: 0; display: block; }
 .trailer img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .85; transition: opacity .2s; }
 .trailer:hover img { opacity: 1; }
@@ -341,11 +354,6 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 .links a { font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
 .links a:hover { border-color: var(--accent); }
 .links svg { width: 13px; height: 13px; opacity: .7; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); max-width: 640px; }
-.facts div { display: grid; gap: 2px; }
-.facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-html[lang="he"] .facts dt { letter-spacing: 0; }
-.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .rail-about { margin-top: auto; }
 .about-btn { display: none; width: 40px; height: 40px; flex: none; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; place-items: center; padding: 0; }
@@ -428,23 +436,44 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   .duel .vs { font-size: 11px; }
   .pick-info b { font-size: 14px; }
   .disc-hint { display: none; }
-  .nav-btn { font-size: 9.5px; }
+  .nav-btn { font-size: 11px; }
   .cast-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .person-head .face { width: 76px; height: 76px; }
   .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 3px; }
-  .score .val { grid-row: auto; height: 40px; min-width: 44px; font-size: 17px; margin-bottom: 4px; }
-  .score .src { font-size: 11px; overflow-wrap: anywhere; }
-  .score .verdict { font-size: 12px; line-height: 1.25; }
+  .score, html[dir="rtl"] .score { grid-template-columns: 1fr; justify-items: start; min-width: 0; padding: 10px; row-gap: 5px; }
+  .score .val { height: 40px; min-width: 44px; font-size: 17px; }
+  .score .src { grid-row: auto; grid-column: auto; justify-self: start; }
+  .score .verdict { grid-row: auto; grid-column: auto; font-size: 12px; line-height: 1.25; }
+  /* title page: poster beside the title, then facts, scores, actions and where to watch, all before the summary */
+  .detail-grid { grid-template-columns: 112px minmax(0, 1fr); gap: 14px;
+    grid-template-areas: "poster head" "meta meta" "scores scores" "btns btns" "watch watch" "rest rest"; }
+  .detail-side, .detail-text { display: contents; }
+  .detail-grid .poster { grid-area: poster; width: auto; }
+  .d-meta { grid-area: meta; }
+  #watch { grid-area: watch; }
+  .d-head { grid-area: head; align-self: center; }
+  .detail h1 { font-size: 24px; }
+  .scores { grid-area: scores; }
+  .detail-grid .btns { grid-area: btns; width: auto; display: flex; flex-wrap: nowrap; gap: 8px; }
+  .detail-grid .btns .btn { flex: 1 1 auto; min-width: 0; padding-inline: 12px; gap: 6px; font-size: 14px; white-space: nowrap; justify-content: center; }
+  .d-rest { grid-area: rest; }
+  .watch { padding: 12px 14px; }
+  .watch > .watch-mine, .watch-sum ~ .watch-head h2 { display: none; }
+  .watch.collapsed > :not(.watch-sum) { display: none !important; }
+  .watch-sum { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; color: var(--fg);
+    font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; text-align: start; }
+  .watch-sum .watch-mine { flex: 1; font-size: 14px; }
+  .watch-sum-h { flex: 1; }
+  .watch-peek { display: flex; gap: 6px; }
+  .watch-peek img { width: 28px; height: 28px; border-radius: 7px; box-shadow: 0 0 0 1px var(--line); }
+  .watch-sum svg { width: 18px; height: 18px; flex: none; color: var(--muted); transition: transform .2s; }
+  .watch-sum[aria-expanded="true"] svg { transform: rotate(180deg); }
   .acct { padding-inline: 8px; }
   .pad, .row { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .hero { margin-inline: max(16px, env(safe-area-inset-left, 0px)); margin-top: 16px; min-height: 340px; }
   .hero-body { padding: 20px; }
   .row { gap: 10px; scroll-padding-inline: 16px; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
-  .detail-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .facts { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-  .detail-grid .poster { width: 170px; }
   .detail-inner { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
@@ -457,8 +486,6 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   <button class="nav-btn" data-view="home" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="home"></span></button>
   <button class="nav-btn" data-view="movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span data-t="movies"></span></button>
   <button class="nav-btn" data-view="tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 2 4 4 4-4"/></svg><span data-t="series"></span></button>
-  <button class="nav-btn" data-view="il-movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="ilMovies"></span></button>
-  <button class="nav-btn" data-view="il-tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 17H4z"/><path d="M12 21 4 7h16z"/></svg><span data-t="ilSeries"></span></button>
   <button class="nav-btn" data-view="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span data-t="mylist"></span></button>
   <button class="nav-btn" data-view="discover" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="8" height="13" rx="1.6"/><rect x="13.5" y="5" width="8" height="13" rx="1.6"/><path d="M12 2v3M12 19v3"/></svg><span data-t="discover"></span></button>
   <button class="nav-btn" data-view="ai" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg><span data-t="ai"></span></button>
@@ -524,7 +551,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
-      share: "Share", linkCopied: "Link copied", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} on Ma Roim:`,
+      share: "Share", linkCopied: "Link copied", copyLink: "Copy link", wMore: "Where to watch", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} on Ma Roim:`,
       markWatched: "Mark watched", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + "h " : ""}${m % 60}m`, results: n => `${n} results`, noResults: "Nothing found",
       noResultsHint: "Try the English or the Hebrew title, or fewer words.", year: "Year", runtime: "Runtime", rating: "IMDb rating",
@@ -574,7 +601,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
-      share: "שיתוף", linkCopied: "הקישור הועתק", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} ב"מה רואים":`,
+      share: "שיתוף", linkCopied: "הקישור הועתק", copyLink: "העתקת קישור", wMore: "איפה לצפות", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} ב"מה רואים":`,
       markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + " ש׳ " : ""}${m % 60} ד׳`, results: n => `${n} תוצאות`, noResults: "לא נמצא כלום",
       noResultsHint: "נסו את השם בעברית או באנגלית, או פחות מילים.", year: "שנה", runtime: "אורך", rating: "דירוג IMDb",
@@ -584,7 +611,7 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
       seriesH: "סדרות", seriesP: "הסדרות האמריקאיות והישראליות הנצפות ביותר מאז 1980.",
       ilH: "ישראלי", ilP: "סרטים וסדרות ישראליים, מוואלס עם באשיר ועד פאודה.",
       listH: "הרשימה שלי", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בכל 57,000 הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
-      aiEx: ["סרט אימה אחרי 2020 עם ג׳יימס מקאבוי עם ציון 8+ ב-IMDb", "סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "סרטים של כריסטופר נולאן עם 90%+ ב-Rotten Tomatoes"],
+      aiEx: ["סרט אימה מאחרי 2020 עם ג׳יימס מקאבוי, ציון מעל 8", "סדרה ישראלית מותחת כמו פאודה", "קומדיה משנות ה-90 שתשפר את הערב", "סרטים של כריסטופר נולאן שהמבקרים הכי אהבו"],
       aiPh: "מה בא לכם לראות?", aiSend: "שאל", aiThinking: "מחפש בקטלוג…", aiNew: "שיחה חדשה",
       aiSignIn: "התחברו כדי להשתמש בעוזר ה-AI. זה בחינם.", aiLimit: "הגעתם למגבלה היומית. נסו שוב מחר.",
       aiNotReady: "עוזר ה-AI עוד לא הופעל.", aiErr: "זה לא עבד. נסו שוב בעוד רגע.", aiNone: "אין כותרים להציג הפעם.",
@@ -647,9 +674,17 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
   const compact = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
   const mcClass = m => m >= 61 ? "mc-hi" : m >= 40 ? "mc-mid" : "mc-lo";
   const mcBand = m => t("mcBands")[m >= 81 ? 4 : m >= 61 ? 3 : m >= 40 ? 2 : m >= 20 ? 1 : 0];
+  // Small marks of the three score sources, drawn under each score
+  const srcLogo = (src, cls) => src === "IMDb"
+    ? '<svg viewBox="0 0 40 18" width="36" height="16" aria-hidden="true"><rect width="40" height="18" rx="3.5" fill="#f5c518"/><text x="20" y="13.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="12" fill="#000">IMDb</text></svg>'
+    : src === "Metacritic"
+    ? '<svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="8.2" fill="#000" stroke="#ffcc34" stroke-width="1.6"/><text x="9" y="12.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="10.5" fill="#fff">m</text></svg>'
+    : cls === "fresh"
+    ? '<svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><circle cx="9" cy="10.6" r="6.9" fill="#fa320a"/><path d="M9 1.2 10.4 3.9 13.6 3 11.8 5.5 14.4 7.1 10.8 6.9 9 9 7.2 6.9 3.6 7.1 6.2 5.5 4.4 3 7.6 3.9z" fill="#0e9f3b"/></svg>'
+    : '<svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true"><path d="M9 1.6l1.7 3.5 3.6-1.4-1 3.7 3.6 1.4-3.4 1.9 1.7 3.5-3.8-.6-.7 3.8-2.7-2.8-2.7 2.8-.7-3.8-3.8.6 1.7-3.5L.2 8.8l3.6-1.4-1-3.7 3.6 1.4z" fill="#0ac855"/></svg>';
   function scoreTiles(it) {
     const tile = (href, cls, val, src, verdict) => {
-      const inner = `<span class="val ${cls}">${val}</span><span class="src">${src}</span><span class="verdict">${esc(verdict)}</span>`;
+      const inner = `<span class="val ${cls}">${val}</span><span class="src" title="${src}">${srcLogo(src, cls)}<span class="sr-only">${src}</span></span><span class="verdict">${esc(verdict)}</span>`;
       return href ? `<a class="score" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="score">${inner}</div>`;
     };
     const out = [];
@@ -670,6 +705,8 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
   };
 
   function card(id) {
@@ -931,47 +968,55 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const it = C.items[id]; if (!it) return;
     if (push) hist.push({ k: "t", id });
     const d = $("#detail"), p = poster(it);
-    const facts = [
-      [t("year"), years(it)],
-      it.ty === "tv" ? (it.s ? [t("seasonsL"), it.s] : null) : (it.rm ? [t("runtime"), t("min")(it.rm)] : null),
-      [t("country"), it.il ? t("il") : t("us")],
-    ].filter(Boolean);
+    if (push) watchOpen = false;
+    // RT and Metacritic already link from their score tiles
     const links = [
       it.imdb && ["IMDb", it.imdb], it.wh && lang === "he" && [t("wikiHe"), it.wh], it.we && [t("wiki"), it.we],
-      it.wh && lang === "en" && [t("wikiHe"), it.wh], it.ru && ["Rotten Tomatoes", it.ru], it.mc && ["Metacritic", it.mc],
+      it.wh && lang === "en" && [t("wikiHe"), it.wh],
     ].filter(Boolean);
     const bg = it.b ? `<img class="sharp" src="${it.b}" alt="">` : (p ? `<img src="${p}" alt="">` : "");
+    // Computer: poster, facts and where to watch on one side, everything else on the other.
+    // Phone: both columns dissolve into one grid (display: contents) so the actions sit right under the title.
     d.innerHTML = `<div class="detail-bg">${bg}</div><div class="detail-inner">
       <button class="btn back" type="button" data-close>${icon.back}${t("back")}</button>
       <div class="detail-grid">
-        <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
-        <div class="detail-text">
-          <div class="meta"><span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
-            <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}</div>
-          <h1>${esc(title(it))}</h1>
-          ${altTitle(it) ? `<div class="alt-title">${esc(altTitle(it))}</div>` : ""}
-          <div class="meta">${it.g.map(x => `<span class="chip">${esc(genre(x))}</span>`).join("")}</div>
-          ${scoreTiles(it)}
-          ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
-          ${trailerHtml(it)}
+        <div class="detail-side">
+          <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
+          <div class="meta d-meta"><span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
+            <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}
+            <span>${it.il ? t("il") : t("us")}</span></div>
           <div id="watch">${it.wa !== undefined && PROV ? watchHtml(it.wa) : watchHtml(undefined)}</div>
+        </div>
+        <div class="detail-text">
+          <div class="d-head">
+            <h1>${esc(title(it))}</h1>
+            ${altTitle(it) ? `<div class="alt-title">${esc(altTitle(it))}</div>` : ""}
+            <div class="meta">${it.g.map(x => `<span class="chip">${esc(genre(x))}</span>`).join("")}</div>
+          </div>
+          ${scoreTiles(it)}
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
             <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
-            <button class="btn wa-btn" type="button" data-wa="${id}">${icon.chat}WhatsApp</button>
             <button class="btn" type="button" data-share="${id}">${icon.share}${t("share")}</button>
           </div>
-          <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
-          <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
-          ${sb ? `<section class="credits" id="credits"><div class="cast-grid">${'<div class="skeleton"></div>'.repeat(4)}</div></section>` : ""}
+          <div class="d-rest">
+            ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
+            ${trailerHtml(it)}
+            <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
+            ${sb ? `<section class="credits" id="credits"><div class="cast-grid">${'<div class="skeleton"></div>'.repeat(4)}</div></section>` : ""}
+          </div>
         </div>
       </div></div>`;
     d.dataset.id = id; d.hidden = false; lockPage(true); if (push) d.scrollTop = 0;
     if (sb) loadCredits(id);
     if (sb && !it.f) fillDetails(id);
     if (it.wa === undefined || !PROV) loadWatch(id); else loadReports(id);
-    d.querySelector("[data-close]").focus();
+    // Focus moves to "Back" for keyboard and screen-reader users, without the ring when the page was opened by a tap or click
+    d.querySelector("[data-close]").focus({ focusVisible: usedKeys });
   }
+  let usedKeys = false;
+  document.addEventListener("keydown", () => { usedKeys = true; }, true);
+  document.addEventListener("pointerdown", () => { usedKeys = false; }, true);
   // while a title or person page is open, the page behind it doesn't scroll (one scroll area, not two)
   function lockPage(on) { document.documentElement.classList.toggle("locked", on); }
   function closeDetail() { hist = []; const d = $("#detail"); d.hidden = true; d.innerHTML = ""; lockPage(false); render(); }
@@ -1265,6 +1310,11 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     if (C.items[id]) C.items[id].wa = w;
     return w;
   }
+  let watchOpen = false;   // phone only: is the full where-to-watch list open
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-watch-toggle]"); if (!b) return;
+    watchOpen = !watchOpen; b.setAttribute("aria-expanded", watchOpen); b.closest(".watch").classList.toggle("collapsed", !watchOpen);
+  });
   function watchHtml(w) {
     if (w === undefined) return `<div class="watch"><div class="watch-head"><h2>${t("whereH")}</h2></div><span class="watch-note">${t("wLoading")}</span></div>`;
     const rows = [["s", t("wStream")], ["f", t("wFree")], ["u", t("wUS")], ["r", t("wRent")], ["b", t("wBuy")]].filter(([k]) => w && w[k] && w[k].length);
@@ -1276,7 +1326,11 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     const mine = w ? [...new Set([...(w.s || []), ...(w.f || []), ...(w.u || [])])].filter(p => myServices.has(p)).map(provName) : [];
     const usLink = w && w.k ? `https://www.themoviedb.org/${w.k}/watch?locale=US` : "https://www.justwatch.com/us";
     const tile = p => `<a class="prov ${myServices.has(p) ? "mine" : ""}" href="${esc(US_SVC.has(p) ? usLink : link)}" target="_blank" rel="noopener" title="${esc(provName(p))}"><img src="${provLogo(p)}" alt="${esc(provName(p))}" loading="lazy"></a>`;
-    return `<section class="watch"><div class="watch-head"><h2>${t("whereH")}</h2><button type="button" data-services>${t("wPick")}</button></div>
+    // Phone: one short line ("On your HBO Max ✓", or the first few logos) that opens the full list
+    const peek = [...new Set(rows.flatMap(([k]) => w[k]))].slice(0, 4).map(p => `<img src="${provLogo(p)}" alt="" loading="lazy">`).join("");
+    const sum = `<button class="watch-sum" type="button" data-watch-toggle aria-expanded="${watchOpen}">
+      ${mine.length ? `<span class="watch-mine">✓ ${esc(t("wMine")(mine.map(n => "⁨" + n + "⁩").join(", ")))}</span>` : `<span class="watch-sum-h">${t("wMore")}</span><span class="watch-peek">${peek}</span>`}${icon.down}</button>`;
+    return `<section class="watch ${watchOpen ? "" : "collapsed"}">${sum}<div class="watch-head"><h2>${t("whereH")}</h2><button type="button" data-services>${t("wPick")}</button></div>
       ${mine.length ? `<div class="watch-mine">✓ ${esc(t("wMine")(mine.map(n => "\u2068" + n + "\u2069").join(", ")))}</div>` : ""}
       ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
         : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
@@ -1376,14 +1430,27 @@ html[lang="he"] .facts dt { letter-spacing: 0; }
     try { await navigator.clipboard.writeText(shareUrl(id)); toast(t("linkCopied")); }
     catch (e) { prompt("", shareUrl(id)); }
   }
+  // Phones share through the system sheet (WhatsApp is in it); computers get a small menu: WhatsApp or copy the link
+  const closeShareMenu = () => { const m = $(".share-menu"); if (m) m.remove(); };
   document.addEventListener("click", async e => {
     const w = e.target.closest("[data-wa]");
-    if (w) { window.open(`https://wa.me/?text=${encodeURIComponent(shareMsg(w.dataset.wa) + "\n" + shareUrl(w.dataset.wa))}`, "_blank", "noopener"); return; }
-    const s = e.target.closest("[data-share]"); if (!s) return;
+    if (w) { closeShareMenu(); window.open(`https://wa.me/?text=${encodeURIComponent(shareMsg(w.dataset.wa) + "\n" + shareUrl(w.dataset.wa))}`, "_blank", "noopener"); return; }
+    const c = e.target.closest("[data-copy]");
+    if (c) { closeShareMenu(); copyLink(c.dataset.copy); return; }
+    const s = e.target.closest("[data-share]");
+    if (!s) { if (!e.target.closest(".share-menu")) closeShareMenu(); return; }
     const id = s.dataset.share;
-    if (navigator.share) { try { await navigator.share({ title: title(C.items[id] || {}), text: shareMsg(id), url: shareUrl(id) }); } catch (err) { /* closed */ } }
-    else copyLink(id);
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+      try { await navigator.share({ title: title(C.items[id] || {}), text: shareMsg(id), url: shareUrl(id) }); } catch (err) { /* closed */ }
+      return;
+    }
+    if ($(".share-menu")) { closeShareMenu(); return; }
+    s.insertAdjacentHTML("afterend", `<div class="share-menu" role="menu">
+      <button type="button" role="menuitem" data-wa="${id}">${icon.chat}WhatsApp</button>
+      <button type="button" role="menuitem" data-copy="${id}">${icon.link}${t("copyLink")}</button></div>`);
+    $(".share-menu button").focus({ focusVisible: usedKeys });
   });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && $(".share-menu")) { e.stopImmediatePropagation(); closeShareMenu(); } }, true);
 
   // ---------- Trailers ----------
   // Hebrew site: the Hebrew (usually Hebrew-subtitled) trailer first; otherwise the English one with YouTube asked to
