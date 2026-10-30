@@ -1,0 +1,45 @@
+# Ma Roim · מה רואים — notes for every session
+
+A bilingual (Hebrew-first, English) catalog of US and Israeli movies and TV series from 1980 to today,
+with posters, scores (IMDb, Rotten Tomatoes, Metacritic), where to watch in Israel, user accounts and an AI helper.
+Live at **https://ma-roim-site.vercel.app**. Owner: Nadav (doesn't write code; describes what he wants,
+judges the result on the site, often from his phone). Talk to him in plain language, in Hebrew when he writes Hebrew.
+
+## Where things live
+- **Code**: this repo (GitHub `Nadav167/Ma-Roim`, private). The whole site is `site/index.html` (vanilla JS, one file).
+- **Hosting**: Vercel project `ma-roim`, root directory `site`, deploys on every push to `main`.
+  Commits must be authored as `Nadav167 <173299564+Nadav167@users.noreply.github.com>` or Vercel blocks the deploy.
+- **Database**: Supabase (`prnfnqvjirwuyafvsulk`). Schema changes are SQL files in `supabase/` (numbered);
+  Nadav runs them himself in Supabase → SQL Editor. The publishable key in the site code is public by design.
+- **Serverless functions**: `site/api/ask.js` (AI helper, needs `ANTHROPIC_API_KEY` in Vercel),
+  `site/api/t.js` (shared-link previews for WhatsApp: `/t/<id>`).
+- **Secrets** (never commit): `.secrets/tmdb_token`, `.secrets/supabase_secret`, `.secrets/supabase_url`,
+  `.secrets/omdb_key`. In GitHub Actions they are the repository secrets `TMDB_TOKEN`, `SUPABASE_SECRET`, `OMDB_KEY`.
+
+## Data pipeline
+`bash scripts/update_all.sh` rebuilds everything from Wikidata, IMDb datasets, TMDB, Hebrew/English Wikipedia and
+OMDb, writes the site files (`site/home.json`, `site/index.json`, `site/watch/*`), the dataset copies in `data/`,
+and loads Supabase. It runs every Sunday via `.github/workflows/weekly-update.yml`; TMDB/Wikipedia/OMDb answers are
+cached on the `pipeline-cache` branch. README.md lists every step.
+
+Title ids: `Q…` = Wikidata titles; `M…`/`S…` = Israeli movies/series added from TMDB (`scripts/tmdb_israeli.py`).
+
+## Rules Nadav set (keep them)
+- **Hebrew first**: the site opens in Hebrew; English only if the visitor picks it.
+- **Own poster and name only**: a title shows only its OWN Hebrew title/poster, otherwise the English one —
+  never borrowed from another title (e.g. an Israeli remake with the same name).
+- **No title without a poster**: titles with no poster from any source are dropped (`scripts/drop_unknown.py`)
+  and come back automatically if a poster appears later.
+- **US/Israeli versions of the same show** (Survivor / הישרדות, The Office / המשרד) both stay, and each is found
+  in search by the other's name (`search_alias`, `scripts/versions.py`, `data/versions.csv`). Same-name titles
+  that are simply different works are left as they are.
+- **Rows**: every row shows at most 20 titles plus a "Show all" card; full lists sorted by date or name are the
+  only exception.
+- **Streaming services in the picker**: Netflix, HBO Max, Prime Video, Apple TV, Disney+ (Disney+ from its US catalog).
+- **Phone layout**: no sideways page scrolling, no visible scrollbars, solid top bar, bottom bar flush to the bottom.
+- Design direction: Stremio-like, dark violet. The design plan is the Claude doc "מה רואים: תוכנית עיצוב".
+
+## Working habits
+- Test changes in a phone-sized browser (Playwright, 390×844) before pushing; check the Vercel deploy status after.
+- Don't do things Nadav didn't ask for; when a choice is his (deleting data, design direction), ask first.
+- Explain what changed in a few plain sentences, not code.
