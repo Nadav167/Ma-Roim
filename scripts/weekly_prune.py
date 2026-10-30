@@ -2,7 +2,17 @@
 # so their posters, Hebrew names, synopses, trailers, keywords and cast photos are fetched again.
 # Older titles keep their cached answers (they rarely change). Where-to-watch is refetched for every title
 # by deleting raw/tmdb/providers.jsonl in scripts/update_all.sh.
-import json, gzip, os, datetime
+import json, gzip, os, glob, datetime
+# A run that was stopped midway can leave a cut-off last line in a cache file; drop such lines (they're fetched again)
+for f in glob.glob("raw/tmdb/*.jsonl"):
+    lines = open(f, encoding="utf-8").read().splitlines()
+    good = []
+    for l in lines:
+        try: json.loads(l); good.append(l)
+        except ValueError: pass
+    if len(good) < len([l for l in lines if l.strip()]):
+        open(f, "w", encoding="utf-8").write("\n".join(good) + ("\n" if good else ""))
+        print(f"{f}: dropped {len([l for l in lines if l.strip()]) - len(good)} broken lines")
 recent_year = datetime.date.today().year - 1
 src = "out/ma_roim_titles.json" if os.path.exists("out/ma_roim_titles.json") else "data/titles.json.gz"
 rows = json.load(open(src, encoding="utf-8") if src.endswith(".json") else gzip.open(src, "rt", encoding="utf-8"))
