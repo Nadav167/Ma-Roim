@@ -151,6 +151,8 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .disc-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .disc-hint { color: var(--muted); font-size: 12px; text-align: center; }
 /* Ask AI fills the screen between the top bar and the menu; messages scroll, the message box stays at the bottom */
+/* The page never bounces past its top or bottom, so the top bar and the bottom bar stay put on every page */
+html, body { overscroll-behavior: none; }
 html:has(body.ai-mode) { overflow: hidden; overscroll-behavior: none; }
 body.ai-mode { overflow: hidden; position: fixed; inset: 0; min-height: 0 !important; overscroll-behavior: none; }
 body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px) + env(safe-area-inset-top, 0px)); bottom: 0; inset-inline: var(--rail) 0; display: flex; flex-direction: column; padding: 0; }
@@ -1314,6 +1316,12 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const d = $("#drawer"); d.setAttribute("aria-hidden", "true"); d.inert = true;
     setTimeout(() => { if (!document.body.classList.contains("drawer-open")) $("#drawer-bg").hidden = true; }, 260);
   }
+  // On the AI page nothing but the chat scrolls. iPhone can leave the whole page shifted after the keyboard
+  // closes (top bar half hidden, gap under the bottom bar): put it back.
+  const unshift = () => { if (document.body.classList.contains("ai-mode") && !/input|textarea/i.test((document.activeElement || {}).tagName || "") && (scrollY || (window.visualViewport && visualViewport.offsetTop))) window.scrollTo(0, 0); };
+  addEventListener("scroll", unshift, { passive: true });
+  document.addEventListener("focusout", () => setTimeout(unshift, 60));
+  if (window.visualViewport) visualViewport.addEventListener("resize", () => setTimeout(unshift, 60));
   $("#menu-btn").onclick = openDrawer;
   $("#dr-close").onclick = closeDrawer;
   $("#drawer-bg").onclick = closeDrawer;
