@@ -154,7 +154,7 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 /* The page never bounces past its top or bottom, so the top bar and the bottom bar stay put on every page */
 html, body { overscroll-behavior: none; }
 html:has(body.ai-mode) { overflow: hidden; overscroll-behavior: none; }
-body.ai-mode { overflow: hidden; position: fixed; inset: 0; min-height: 0 !important; overscroll-behavior: none; }
+body.ai-mode { overflow: hidden; min-height: 0 !important; overscroll-behavior: none; }
 body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px) + env(safe-area-inset-top, 0px)); bottom: 0; inset-inline: var(--rail) 0; display: flex; flex-direction: column; padding: 0; }
 .ai-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 8px 20px; }
 .ai-mode .composer { position: static; flex: none; background: var(--bg); border-top: 1px solid var(--line); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
@@ -1025,7 +1025,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   function render() {
     const main = $("#main");
     const q = searchQ;
-    document.body.classList.toggle("ai-mode", view === "ai" && !q);
+    const toAi = view === "ai" && !q;
+    if (toAi && !document.body.classList.contains("ai-mode") && scrollY) window.scrollTo(0, 0);   // go to the top first, or iPhone keeps the old scroll and shifts everything
+    document.body.classList.toggle("ai-mode", toAi);
     clearInterval(heroTimer);
     document.querySelectorAll(".nav-btn, .dr-item[data-view]").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
     if (view !== "browse" && !PAGES[view]) viewKey = view;
