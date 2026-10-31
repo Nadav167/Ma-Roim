@@ -559,6 +559,10 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 .dr-item[aria-current="page"] { background: var(--surface-2); }
 .dr-item[aria-current="page"] svg { color: var(--accent); }
 #dr-lang-l:lang(he), #dr-lang span { font-family: var(--font-ui); }
+#dr-acct { display: grid; gap: 2px; }
+.dr-who { display: flex; align-items: center; gap: 14px; padding: 8px 14px 4px; color: var(--muted); font-size: 14px; min-width: 0; }
+.dr-who svg { width: 22px; height: 22px; flex: none; }
+.dr-who bdi { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-bg { transition: none; } }
 </style>
 </head>
@@ -589,6 +593,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     <hr>
     <button class="dr-item" data-view="about" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span data-t="about"></span></button>
     <button class="dr-item" type="button" id="dr-lang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M10 5c-1 4-3.5 7-6 8.5M6 9c1.2 2 3 3.6 5 4.5"/><path d="m12 21 4.5-10L21 21M13.6 17.5h5.8"/></svg><span id="dr-lang-l"></span></button>
+    <div id="dr-acct"></div>
   </nav>
 </aside>
 <div class="app">
@@ -1325,7 +1330,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   $("#menu-btn").onclick = openDrawer;
   $("#dr-close").onclick = closeDrawer;
   $("#drawer-bg").onclick = closeDrawer;
-  $("#drawer").addEventListener("click", e => { if (e.target.closest("[data-view]")) closeDrawer(); });
+  $("#drawer").addEventListener("click", e => { if (e.target.closest("[data-view], [data-auth]")) closeDrawer(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("drawer-open")) { e.stopImmediatePropagation(); closeDrawer(); } }, true);
   // ---------- Search: suggestions while typing, full results on Enter ----------
   let searchQ = "", qT, sgSeq = 0, sgItems = [], sgIndex = -1;
@@ -1934,15 +1939,19 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   }
   function refresh() { if (!$("#detail").hidden) reopen(); else render(); }
 
+  // Top bar: only "Sign in" when signed out. The account (email, sign out / sign in) lives in the side menu.
   function renderAcct() {
-    const w = $("#acct-wrap");
-    if (!sb) { w.innerHTML = ""; return; }
-    if (!user) { w.innerHTML = `<button class="btn acct" type="button" data-auth="in"><span>${t("signIn")}</span></button>`; return; }
-    const email = user.email || "";
-    w.innerHTML = `<button class="btn acct" type="button" id="acct-btn" aria-expanded="${menuOpen}"><span class="avatar">${esc(email[0] || "?")}</span><span class="label">${t("mylist")}</span></button>
-      ${menuOpen ? `<div class="menu" role="menu"><div class="who">${esc(email)}</div>
-        <button type="button" role="menuitem" data-view="list">${t("mylist")}</button>
-        <button type="button" role="menuitem" id="sign-out">${t("signOut")}</button></div>` : ""}`;
+    const w = $("#acct-wrap"), d = $("#dr-acct");
+    if (!sb) { w.innerHTML = ""; d.innerHTML = ""; return; }
+    const userSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>`;
+    if (!user) {
+      w.innerHTML = `<button class="btn acct" type="button" data-auth="in"><span>${t("signIn")}</span></button>`;
+      d.innerHTML = `<hr><button class="dr-item" type="button" data-auth="in">${userSvg}<span>${t("signIn")}</span></button>`;
+      return;
+    }
+    w.innerHTML = "";
+    d.innerHTML = `<hr><div class="dr-who">${userSvg}<bdi>${esc(user.email || "")}</bdi></div>
+      <button class="dr-item" type="button" id="sign-out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10"/></svg><span>${t("signOut")}</span></button>`;
   }
   function openAuth(mode) {
     authMode = mode; menuOpen = false;
@@ -1984,9 +1993,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   $("#auth").addEventListener("click", e => { if (e.target.id === "auth") $("#auth").hidden = true; });
   document.addEventListener("click", async e => {
     const a = e.target.closest("[data-auth]"); if (a) { openAuth(a.dataset.auth); return; }
-    if (e.target.closest("#acct-btn")) { menuOpen = !menuOpen; renderAcct(); return; }
-    if (e.target.closest("#sign-out")) { menuOpen = false; await sb.auth.signOut(); toast(t("bye")); return; }
-    if (menuOpen && !e.target.closest("#acct-wrap")) { menuOpen = false; renderAcct(); }
+    if (e.target.closest("#sign-out")) { closeDrawer(); await sb.auth.signOut(); toast(t("bye")); return; }
   });
   if (sb) sb.auth.onAuthStateChange((event, session) => {
     const was = user && user.id; user = session ? session.user : null;
