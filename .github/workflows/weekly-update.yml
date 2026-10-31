@@ -75,5 +75,6 @@ jobs:
           git init -q -b pipeline-cache
           cp /tmp/cache.tar.gz .
           printf "Cached TMDB and Hebrew Wikipedia answers for the weekly update. Replaced every week.\n" > README.md
+          mkdir site && printf '{"git":{"deploymentEnabled":false}}\n' > site/vercel.json   # Vercel: don't deploy this branch
           git add . && git -c user.name=Nadav167 -c user.email=173299564+Nadav167@users.noreply.github.com commit -q -m "Pipeline cache $(date -u +%F)"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" pipeline-cache

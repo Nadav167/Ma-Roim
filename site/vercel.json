@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "pipeline-cache": false
+    }
+  },
   "headers": [
     {
       "source": "/",
