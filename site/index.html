@@ -766,7 +766,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const t = k => T[lang][k];
   // Names copied from Wikipedia sometimes end in "(סדרת טלוויזיה)", "(סרט, 2005)", "(TV series)": the page already says what it is
-  const KIND_TAG = /s*((?:d{4} )?(?:סרט|סדרת טלוויזיה|מיני-סדרה|מיני סדרה|סדרה|סדרת אנימציה|סדרה אנימציה|סדרת אנימה|סדרת רשת|סדרה תיעודית|תוכנית טלוויזיה(?: אמריקאית)?|שעשועון|TV series|miniseries|film)(?:, d{4})?)s*$/i;
+  const KIND_TAG = /\s*\((?:\d{4} )?(?:סרט|סדרת טלוויזיה|מיני-סדרה|מיני סדרה|סדרה|סדרת אנימציה|סדרה אנימציה|סדרת אנימה|סדרת רשת|סדרה תיעודית|תוכנית טלוויזיה(?: אמריקאית)?|שעשועון|TV series|miniseries|film)(?:, \d{4})?\)\s*$/i;
   const clean = s => s && s.replace(KIND_TAG, "");
   const title = it => clean(lang === "he" ? (it.th || it.t) : it.t);
   const altTitle = it => { const a = clean(it.t), b = clean(it.th); return lang === "he" ? (b && b !== a ? a : "") : (b && b !== a ? b : ""); };
