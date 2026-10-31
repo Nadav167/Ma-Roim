@@ -64,7 +64,7 @@ outf.close()
 
 # English Wikipedia's table (scripts/enwiki_seasons.py) comes first: the owner trusts it more; TMDB fills the rest.
 wiki = json.load(open("raw/enwiki/seasons.json")) if os.path.exists("raw/enwiki/seasons.json") else {}
-n = nw = 0
+n = nw = fixed = 0
 for r in rows:
     w = (wiki.get(r["wikidata_id"]) or {}).get("ss") if r["type"] == "TV series" else None
     c = cache.get(int(r["tmdb_id"])) if r.get("tmdb_type") == "tv" and r.get("tmdb_id") else None
@@ -73,5 +73,9 @@ for r in rows:
     if w: r["season_table"] = w; n += 1; nw += 1
     elif c and c["ss"]: r["season_table"] = c["ss"]; n += 1
     else: r.pop("season_table", None)
+    # Start year: when Wikipedia's and TMDB's tables agree on the year of the first season, that is the year
+    # (Wikidata sometimes has the comic's or a pilot's year: The Walking Dead 2003 -> 2010)
+    if w and c and c["ss"] and w[0][2][:4] == c["ss"][0][2][:4] and str(r["year"]) != w[0][2][:4]:
+        r["year"] = int(w[0][2][:4]); fixed += 1
 json.dump(rows, open("out/ma_roim_titles.json", "w", encoding="utf-8"), ensure_ascii=False)
-print("series with a season table:", n, "| from Wikipedia:", nw, "| from TMDB:", n - nw)
+print("series with a season table:", n, "| from Wikipedia:", nw, "| from TMDB:", n - nw, "| start years corrected:", fixed)

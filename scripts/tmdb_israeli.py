@@ -1,5 +1,5 @@
-# Israeli movies and series that are on TMDB but not on Wikidata (e.g. The Voice Israel, X Factor Israel):
-# add them to the catalog. Runs right after build.py (adds rows to out/ma_roim_titles.json) and before merge_tmdb.py,
+# Israeli movies and series that are on TMDB but not on Wikidata (e.g. The Voice Israel, X Factor Israel), plus the
+# owner's exceptions in data/keep_titles.csv: add them to the catalog. Runs right after build.py (adds rows to out/ma_roim_titles.json) and before merge_tmdb.py,
 # which takes their TMDB details from raw/tmdb/extra.jsonl.
 #   ids: "M<tmdb movie id>" / "S<tmdb series id>" (Wikidata titles keep their Q ids)
 #   skipped: titles already in the catalog (same TMDB id, same IMDb id, or same name and year), no poster, adult, before 1980
@@ -34,6 +34,12 @@ for kind, date_key in (("tv", "first_air_date"), ("movie", "primary_release_date
             if h.get("poster_path"): found[(kind, h["id"])] = h
         page += 1
 print("Israeli titles with a poster on TMDB:", len(found), flush=True)
+# plus the owner's exceptions: non-American, non-Israeli titles he wants anyway (data/keep_titles.csv, e.g. Money Heist)
+import csv
+keep_keys = set()
+if os.path.exists("data/keep_titles.csv"):
+    for x in csv.DictReader(open("data/keep_titles.csv", encoding="utf-8")):
+        k = (x["tmdb_type"], int(x["tmdb_id"])); keep_keys.add(k); found.setdefault(k, {})
 
 # 2) what the catalog already has
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
@@ -111,7 +117,8 @@ for (kind, tid) in todo:
     rows.append({
         "title": x["title_en"] or x["original_title"], "title_he": x["title_he"] or "",
         "type": "TV series" if kind == "tv" else "Movie", "year": x["year"], "end_year": x["end_year"] or "",
-        "country": "Israel", "all_countries": ", ".join(sorted(set(x["countries"]))) or "Israel",
+        "country": "Israel" if (kind, tid) not in keep_keys else ", ".join(sorted(set(x["countries"]))) or "Other",
+        "all_countries": ", ".join(sorted(set(x["countries"]))) or "Israel",
         "genres": ", ".join(x["tmdb_genres"]), "imdb_genres": "", "runtime_min": x["runtime"] or "",
         "imdb_rating": rt[0] if rt else "", "imdb_votes": rt[1] if rt else "",
         "imdb_url": f"https://www.imdb.com/title/{x['imdb']}/" if x.get("imdb") else "",

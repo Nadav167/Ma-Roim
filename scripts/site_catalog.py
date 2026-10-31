@@ -23,6 +23,7 @@ def slim(r):
     return {
         "id": r["wikidata_id"], "t": r["title"], "th": r["title_he"], "ty": "tv" if r["type"] == "TV series" else "movie",
         "y": r["year"], "ye": r["end_year"] or None, "il": "Israel" in r["country"],
+        **({"us": False} if "Israel" not in r["country"] and "United States" not in r["country"] else {}),   # an exception like Money Heist
         "g": g, "rt": r["imdb_rating"] or None, "v": r["imdb_votes"] or 0,
         "rs": r.get("rt_score") if r.get("rt_score") != "" else None, "ms": r.get("mc_score") if r.get("mc_score") != "" else None,
         "ru": r.get("rt_url") or None, "tr": r.get("trailer_en") or None, "trh": r.get("trailer_he") or None,

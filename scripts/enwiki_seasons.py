@@ -133,10 +133,12 @@ for i in range(0, len(todo), B):
     got = fetch(list(dict.fromkeys(arts.values())))
     if got is False: print("English Wikipedia isn't reachable from here; skipping (uses what's cached)", flush=True); break
     want = {}
+    own = {}
     for qid, a in arts.items():
         t = got.get(a)
-        tb = table(t) if t else None
-        if tb: cache[qid] = {"checked": today.isoformat(), "page": a, "ss": tb}; continue
+        # the episode list the article points to comes first: an article's own table can be of its shorts or spin-off
+        # (Gravity Falls); the article's table is used only when no episode list has one
+        own[qid] = table(t) if t else None
         links = re.findall(r"\{\{\s*[Mm]ain(?: article)?\s*\|\s*(List of [^|}{]*episodes[^|}{]*)", t or "")
         want[qid] = list(dict.fromkeys(links + [f"List of {base(a)} episodes"]))[:3]
     lists = list(dict.fromkeys(x for v in want.values() for x in v))
@@ -150,6 +152,7 @@ for i in range(0, len(todo), B):
         for c in cands:
             if got2.get(c): tb = table(got2[c]); pg = c
             if tb: break
+        if not tb and own[qid]: tb, pg = own[qid], arts[qid]
         cache[qid] = {"checked": today.isoformat(), "page": pg if tb else None, "ss": tb or []}
     done += len(batch)
     json.dump(cache, open(OUT + ".tmp", "w")); os.replace(OUT + ".tmp", OUT)   # saved every batch: safe to stop anytime

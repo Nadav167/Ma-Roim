@@ -5,6 +5,8 @@ URL = open(".secrets/supabase_url").read().strip().rstrip("/")
 KEY = open(".secrets/supabase_secret").read().strip()
 H = {"apikey": KEY, "Authorization": f"Bearer {KEY}", "Prefer": "return=representation"}
 ids = json.load(open("out/dropped_ids.json"))
+# foreign-language titles the owner asked to remove (scripts/drop_foreign.py): always deleted, no size limit
+foreign = json.load(open("out/foreign_ids.json")) if __import__("os").path.exists("out/foreign_ids.json") else []
 present = []
 for i in range(0, len(ids), 100):
     r = requests.get(f"{URL}/rest/v1/titles", params={"select": "id", "id": f"in.({','.join(ids[i:i + 100])})"},
@@ -13,6 +15,7 @@ for i in range(0, len(ids), 100):
 catalog = len(json.load(open("out/ma_roim_titles.json", encoding="utf-8")))
 if len(present) > 0.02 * catalog:
     print(f"{len(present)} dropped titles are in the database; too many to remove safely, kept"); raise SystemExit
+present = sorted(set(present) | set(foreign))
 n = 0
 for i in range(0, len(present), 100):
     for a in range(5):

@@ -702,7 +702,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const face = (photo, size = "w185") => `<span class="face">${photo ? `<img src="https://image.tmdb.org/t/p/${size}${photo}" alt="" loading="lazy" decoding="async">` : SILHOUETTE}</span>`;
   function reopen() { const top = hist[hist.length - 1]; if (!top) return; top.k === "p" ? openPerson(top.id, false) : openDetail(top.id, false); }
   try { if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) { sb = null; }
-  const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli,
+  const fromRow = r => ({ id: r.id, t: r.title, th: r.title_he, ty: r.type, y: r.year, ye: r.end_year, il: r.israeli, ...(r.israeli || r.us !== false ? {} : { us: false }),
     g: (r.genres || []).slice(0, 3), rt: r.imdb_rating != null ? Number(r.imdb_rating) : null, v: r.imdb_votes || 0,
     rm: r.runtime_min, s: r.seasons, p: r.poster_en, ph: r.poster_he, rs: r.rt_score, ms: r.mc_score, ru: r.rt_url, tr: r.trailer_en, trh: r.trailer_he,
     b: r.backdrop, o: r.overview_en || "", oh: r.overview_he || "", f: 1, imdb: r.imdb_url, we: r.wikipedia_en, wh: r.wikipedia_he, mc: r.metacritic_url });
@@ -1074,7 +1074,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
           <div class="poster">${p ? `<img src="${p}" alt="">` : `<div class="textcard"><strong>${esc(title(it))}</strong></div>`}</div>
           <div class="meta d-meta"><span>${it.ty === "tv" ? t("tv") : t("movie")}</span>
             <span>${years(it)}</span>${it.ty === "tv" && it.s ? `<span>${t("seasons")(it.s)}</span>` : it.rm ? `<span>${t("min")(it.rm)}</span>` : ""}
-            <span>${it.il ? t("il") : t("us")}</span></div>
+            ${it.il ? `<span>${t("il")}</span>` : it.us === false ? "" : `<span>${t("us")}</span>`}</div>
           <div id="watch">${it.wa !== undefined && PROV ? watchHtml(it.wa) : watchHtml(undefined)}</div>
         </div>
         <div class="detail-text">
