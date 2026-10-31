@@ -154,7 +154,7 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 /* The page never bounces past its top or bottom, so the top bar and the bottom bar stay put on every page */
 html, body { overscroll-behavior: none; }
 html:has(body.ai-mode) { overflow: hidden; overscroll-behavior: none; }
-body.ai-mode { overflow: hidden; min-height: 0 !important; overscroll-behavior: none; }
+body.ai-mode { overflow: hidden; overscroll-behavior: none; }   /* keeps body's min-height: without it iPhone lifts the bottom bar */
 body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px) + env(safe-area-inset-top, 0px)); bottom: 0; inset-inline: var(--rail) 0; display: flex; flex-direction: column; padding: 0; }
 .ai-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 8px 20px; }
 .ai-mode .composer { position: static; flex: none; background: var(--bg); border-top: 1px solid var(--line); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
@@ -471,7 +471,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   body.ai-mode main { inset-inline: 0; bottom: var(--nav-h, 80px); }
   .ai-mode .composer { padding-bottom: 10px; }
   .bubble .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
-  .disc-stage { min-height: 360px; padding: 32px 18px; border-radius: 20px; }
+  .disc-stage { min-height: 360px; padding: 32px 18px; border-radius: 20px; margin-top: 14px; }   /* clear of the top bar */
   .disc-collage { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .say-q { font-size: 21px; padding: 14px 18px; }
   .say-a { font-size: 17px; padding: 13px 20px; }
