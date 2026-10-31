@@ -26,6 +26,9 @@ for r in rows:
     imdb = r["imdb_url"].rstrip("/").rsplit("/", 1)[1] if r["imdb_url"] else None
     t = tm.get(imdb, {})
     if not (t.get("tmdb_id") and t.get("poster_en")) and r["wikidata_id"] in found: t = found[r["wikidata_id"]]
+    # titles added from TMDB (M/S ids) keep their own TMDB entry: the IMDb lookup can land on another entry
+    # (Fleabag's IMDb ID also finds the filmed stage show)
+    if r["wikidata_id"][:1] in "MS" and found.get(r["wikidata_id"], {}).get("tmdb_id"): t = found[r["wikidata_id"]]
     title_he = t.get("title_he") or r["title_he"]
     o = {
         "title": r["title"],
