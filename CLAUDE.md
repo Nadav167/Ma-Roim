@@ -42,6 +42,10 @@ Title ids: `Q…` = Wikidata titles; `M…`/`S…` = Israeli movies/series added
   "Series overview": English Wikipedia's table first (Nadav trusts it more, `scripts/enwiki_seasons.py`), TMDB as the
   fallback (`scripts/seasons.py`). English Wikipedia answers 429 from the cloud sandbox; it works from GitHub Actions
   and from Nadav's linked computer.
+- **Only American and Israeli titles**, plus Nadav's hand-picked exceptions: titles not in English/Hebrew are removed
+  unless Israeli, partly in English or made by an American company (`scripts/drop_foreign.py`). Exceptions he chose
+  (Money Heist, big non-US series, BBC/UK nature documentaries) are listed in `data/keep_titles.csv` and added from
+  TMDB by `scripts/tmdb_israeli.py`; to add more, append rows there (tmdb_type, tmdb_id).
 - **Streaming services in the picker**: Netflix, HBO Max, Prime Video, Apple TV, Disney+ (Disney+ from its US catalog).
 - **Phone layout**: no sideways page scrolling, no visible scrollbars, solid top bar, bottom bar flush to the bottom.
 - Design direction: Stremio-like, dark violet. The design plan is the Claude doc "מה רואים: תוכנית עיצוב".
