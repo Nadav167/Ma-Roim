@@ -138,6 +138,18 @@ html[dir="rtl"] .hero::after { background: linear-gradient(to top, var(--bg) 2%,
 .disc-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
 .disc-top h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
 .disc-top .count { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.disc-sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.lk { border: 0; padding: 0; background: none; color: inherit; cursor: pointer; text-align: start; display: grid; gap: 6px; min-width: 0; font: inherit; }
+.lk .poster { transition: box-shadow .15s, transform .15s; }
+.lk .poster img { transition: opacity .15s; }
+.lk-mark { position: absolute; inset-inline-end: 7px; bottom: 7px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(16,13,10,.7); border: 2px solid rgba(255,255,255,.7); color: transparent; transition: background .15s, border-color .15s; }
+.lk-mark svg { width: 16px; height: 16px; }
+.lk.on .poster { box-shadow: 0 0 0 3px var(--accent); }
+.lk.on .lk-mark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) { .lk:hover .poster { transform: translateY(-3px); } }
+.lk-bar { position: sticky; bottom: calc(var(--nav-h, 0px) + 12px); z-index: 4; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px; margin-top: 4px; border-radius: 20px; background: rgba(16,13,10,.86); backdrop-filter: blur(8px); border: 1px solid var(--line); }
 .duel { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
 .duel .vs { align-self: center; }
 .duel .vs { color: var(--muted); font-weight: 800; font-size: 14px; letter-spacing: .08em; }
@@ -649,12 +661,12 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 (() => {
   const T = {
     en: { about: "About", menu: "Menu", close: "Close", home: "Home", discover: "Discover",
-      dH: "Want something new?", dP: "Pick one of two, again and again. Every choice teaches it your taste. Stop whenever you want and get picks made for you.",
-      dMovies: "Movies", dSeries: "Series", dContinue: n => `Continue (${n} choices so far)`, dRestart: "Start over",
-      dQ: "Which would you rather watch?", dNeither: "Neither", dCount: n => `${n} choices`, dStop: "Show my picks",
-      dMin: n => `Make ${n} more ${n === 1 ? "choice" : "choices"} to get picks`, dTaste: "Your taste so far", dLikes: "You lean toward", dLess: "Less your thing",
-      dKeep: "Keep going", dThinking: "Finding titles for your taste…", dSignIn: "Sign in to get your picks. Your choices are kept.",
-      dLoading: "Loading titles…", dKeys: "Tip: ← and → keys pick, ↓ skips", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
+      dH: "Want something new?", dP: "Mark the ones you liked among the 50 most popular, and get picks made for you.",
+      dMovies: "Movies", dSeries: "Series", dContinue: n => `Continue (${n} marked so far)`, dRestart: "Start over",
+      dQ: "Which of these did you like?", dQSub: "Tap every title you liked. Skip the ones you haven’t seen.", dCount: n => `${n} marked`, dStop: "Show my picks", dMore: "More picks", dMoreBusy: "Finding more…",
+      dMin: n => `Mark ${n} more to get picks`, dTaste: "Your taste so far", dLikes: "You lean toward", dLess: "Less your thing",
+      dKeep: "Edit my marks", dThinking: "Finding titles for your taste…", dSignIn: "Sign in to get your picks. Your choices are kept.",
+      dLoading: "Loading titles…", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
       ilMovies: "Israeli movies", ilSeries: "Israeli series", showAll: "Show all", sortL: "Sort",
       whereH: "Where to watch in Israel", wStream: "Stream", wFree: "Free", wRent: "Rent", wBuy: "Buy", wNone: "Not available to stream or rent in Israel right now.",
       wMine: names => `On your ${names}`, wPick: "My services", wPickH: "My streaming services", wPickP: "Pick the services you have. Titles on them get a green check, and you can show only what’s on them.", wDone: "Done",
@@ -699,12 +711,12 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
     he: { about: "אודות", menu: "תפריט", close: "סגירה", home: "בית", discover: "גלו",
-      dH: "בא לכם משהו חדש?", dP: "בחרו אחד מתוך שניים, שוב ושוב. כל בחירה מלמדת את הטעם שלכם. עצרו מתי שתרצו וקבלו המלצות בשבילכם.",
-      dMovies: "סרטים", dSeries: "סדרות", dContinue: n => `המשיכו (${n} בחירות עד עכשיו)`, dRestart: "התחילו מחדש",
-      dQ: "מה הייתם מעדיפים לראות?", dNeither: "אף אחד", dCount: n => `${n} בחירות`, dStop: "הראו לי המלצות",
-      dMin: n => `עוד ${n} בחירות כדי לקבל המלצות`, dTaste: "הטעם שלכם עד עכשיו", dLikes: "אתם נמשכים ל", dLess: "פחות בשבילכם",
-      dKeep: "המשיכו לבחור", dThinking: "מחפש כותרים לפי הטעם שלכם…", dSignIn: "התחברו כדי לקבל המלצות. הבחירות שלכם נשמרות.",
-      dLoading: "טוען כותרים…", dKeys: "טיפ: מקשי ← ו-→ בוחרים, ↓ מדלג", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
+      dH: "בא לכם משהו חדש?", dP: "סמנו מה אהבתם מתוך 50 הפופולריים ביותר, וקבלו המלצות בשבילכם.",
+      dMovies: "סרטים", dSeries: "סדרות", dContinue: n => `המשיכו (${n} סומנו עד עכשיו)`, dRestart: "התחילו מחדש",
+      dQ: "מה מאלה אהבתם?", dQSub: "לחצו על כל כותר שאהבתם. על מה שלא ראיתם פשוט דלגו.", dCount: n => `${n} סומנו`, dStop: "הראו לי המלצות", dMore: "המלצות נוספות", dMoreBusy: "מחפש עוד…",
+      dMin: n => `סמנו עוד ${n} כדי לקבל המלצות`, dTaste: "הטעם שלכם עד עכשיו", dLikes: "אתם נמשכים ל", dLess: "פחות בשבילכם",
+      dKeep: "עדכנו את הסימונים", dThinking: "מחפש כותרים לפי הטעם שלכם…", dSignIn: "התחברו כדי לקבל המלצות. הבחירות שלכם נשמרות.",
+      dLoading: "טוען כותרים…", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
       ilMovies: "סרטים ישראליים", ilSeries: "סדרות ישראליות", showAll: "הצג הכל", sortL: "מיון",
       whereH: "איפה לצפות בישראל", wStream: "סטרימינג", wFree: "בחינם", wRent: "השכרה", wBuy: "קנייה", wNone: "לא זמין כרגע לצפייה או להשכרה בישראל.",
       wMine: names => `זמין אצלכם ב-${names}`, wPick: "השירותים שלי", wPickH: "שירותי הסטרימינג שלי", wPickP: "בחרו את השירותים שיש לכם. כותרים שזמינים בהם יקבלו וי ירוק, ואפשר להציג רק אותם.", wDone: "סיום",
@@ -1711,17 +1723,17 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       title="${esc(t("trailer"))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   });
 
-  // ---------- Discover: endless this-or-that that learns your taste ----------
+  // ---------- Discover: mark what you liked among the 50 most popular, get picks ----------
   // Taste = weights on simple features (genres, Israeli, lead actors and director/creator, and for series how
-  // many seasons). Not year or rating: those only filter the answer down to nothing. Each pick adds the winner's
-  // features and subtracts the loser's. Pairs mix "best match so far" with exploration. Saved on this device.
+  // many seasons) of the titles marked as liked. Titles left unmarked count for nothing (maybe just not seen).
+  // Marks are saved on this device.
   const DKEY = "taste";
   let disc = Object.assign({ stage: "start", type: null, w: { movie: {}, tv: {} }, seen: { movie: [], tv: [] }, picks: { movie: [], tv: [] }, passes: { movie: [], tv: [] }, pn: {}, pair: null, result: null, busy: false, anim: null },
     store.get(DKEY, {}), { stage: "start", pair: null, result: null, busy: false, anim: null });
   const okFeat = f => f === "il" || /^(g|p|s):/.test(f);
   for (const ty of ["movie", "tv"]) for (const f of Object.keys(disc.w[ty] || {})) if (!okFeat(f)) delete disc.w[ty][f];   // drop old year/rating weights
   if (!disc.pn) disc.pn = {};
-  const MIN_PICKS = 6;
+  const MIN_PICKS = 3, TOP = 50;
   const saveDisc = () => store.set(DKEY, { w: disc.w, seen: disc.seen, picks: disc.picks, passes: disc.passes, pn: disc.pn });
   const discCr = {};   // title id -> the people Discover weighs (top 3 cast + first director or creator), once loaded
   function loadPairInfo(ids) {
@@ -1758,43 +1770,28 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const seen = new Set(disc.seen[type]);
     return famous[type].filter(id => !seen.has(id));
   }
-  const rnd = a => a[Math.floor(Math.random() * a.length)];
-  function nextPair() {
-    const type = disc.type, ids = pool(type), w = disc.w[type], n = disc.picks[type].length;
-    if (ids.length < 2) { disc.seen[type] = []; return nextPair(); }
-    const g1 = id => (C.items[id].g || [])[0];
-    let a, b;
-    if (n < 4 || Math.random() < 0.3) {                         // explore: two different kinds of titles
-      a = rnd(ids); const diff = ids.filter(x => x !== a && g1(x) !== g1(a)); b = rnd(diff.length ? diff : ids.filter(x => x !== a));
-    } else {                                                      // exploit: a strong match vs. something that tests it
-      const sample = Array.from({ length: Math.min(80, ids.length) }, () => rnd(ids));
-      const ranked = [...new Set(sample)].map(id => [score(id, w) + Math.random() * 0.6, id]).sort((x, y) => y[0] - x[0]);
-      a = ranked[0][1];
-      const rest = ranked.slice(1).filter(([, id]) => g1(id) !== g1(a));
-      b = (rest.length ? rest[Math.floor(rest.length * (0.2 + Math.random() * 0.5))] : ranked[1])[1];
-    }
-    disc.pair = Math.random() < 0.5 ? [a, b] : [b, a];
-    loadPairInfo(disc.pair);
+  function topIds(type) { pool(type); return famous[type].slice(0, TOP); }
+  // weights come straight from the marked titles (recomputed, so unmarking undoes it)
+  function rebuildTaste(type) {
+    const w = {};
+    for (const id of disc.picks[type]) if (C.items[id]) for (const f of feats(C.items[id], id)) w[f] = (w[f] || 0) + 1;
+    disc.w[type] = w;
   }
-  function choose(winIdx) {
-    if (!disc.pair || disc.anim) return;
-    const type = disc.type, w = disc.w[type], [a, b] = disc.pair;
-    if (winIdx === -1) { for (const id of [a, b]) for (const f of feats(C.items[id], id)) w[f] = (w[f] || 0) - 0.5; disc.passes[type].push(a, b); }
-    else {
-      const win = disc.pair[winIdx], lose = disc.pair[1 - winIdx];
-      for (const f of feats(C.items[win], win)) w[f] = (w[f] || 0) + 1;
-      for (const f of feats(C.items[lose], lose)) w[f] = (w[f] || 0) - 1;
-      disc.picks[type].push(win); disc.passes[type].push(lose);
-    }
-    for (const id of [a, b]) for (const p of discCr[id] || []) disc.pn[p.id] = { name: p.name, name_he: p.name_he };
-    disc.seen[type].push(a, b); saveDisc();
-    disc.anim = winIdx; render();
-    setTimeout(() => { disc.anim = null; nextPair(); if (view === "discover") render(); }, winIdx === -1 ? 120 : 380);
+  function toggleLike(id) {
+    const type = disc.type, arr = disc.picks[type], i = arr.indexOf(id);
+    if (i >= 0) arr.splice(i, 1); else { arr.push(id); loadPairInfo([id]); }
+    for (const p of discCr[id] || []) disc.pn[p.id] = { name: p.name, name_he: p.name_he };
+    rebuildTaste(type); saveDisc();
+    const el = document.querySelector(`[data-like="${id}"]`);
+    if (el) { const on = arr.includes(id); el.classList.toggle("on", on); el.setAttribute("aria-pressed", on); }
+    const n = arr.length, left = Math.max(0, MIN_PICKS - n);
+    const c = $("#lk-count"); if (c) c.textContent = t("dCount")(n);
+    const go = $("#lk-go"); if (go) { go.disabled = !!left; go.textContent = left ? t("dMin")(left) : t("dStop"); }
   }
-  const pickCard = (id, i) => { const it = C.items[id], ps = poster(it);
-    const cls = disc.anim === null || disc.anim === undefined ? "" : disc.anim === i ? "won" : disc.anim === -1 ? "lost" : "lost";
-    return `<button class="pick ${cls}" type="button" data-pick="${i}"><div class="poster">${ps ? `<img src="${ps}" alt="">` : ""}${it.rt ? `<span class="badge"><i>★</i>${it.rt.toFixed(1)}</span>` : ""}</div>
-      <div class="pick-info"><b>${esc(title(it))}</b><small>${years(it)}${(it.g || []).length ? " · " + it.g.slice(0, 2).map(genre).map(esc).join(", ") : ""}</small></div></button>`; };
+  const likeCard = id => { const it = C.items[id], ps = poster(it), on = disc.picks[disc.type].includes(id);
+    return `<button class="lk ${on ? "on" : ""}" type="button" data-like="${id}" aria-pressed="${on}"><div class="poster">${ps ? `<img src="${ps}" alt="" loading="lazy" decoding="async">` : ""}
+      ${it.rt ? `<span class="badge"><i>★</i>${it.rt.toFixed(1)}</span>` : ""}<span class="lk-mark">${icon.check}</span></div>
+      <div class="card-title">${esc(title(it))}</div><div class="card-sub">${years(it)}</div></button>`; };
   function discView() {
     const head = `<div class="view-head pad"><h1>${esc(t("dH"))}</h1><p>${esc(t("dP"))}</p></div>`;
     if (!C.index.length) return head + `<div class="pad"><div class="loading" style="padding:30px 0">${t("dLoading")}</div></div>`;
@@ -1821,57 +1818,62 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
         ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids))
           : user ? `<div class="bubble ai a wait ts">${t("dThinking")}</div>` : ""}
         ${!user && sb ? `<div class="empty"><strong>${t("dSignIn")}</strong><div class="btns"><button class="btn primary" type="button" data-auth="in">${t("signIn")}</button></div></div>` : ""}
-        <div class="disc-actions"><button class="btn primary" type="button" data-disc-keep>${t("dKeep")}</button><button class="btn" type="button" data-disc-reset="${type}">${t("dRestart")}</button></div></div></div>`;
+        ${r && !r.err ? `<div class="disc-actions"><button class="btn primary" type="button" data-disc-more ${disc.busy ? "disabled" : ""}>${disc.busy ? t("dMoreBusy") : t("dMore")}</button></div>` : ""}
+        <div class="disc-actions"><button class="btn" type="button" data-disc-keep>${t("dKeep")}</button><button class="btn" type="button" data-disc-reset="${type}">${t("dRestart")}</button></div></div></div>`;
     }
-    if (!disc.pair) nextPair();
-    const left = Math.max(0, MIN_PICKS - n);
+    const ids = topIds(type), left = Math.max(0, MIN_PICKS - n);
+    loadPairInfo(disc.picks[type].filter(id => C.items[id] && !discCr[id]));
     return `<div class="pad"><div class="disc">
-      <div class="disc-top"><h2>${esc(t("dQ"))}</h2><span class="count">${t("dCount")(n)}</span></div>
-      <div class="duel">${pickCard(disc.pair[0], 0)}<span class="vs">${lang === "he" ? "או" : "or"}</span>${pickCard(disc.pair[1], 1)}</div>
-      <div class="disc-actions"><button class="btn" type="button" data-pick="-1">${t("dNeither")}</button>
-        <button class="btn primary" type="button" data-disc-stop ${left ? "disabled" : ""}>${left ? esc(t("dMin")(left)) : t("dStop")}</button></div>
-      <p class="disc-hint">${t("dKeys")}</p></div></div>`;
+      <div class="disc-top"><div><h2>${esc(t("dQ"))}</h2><p class="disc-sub">${esc(t("dQSub"))}</p></div><span class="count" id="lk-count">${t("dCount")(n)}</span></div>
+      <div class="grid lk-grid">${ids.map(likeCard).join("")}</div>
+      <div class="lk-bar"><button class="btn primary" type="button" id="lk-go" data-disc-stop ${left ? "disabled" : ""}>${left ? esc(t("dMin")(left)) : t("dStop")}</button>
+        <button class="btn" type="button" data-disc-reset="${type}">${t("dRestart")}</button></div></div></div>`;
   }
-  async function discPicks() {
-    const type = disc.type; disc.stage = "result"; disc.result = null; render();
-    if (!user) return;
+  // more = true: ten more picks under the ones already shown ("More picks")
+  async function discPicks(more) {
+    const type = disc.type;
+    if (more) { if (disc.busy || !disc.result || disc.result.err) return; disc.busy = true; render(); }
+    else { disc.stage = "result"; disc.result = null; disc.busy = false; render(); }
+    if (!user) { disc.busy = false; return; }
+    const already = more ? disc.result.ids : [];
     const name = id => C.items[id] ? title(C.items[id]) : id;
-    const picks = [...new Set(disc.picks[type])].slice(-25).map(name), passes = [...new Set(disc.passes[type])].filter(id => !disc.picks[type].includes(id)).slice(-15).map(name);
+    rebuildTaste(type);
+    const picks = [...new Set(disc.picks[type])].slice(-30).map(name);
     const w = disc.w[type], ent = Object.entries(w).filter(([f]) => featLabel(f));
     const likes = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([f]) => featLabel(f));
     const less = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([f]) => featLabel(f));
     const kind = type === "movie" ? (lang === "he" ? "סרטים" : "movies") : (lang === "he" ? "סדרות" : "TV series");
     // Candidates: well-known titles not shown in the game yet, best taste match first. The AI picks from these
     // (one quick call); if it fails, the best matches show on their own.
-    const shown = new Set([...disc.seen[type], ...disc.picks[type], ...disc.passes[type]]), minV = type === "movie" ? 100000 : 20000;
+    const shown = new Set([...topIds(type), ...disc.picks[type], ...already]), minV = type === "movie" ? 100000 : 20000;
     const cands = Object.keys(C.items).filter(id => { const it = C.items[id]; return it.ty === type && it.p && it.rt && (it.v || 0) >= minV && !shown.has(id); })
       .map(id => [score(id, w) + Math.log10(C.items[id].v) * 0.01, id]).sort((x, y) => y[0] - x[0]).slice(0, 60).map(([, id]) => id);
     const fallback = () => ({ message: lang === "he" ? "אלה הכותרים שהכי מתאימים לטעם שלכם:" : "These fit your taste best:", ids: cands.slice(0, 10) });
     const msg = lang === "he"
-      ? `שיחקתי "זה או זה" כדי לגלות מה אני אוהב. המלץ לי על 10 ${kind} שיתאימו לטעם שלי. בחרתי: ${picks.join(", ")}. ויתרתי על: ${passes.join(", ")}. אני נמשך ל: ${likes.join(", ")}. פחות בשבילי: ${less.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת. התחל במשפט קצר שמתאר את הטעם שלי.`
-      : `I played a this-or-that game to find what I like. Recommend 10 ${kind} that fit my taste. I picked: ${picks.join(", ")}. I passed on: ${passes.join(", ")}. I lean toward: ${likes.join(", ")}. Less my thing: ${less.join(", ")}. Choose the 10 best fits from the attached list. Start with one short sentence describing my taste.`;
+      ? `המלץ לי על 10 ${kind} שיתאימו לטעם שלי. מתוך ה-${kind} הפופולריים ביותר, אהבתי את: ${picks.join(", ")}. אני נמשך ל: ${likes.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת. התחל במשפט קצר שמתאר את הטעם שלי.`
+      : `Recommend 10 ${kind} that fit my taste. Of the most popular ${kind}, I liked: ${picks.join(", ")}. I lean toward: ${likes.join(", ")}. Choose the 10 best fits from the attached list. Start with one short sentence describing my taste.`;
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
         body: JSON.stringify({ lang, services: [...myServices], pick_from: cands, messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); disc.result = { message: j.message, ids: j.ids }; }
-      else disc.result = j.error === "limit" ? { err: t("aiLimit") } : fallback();
-    } catch (e) { disc.result = fallback(); }
+      let res;
+      if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); res = { message: j.message, ids: j.ids }; }
+      else res = j.error === "limit" ? { err: t("aiLimit") } : fallback();
+      if (more) { if (res.err) toast(res.err); else disc.result = { message: disc.result.message, ids: [...already, ...res.ids.filter(id => !already.includes(id))] }; }
+      else disc.result = res;
+    } catch (e) { if (more) disc.result = { message: disc.result.message, ids: [...already, ...fallback().ids] }; else disc.result = fallback(); }
+    disc.busy = false;
     if (view === "discover") render();
   }
   document.addEventListener("click", e => {
-    const el = e.target.closest("[data-disc-type], [data-disc-reset], [data-pick], [data-disc-stop], [data-disc-keep]"); if (!el) return;
-    if (el.dataset.discType) { disc.type = el.dataset.discType; disc.stage = "play"; disc.pair = null; render(); }
-    else if (el.dataset.discReset) { const ty = el.dataset.discReset; disc.w[ty] = {}; disc.seen[ty] = []; disc.picks[ty] = []; disc.passes[ty] = []; saveDisc(); disc.stage = "start"; disc.pair = null; render(); }
-    else if (el.dataset.pick !== undefined) choose(+el.dataset.pick);
-    else if (el.dataset.discStop !== undefined) discPicks();
-    else if (el.dataset.discKeep !== undefined) { disc.stage = "play"; disc.pair = null; render(); }
-  });
-  document.addEventListener("keydown", e => {
-    if (view !== "discover" || disc.stage !== "play" || !$("#detail").hidden || /input|textarea/i.test((e.target.tagName || ""))) return;
-    const rtl = document.documentElement.dir === "rtl";
-    if (e.key === "ArrowLeft") { e.preventDefault(); choose(rtl ? 1 : 0); } else if (e.key === "ArrowRight") { e.preventDefault(); choose(rtl ? 0 : 1); } else if (e.key === "ArrowDown") { e.preventDefault(); choose(-1); }
+    const el = e.target.closest("[data-disc-type], [data-disc-reset], [data-like], [data-disc-stop], [data-disc-keep], [data-disc-more]"); if (!el) return;
+    if (el.dataset.discMore !== undefined) { discPicks(true); return; }
+    if (el.dataset.discType) { disc.type = el.dataset.discType; disc.stage = "play"; render(); scrollTo(0, 0); }
+    else if (el.dataset.discReset) { const ty = el.dataset.discReset; disc.w[ty] = {}; disc.seen[ty] = []; disc.picks[ty] = []; disc.passes[ty] = []; saveDisc(); disc.stage = "start"; render(); }
+    else if (el.dataset.like) toggleLike(el.dataset.like);
+    else if (el.dataset.discStop !== undefined) { scrollTo(0, 0); discPicks(); }
+    else if (el.dataset.discKeep !== undefined) { disc.stage = "play"; render(); }
   });
 
   // ---------- About ----------
