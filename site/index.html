@@ -1032,6 +1032,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const toAi = view === "ai" && !q;
     if (toAi && !document.body.classList.contains("ai-mode") && scrollY) window.scrollTo(0, 0);   // go to the top first, or iPhone keeps the old scroll and shifts everything
     document.body.classList.toggle("ai-mode", toAi);
+    if (toAi) try { setTopH(); } catch (e) { /* before startup finished: measured right after */ }   // the chat box sits on the bottom bar: measure it now
     clearInterval(heroTimer);
     document.querySelectorAll(".nav-btn, .dr-item[data-view]").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
     if (view !== "browse" && !PAGES[view]) viewKey = view;
@@ -2045,8 +2046,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const r = rail.getBoundingClientRect();   // on phones the menu is a bar along the bottom
     document.documentElement.style.setProperty("--nav-h", (r.top > innerHeight / 2 ? rail.offsetHeight : 0) + "px");
   };
-  if ("ResizeObserver" in window) { const ro = new ResizeObserver(setTopH); ro.observe(topBar); ro.observe(rail); } setTopH();
-  addEventListener("resize", setTopH);
+  // border-box: iPhone fills in the home-bar padding (safe area) after load, which changes the bar's height but not its content
+  if ("ResizeObserver" in window) { const ro = new ResizeObserver(setTopH); ro.observe(topBar, { box: "border-box" }); ro.observe(rail, { box: "border-box" }); } setTopH();
+  addEventListener("resize", setTopH); addEventListener("load", setTopH); addEventListener("pageshow", setTopH);
 
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
 
