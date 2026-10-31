@@ -3,8 +3,9 @@
 # takes a few days; answers are cached in raw/omdb/posters.json and titles with no poster are retried after 30 days.
 # Rewrites out/ma_roim_titles.{json,csv}; poster_en_source = "imdb".
 import json, csv, os, time, datetime, requests
-if not os.path.exists(".secrets/omdb_key"): print("no OMDb key; skipping"); raise SystemExit
-KEY = open(".secrets/omdb_key").read().strip()
+# Without a key, posters already found (the cache) are still applied; only new lookups are skipped.
+KEY = open(".secrets/omdb_key").read().strip() if os.path.exists(".secrets/omdb_key") else None
+if not KEY: print("no OMDb key: using cached posters only, no new lookups", flush=True)
 os.makedirs("raw/omdb", exist_ok=True)
 OUT = "raw/omdb/posters.json"
 cache = json.load(open(OUT)) if os.path.exists(OUT) else {}
@@ -13,7 +14,7 @@ rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
 imdb_of = lambda r: r["imdb_url"].rstrip("/").rsplit("/", 1)[1] if r["imdb_url"] else None
 def fresh(c): return c.get("poster") or (today - datetime.date.fromisoformat(c["checked"])).days < 30
 todo = [r for r in rows if not r["poster_en"] and not r["poster_he"] and imdb_of(r) and "Adult" not in (r["genres"] or "")
-        and not (imdb_of(r) in cache and fresh(cache[imdb_of(r)]))]
+        and not (imdb_of(r) in cache and fresh(cache[imdb_of(r)]))] if KEY else []
 todo.sort(key=lambda r: -(r["imdb_votes"] or 0))   # most popular first, in case the daily limit runs out
 print("to look up:", len(todo), flush=True)
 done = 0
