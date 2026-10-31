@@ -35,7 +35,7 @@ def slim(r):
 
 has_poster = [r for r in rows if r["poster_en"]]
 by_votes = sorted(has_poster, key=lambda r: -(r["imdb_votes"] or 0))
-def top(pred, n=20):
+def top(pred, n=18):   # every row shows at most 18 titles (owner's rule)
     return [r["wikidata_id"] for r in by_votes if pred(r)][:n]
 def g(r, *names): return any(n in (r["genres"] or "") for n in names)
 
@@ -47,7 +47,7 @@ shelves = [
     ("il-movies", "Israeli movies", "סרטים ישראליים", top(lambda r: "Israel" in r["country"] and r["type"] == "Movie")),
     ("top", "Highest rated", "הדירוג הגבוה ביותר",
      [r["wikidata_id"] for r in sorted([r for r in has_poster if (r["imdb_votes"] or 0) >= 250000],
-                                       key=lambda r: -(r["imdb_rating"] or 0))][:20]),
+                                       key=lambda r: -(r["imdb_rating"] or 0))][:18]),
     ("comedy", "Comedy", "קומדיה", top(lambda r: g(r, "Comedy") and not g(r, "Animation"))),
     ("crime", "Crime and thrillers", "פשע ומתח", top(lambda r: g(r, "Crime", "Thriller"))),
     ("scifi", "Sci-fi and fantasy", "מדע בדיוני ופנטזיה", top(lambda r: g(r, "Science Fiction", "Sci-Fi", "Fantasy"))),
@@ -119,6 +119,7 @@ if mode == "site":
     # where to watch in Israel for home titles (same compact shape as site/watch/NN.json; null = not available)
     by_id = {r["wikidata_id"]: r for r in rows}
     for i, it in home_items.items():
+        if by_id[i].get("season_table"): it["ss"] = by_id[i]["season_table"]   # series overview table
         w = by_id[i].get("watch_il") or {}
         if "watch_il" not in by_id[i]: continue
         if not w and not by_id[i].get("network_il") and not by_id[i].get("stream_us"): it["wa"] = None; continue

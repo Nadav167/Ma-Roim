@@ -33,8 +33,15 @@ Title ids: `Q…` = Wikidata titles; `M…`/`S…` = Israeli movies/series added
 - **US/Israeli versions of the same show** (Survivor / הישרדות, The Office / המשרד) both stay, and each is found
   in search by the other's name (`search_alias`, `scripts/versions.py`, `data/versions.csv`). Same-name titles
   that are simply different works are left as they are.
-- **Rows**: every row shows at most 20 titles plus a "Show all" card; full lists sorted by date or name are the
+- **Rows**: every row shows at most 18 titles plus a "Show all" card; full lists sorted by date or name are the
   only exception.
+- **Years**: a series still running shows only its first year ("2023", never "2023–").
+- **Titles**: no Wikipedia disambiguation notes in names ("(סרט)", "(סדרת טלוויזיה עתידית)", "(TV series)"):
+  `scripts/clean_titles.py`.
+- **Season table** on every series page (season, episodes, first/last episode date), like Wikipedia's
+  "Series overview": English Wikipedia's table first (Nadav trusts it more, `scripts/enwiki_seasons.py`), TMDB as the
+  fallback (`scripts/seasons.py`). English Wikipedia answers 429 from the cloud sandbox; it works from GitHub Actions
+  and from Nadav's linked computer.
 - **Streaming services in the picker**: Netflix, HBO Max, Prime Video, Apple TV, Disney+ (Disney+ from its US catalog).
 - **Phone layout**: no sideways page scrolling, no visible scrollbars, solid top bar, bottom bar flush to the bottom.
 - Design direction: Stremio-like, dark violet. The design plan is the Claude doc "מה רואים: תוכנית עיצוב".

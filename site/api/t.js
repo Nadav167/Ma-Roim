@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
   let title = site, desc = he ? "סרטים וסדרות אמריקאיים וישראליים, עם עוזר AI שממליץ מה לראות." : "US and Israeli movies and series, with an AI helper that suggests what to watch.", image = "";
   if (t) {
     const name = he ? (t.title_he || t.title) : t.title;
-    const years = t.type === "tv" && t.year ? (t.end_year && t.end_year !== t.year ? `${t.year}–${t.end_year}` : t.end_year ? `${t.year}` : `${t.year}–`) : (t.year || "");
+    const years = t.type === "tv" && t.year ? (t.end_year && t.end_year !== t.year ? `${t.year}–${t.end_year}` : `${t.year}`) : (t.year || "");
     const kind = t.type === "tv" ? (he ? "סדרה" : "Series") : (he ? "סרט" : "Movie");
     const score = t.imdb_rating ? ` · IMDb ${Number(t.imdb_rating).toFixed(1)}` : "";
     title = `${name}${years ? ` (${years})` : ""}`;

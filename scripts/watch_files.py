@@ -1,6 +1,7 @@
 # Static where-to-watch files for the site (no database needed):
 #   site/watch/providers.json  {provider_id: [name, logo_path, titles_streaming_in_IL]}
-#   site/watch/NN.json         64 shards: {wikidata_id: {"k": "movie/123", "s": [ids], "f": [...], "r": [...], "b": [...]}}
+#   site/watch/NN.json         64 shards: {wikidata_id: {"k": "movie/123", "s": [ids], "f": [...], "r": [...], "b": [...],
+#                              "ss": [[season, episodes, first date, last date], ...]}}
 # Shard = numeric part of the Wikidata ID % 64 (the site computes the same).
 import json, os, collections
 rows = json.load(open("out/ma_roim_titles.json", encoding="utf-8"))
@@ -8,8 +9,9 @@ os.makedirs("site/watch", exist_ok=True)
 prov, stream_count, shards = {}, collections.Counter(), collections.defaultdict(dict)
 for r in rows:
     w = r.get("watch_il") or {}
-    if not w and not r.get("network_il") and not r.get("stream_us"): continue
+    if not w and not r.get("network_il") and not r.get("stream_us") and not r.get("season_table"): continue
     e = {"k": f"{r['tmdb_type']}/{r['tmdb_id']}"} if r.get("tmdb_id") else {}
+    if r.get("season_table"): e["ss"] = r["season_table"]       # series overview: [season, episodes, first, last]
     if r.get("network_il"): e["o"] = r["network_il"]          # original channel(s): [en, he, service key]
     for src, dst in (("stream", "s"), ("free", "f"), ("rent", "r"), ("buy", "b")):
         ids = []

@@ -205,6 +205,15 @@ html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
 .examples button { border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 9px 14px; cursor: pointer; text-align: start; font-size: 14px; }
 .examples button:hover { border-color: var(--accent); }
 .credits { display: grid; gap: 18px; margin-top: 8px; }
+.seasons { display: grid; gap: 12px; justify-items: start; }
+.seasons h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.seasons table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; width: 100%; max-width: 620px;
+  background: rgba(255,255,255,.03); border-radius: 12px; overflow: hidden; }
+.seasons th, .seasons td { border: 1px solid rgba(255,255,255,.08); padding: 8px 10px; text-align: center; white-space: nowrap; }
+.seasons th { background: rgba(255,255,255,.06); font-weight: 700; color: #e9e6f5; }
+.seasons td { color: #dad7ea; }
+.seasons td.ss-c { width: 14px; padding: 0; }
+@media (max-width: 600px) { .seasons th, .seasons td { padding: 7px 5px; font-size: 13px; } .seasons th { white-space: normal; } }
 .credits h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
 .crew { display: grid; gap: 6px; }
 .crew-row { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
@@ -589,6 +598,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       rNone: "No reports yet.", rThanks: "Thanks, your report is saved", rSignIn: "Sign in to report where you saw it.",
       wOrig: "Originally on", wFreeOn: n => `Watch free on ${n}`, wSubOn: n => `With a ${n} subscription`, wLoading: "Checking where it’s available…",
       trailer: "Trailer", trailerHe: "Trailer · Hebrew subtitles", playTrailer: "Play trailer",
+      ssH: "Series overview", ssSeason: "Season", ssEps: "Episodes", ssAired: "Originally released", ssFirst: "First released", ssLast: "Last released",
+      ssAll: n => `Show all ${n} seasons`, ssLess: "Show fewer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
       sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
@@ -637,6 +648,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       rNone: "אין עדיין דיווחים.", rThanks: "תודה, הדיווח נשמר", rSignIn: "התחברו כדי לדווח איפה ראיתם את זה.",
       wOrig: "שודר במקור ב", wFreeOn: n => `צפייה חינם ב${n}`, wSubOn: n => `במנוי ${n}`, wLoading: "בודק איפה זה זמין…",
       trailer: "טריילר", trailerHe: "טריילר · מתורגם לעברית", playTrailer: "נגן טריילר",
+      ssH: "סקירת עונות", ssSeason: "עונה", ssEps: "פרקים", ssAired: "תאריכי שידור", ssFirst: "פרק ראשון", ssLast: "פרק אחרון",
+      ssAll: n => `הצג את כל ${n} העונות`, ssLess: "הצג פחות",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
       sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
@@ -677,7 +690,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
-  const BUILD = "2026-10-30.1215";
+  const BUILD = "2026-10-31.1545";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
   const SB_KEY = "sb_publishable_mxaPvh6JxrmWlaOuR4LVkA_q0ll9ESM";   // public key; the database's row-level security protects user data
@@ -713,7 +726,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const poster = it => lang === "he" ? (it.ph || it.p) : it.p;
   const overview = it => lang === "he" ? (it.oh || it.o) : (it.o || it.oh);
   const genre = g => lang === "he" ? (C.genres_he[g] || g) : g;
-  const years = it => it.ty === "tv" && it.y ? (it.ye ? (it.ye === it.y ? `${it.y}` : `${it.y}–${it.ye}`) : `${it.y}–`) : `${it.y ?? ""}`;
+  const years = it => it.ty === "tv" && it.y ? (it.ye ? (it.ye === it.y ? `${it.y}` : `${it.y}–${it.ye}`) : `${it.y}`) : `${it.y ?? ""}`;
   const compact = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
   const mcClass = m => m >= 61 ? "mc-hi" : m >= 40 ? "mc-mid" : "mc-lo";
   const mcBand = m => t("mcBands")[m >= 81 ? 4 : m >= 61 ? 3 : m >= 40 ? 2 : m >= 20 ? 1 : 0];
@@ -770,7 +783,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const moreCard = attrs => `<button class="card more" type="button" ${attrs}><div class="poster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>${t("showAll")}</span></div></button>`;
   function shelf(s) {
     return `<section class="shelf"><div class="shelf-head pad"><h2>${esc(shelfName(s))}</h2></div>
-      <div class="row">${s.ids.map(card).join("")}${sb && SHELF_FILTERS[s.key] ? moreCard(`data-shelf="${s.key}"`) : ""}</div></section>`;
+      <div class="row">${s.ids.slice(0, ROW).map(card).join("")}${sb && SHELF_FILTERS[s.key] ? moreCard(`data-shelf="${s.key}"`) : ""}</div></section>`;
   }
   function hero() {
     const id = C.hero[heroIdx], it = C.items[id];
@@ -793,7 +806,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 
   // ---------- Browse pages (full catalog from the database, 60 at a time) ----------
   const PAGE = 60;
-  const ROW = 20;   // every row on the site shows at most 20 titles, then Show all
+  const ROW = 18;   // every row on the site shows at most 18 titles, then Show all
   const PAGES = {
     "movie": { name: () => t("moviesH"), f: { type: "movie" } },
     "tv": { name: () => t("seriesH"), f: { type: "tv" } },
@@ -1046,7 +1059,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const it = C.items[id]; if (!it) return;
     if (push) hist.push({ k: "t", id });
     const d = $("#detail"), p = poster(it);
-    if (push) watchOpen = false;
+    if (push) { watchOpen = false; ssOpen = false; }
     // RT and Metacritic already link from their score tiles
     const links = [
       it.imdb && ["IMDb", it.imdb], (lang === "he" ? it.wh || it.we : it.we) && [t("wiki"), lang === "he" ? it.wh || it.we : it.we],
@@ -1079,6 +1092,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
           <div class="d-rest">
             ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
             ${trailerHtml(it)}
+            <div id="seasons">${seasonsHtml(it)}</div>
             <div class="links">${links.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}${icon.out}</a>`).join("")}</div>
             ${sb ? `<section class="credits" id="credits"><div class="cast-grid">${'<div class="skeleton"></div>'.repeat(4)}</div></section>` : ""}
           </div>
@@ -1178,7 +1192,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       const { p, byRole, total } = personCache[pid];
       if (!p) { goBack(); return; }
       const facts = [p.birth_year ? t("born")(p.birth_year) : "", t("credits")(total)].filter(Boolean).join(" · ");
-      // One row per role: the 20 most popular titles, then Show all when there are more
+      // One row per role: the 18 most popular titles, then Show all when there are more
       const rows = ["cast", "director", "creator", "writer", "composer"].filter(r => byRole[r] && byRole[r].length).map(r => {
         const ids = byRole[r];
         const more = ids.length > ROW ? moreCard(`data-person-all="${pid}" data-role="${r}"`) : "";
@@ -1418,6 +1432,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const w = await getWatch(id);
     const el = $("#detail").dataset.id === id ? $("#watch") : null;
     if (el) { if (w === "unknown") el.remove(); else { el.innerHTML = watchHtml(w); loadReports(id); } }
+    const ss = $("#detail").dataset.id === id ? $("#seasons") : null;
+    if (ss && !ss.innerHTML && C.items[id]) ss.innerHTML = seasonsHtml(C.items[id]);
   }
   // ---------- Viewer reports: "I saw this on…" (shown only once the watch_reports table exists) ----------
   const REPORT_SVC = {
@@ -1535,6 +1551,27 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     if (lang === "he") return it.trh ? { key: it.trh, he: true } : it.tr ? { key: it.tr, cc: true } : null;
     return it.tr ? { key: it.tr } : it.trh ? { key: it.trh, he: true } : null;
   }
+  // Series overview, like Wikipedia's: season, episodes, first and last episode dates (scripts/seasons.py)
+  let ssOpen = false;
+  function seasonsHtml(it) {
+    const ss = it.ss || (it.wa && it.wa.ss);
+    if (it.ty !== "tv" || !ss || !ss.length) return "";
+    const fmt = new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-US", { year: "numeric", month: innerWidth < 600 ? "short" : "long", day: "numeric" });
+    const fmtM = new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-US", { year: "numeric", month: "long" });
+    const day = d => !d ? "—" : `<bdi>${d.length === 4 ? d : d.length === 7 ? fmtM.format(new Date(d + "-15T12:00:00")) : fmt.format(new Date(d + "T12:00:00"))}</bdi>`;
+    const many = ss.length > 12, shown = many && !ssOpen ? ss.slice(0, 10) : ss;
+    return `<section class="seasons"><h2>${t("ssH")}</h2><table>
+      <thead><tr><th rowspan="2" colspan="2">${t("ssSeason")}</th><th rowspan="2">${t("ssEps")}</th><th colspan="2">${t("ssAired")}</th></tr>
+        <tr><th>${t("ssFirst")}</th><th>${t("ssLast")}</th></tr></thead>
+      <tbody>${shown.map(([n, e, a, b, c]) => `<tr><td class="ss-c" style="background:${c && /^#[0-9a-f]{3,6}$/i.test(c) ? c : `hsl(${(n * 67 + 250) % 360} 38% 42%)`}"></td><td>${n}</td><td>${e || "—"}</td>${
+        a === b ? `<td colspan="2">${day(a)}</td>` : `<td>${day(a)}</td><td>${day(b)}</td>`}</tr>`).join("")}</tbody>
+      </table>${many ? `<button class="switch" type="button" data-ss-more>${ssOpen ? t("ssLess") : t("ssAll")(ss.length)}</button>` : ""}</section>`;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-ss-more]"); if (!b) return;
+    ssOpen = !ssOpen; const id = $("#detail").dataset.id, box = $("#seasons");
+    if (box && C.items[id]) box.innerHTML = seasonsHtml(C.items[id]);
+  });
   function trailerHtml(it) {
     const tr = pickTrailer(it); if (!tr) return "";
     return `<button class="trailer" type="button" data-yt="${esc(tr.key)}" data-cc="${tr.cc ? 1 : 0}" aria-label="${esc(t("playTrailer"))}">
