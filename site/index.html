@@ -178,8 +178,8 @@ body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px
 .bubble.te::after { inset-inline-end: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); }
 html[dir="rtl"] .bubble.ts::after { clip-path: polygon(0 0, 100% 0, 100% 100%); }
 html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
-.bubble.wide { max-width: 100%; display: grid; gap: 14px; padding: 14px 16px 16px; }
-.bubble .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.bubble.wide { max-width: 100%; justify-self: stretch; display: grid; gap: 14px; padding: 14px 16px 16px; }   /* AI picks: the full width of the screen */
+.bubble .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 .bubble .card-title { color: #fff; }
 .bubble .card-sub { color: rgba(255,255,255,.78); }
 /* Discover start: the logo as a scene over a soft blur of posters */
