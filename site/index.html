@@ -157,7 +157,7 @@ html:has(body.ai-mode) { overflow: hidden; overscroll-behavior: none; }
 body.ai-mode { overflow: hidden; overscroll-behavior: none; }   /* keeps body's min-height: without it iPhone lifts the bottom bar */
 body.ai-mode main { position: fixed; z-index: 1; top: calc(var(--top-bar-h, 72px) + env(safe-area-inset-top, 0px)); bottom: 0; inset-inline: var(--rail) 0; display: flex; flex-direction: column; padding: 0; }
 .ai-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 8px 20px; }
-.ai-mode .composer { position: static; flex: none; background: var(--bg); border-top: 1px solid var(--line); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.ai-mode .composer { position: static; flex: none; background: var(--bg); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
 .ai-mode .composer form { max-width: none; }
 .ai-mode .bubble { max-width: 85%; }
 .ai-intro { display: grid; gap: 18px; padding-top: 12px; }
@@ -447,7 +447,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   :root { --poster: 118px; }
   .rail { inset: auto 0 0 0; width: auto; height: auto; flex-direction: row; justify-content: space-around; gap: 0;
     border-inline-end: 0; border-top: 1px solid var(--line);
-    padding-block: 6px max(6px, calc(env(safe-area-inset-bottom, 0px) - 16px));
+    padding-block: 6px max(8px, env(safe-area-inset-bottom, 0px));   /* labels clear of iPhone's home bar */
     padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   .brand { display: none; }
   .rail { align-items: stretch; }
@@ -460,7 +460,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   .app { margin-inline-start: 0; }
   main { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
   /* the search sits on its own line here, so the bar needs a solid background or content shows through under it */
-  .top { background: var(--bg); box-shadow: 0 1px 0 var(--line); flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .top { background: var(--bg); flex-wrap: wrap; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .wordmark { margin-inline-end: auto; }
   .acct .label { display: none; }
