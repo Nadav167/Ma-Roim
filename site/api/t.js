@@ -51,8 +51,8 @@ module.exports = async function handler(req, res) {
 <meta property="og:url" content="${esc(`${host}/t/${id}?l=${lang}`)}">
 <meta property="og:locale" content="${he ? "he_IL" : "en_US"}">
 <meta name="twitter:card" content="summary">
-<meta name="theme-color" content="#0e0c18">
+<meta name="theme-color" content="#100d0a">
 <meta http-equiv="refresh" content="0;url=${esc(app)}">
 <script>location.replace(${JSON.stringify(app)})</script>
-</head><body style="background:#0e0c18;color:#fff;font-family:system-ui;padding:24px"><a style="color:#b49cff" href="${esc(app)}">${esc(title)}</a></body></html>`);
+</head><body style="background:#100d0a;color:#fff;font-family:system-ui;padding:24px"><a style="color:#ffb547" href="${esc(app)}">${esc(title)}</a></body></html>`);
 };

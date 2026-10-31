@@ -2,7 +2,7 @@
 // The page and catalog: network first (always the newest version online), cached copy when offline.
 // Library and icons: cached. Posters and photos: cached as you browse, capped at 400 images.
 // Never touches the database, the AI or anything else.
-const SHELL = "w2w-shell-v3", IMG = "w2w-img-v1", IMG_MAX = 400;
+const SHELL = "w2w-shell-v4", IMG = "w2w-img-v1", IMG_MAX = 400;
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(["./", "vendor/supabase.js", "manifest.webmanifest", "icons/icon-192.png"])).then(() => self.skipWaiting()));
 });

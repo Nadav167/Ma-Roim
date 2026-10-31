@@ -48,7 +48,7 @@ Title ids: `Q…` = Wikidata titles; `M…`/`S…` = Israeli movies/series added
   TMDB by `scripts/tmdb_israeli.py`; to add more, append rows there (tmdb_type, tmdb_id).
 - **Streaming services in the picker**: Netflix, HBO Max, Prime Video, Apple TV, Disney+ (Disney+ from its US catalog).
 - **Phone layout**: no sideways page scrolling, no visible scrollbars, solid top bar, bottom bar flush to the bottom.
-- Design direction: Stremio-like, dark violet. The design plan is the Claude doc "מה רואים: תוכנית עיצוב".
+- Design direction: "Marquee" palette (chosen 2026-10-31 to get away from the Stremio look): warm cinema black `#100d0a`, one amber accent `#ffb547` for actions only, white rating stars, IMDb yellow kept. Speech bubbles (from the logo) only in Discover and Ask AI. Design reviews: Claude docs "מה רואים: תוכנית עיצוב" and "מה רואים: בדיקת עיצוב 2".
 
 ## Working habits
 - Test changes in a phone-sized browser (Playwright, 390×844) before pushing; check the Vercel deploy status after.
