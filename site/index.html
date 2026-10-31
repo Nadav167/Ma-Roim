@@ -530,6 +530,34 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   html[dir="rtl"] .row-arrow svg { transform: scaleX(-1); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* ---------- side menu ---------- */
+.menu-btn { width: 40px; height: 40px; flex: none; border: 0; background: none; color: var(--fg); border-radius: 12px; display: grid; place-items: center; padding: 0; cursor: pointer; margin-inline-end: -6px; }
+.menu-btn:hover { background: var(--surface-2); }
+.menu-btn svg { width: 24px; height: 24px; }
+.drawer-bg { position: fixed; inset: 0; z-index: 60; background: rgba(5,4,12,.6); opacity: 0; transition: opacity .25s; }
+.drawer-open .drawer-bg { opacity: 1; }
+.drawer { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 61; width: min(78vw, 320px); background: var(--surface);
+  border-start-end-radius: 24px; border-end-end-radius: 24px; box-shadow: 0 0 44px rgba(0,0,0,.5);
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 12px calc(14px + env(safe-area-inset-bottom, 0px)); overflow-y: auto;
+  transform: translateX(-105%); transition: transform .25s ease; visibility: hidden; }
+[dir="rtl"] .drawer { transform: translateX(105%); }
+.drawer-open .drawer { transform: none; visibility: visible; }
+.dr-head { display: flex; align-items: center; gap: 10px; padding: 4px 6px 14px; }
+.dr-head img { width: 38px; height: 38px; border-radius: 10px; }
+.dr-head .wordmark { margin-inline-end: auto; }
+.dr-close { width: 40px; height: 40px; border: 0; background: none; color: var(--fg); border-radius: 12px; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.dr-close svg { width: 22px; height: 22px; }
+.dr-nav { display: grid; gap: 2px; }
+.dr-nav hr { border: 0; border-top: 1px solid var(--line); margin: 10px 8px; }
+.dr-item { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; background: none; color: var(--fg); font-size: 17px; font-weight: 600;
+  padding: 13px 14px; border-radius: 14px; cursor: pointer; text-align: start; }
+.dr-item svg { width: 22px; height: 22px; flex: none; color: var(--muted); }
+.dr-item:hover { background: var(--surface-2); }
+.dr-item[aria-current="page"] { background: var(--surface-2); }
+.dr-item[aria-current="page"] svg { color: var(--accent); }
+#dr-lang-l:lang(he), #dr-lang span { font-family: var(--font-ui); }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-bg { transition: none; } }
 </style>
 </head>
 <body>
@@ -545,19 +573,31 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   <button class="nav-btn rail-about" data-view="about" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span data-t="about"></span></button>
 </nav>
 
+<div class="drawer-bg" id="drawer-bg" hidden></div>
+<aside class="drawer" id="drawer" aria-hidden="true" inert>
+  <div class="dr-head"><img src="icons/icon.svg?v=2" alt=""><span class="wordmark" id="dr-word"></span>
+    <button class="dr-close" type="button" id="dr-close" data-t-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <nav class="dr-nav">
+      <button class="dr-item" data-view="home" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span data-t="home"></span></button>
+      <button class="dr-item" data-view="movie" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span data-t="movies"></span></button>
+      <button class="dr-item" data-view="tv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 2 4 4 4-4"/></svg><span data-t="series"></span></button>
+      <button class="dr-item" data-view="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span data-t="mylist"></span></button>
+      <button class="dr-item" data-view="discover" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="8" height="13" rx="1.6"/><rect x="13.5" y="5" width="8" height="13" rx="1.6"/><path d="M12 2v3M12 19v3"/></svg><span data-t="discover"></span></button>
+      <button class="dr-item" data-view="ai" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg><span data-t="ai"></span></button>
+    <hr>
+    <button class="dr-item" data-view="about" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span data-t="about"></span></button>
+    <button class="dr-item" type="button" id="dr-lang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M10 5c-1 4-3.5 7-6 8.5M6 9c1.2 2 3 3.6 5 4.5"/><path d="m12 21 4.5-10L21 21M13.6 17.5h5.8"/></svg><span id="dr-lang-l"></span></button>
+  </nav>
+</aside>
 <div class="app">
   <header class="top">
+    <button class="menu-btn" type="button" id="menu-btn" data-t-label="menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div class="wordmark" id="wordmark"></div>
     <form class="search" id="search-form" role="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="suggest" aria-autocomplete="list">
       <div class="suggest" id="suggest" role="listbox" hidden></div>
     </form>
-    <div class="lang" role="group" aria-label="Language">
-      <button type="button" id="lang-en" aria-pressed="true">EN</button>
-      <button type="button" id="lang-he" aria-pressed="false">עב</button>
-    </div>
-    <button class="about-btn" type="button" data-view="about" data-t-label="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
     <div class="acct-wrap" id="acct-wrap"></div>
   </header>
   <main id="main"><div class="loading">Loading…</div></main>
@@ -582,7 +622,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 <script>
 (() => {
   const T = {
-    en: { about: "About", home: "Home", discover: "Discover",
+    en: { about: "About", menu: "Menu", close: "Close", home: "Home", discover: "Discover",
       dH: "Want something new?", dP: "Pick one of two, again and again. Every choice teaches it your taste. Stop whenever you want and get picks made for you.",
       dMovies: "Movies", dSeries: "Series", dContinue: n => `Continue (${n} choices so far)`, dRestart: "Start over",
       dQ: "Which would you rather watch?", dNeither: "Neither", dCount: n => `${n} choices`, dStop: "Show my picks",
@@ -632,7 +672,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       born: y => `Born ${y}`, credits: n => n === 1 ? "1 title" : `${n} titles`, castLoadErr: "The cast didn’t load.",
       votesN: n => `${n} votes`, fresh: "Fresh", rotten: "Rotten", critics: "Critics",
       mcBands: ["Overwhelming dislike", "Generally unfavorable", "Mixed or average", "Generally favorable", "Universal acclaim"], searching: "Searching…", signInToSave: "Sign in to keep your list on every device" },
-    he: { about: "אודות", home: "בית", discover: "גלו",
+    he: { about: "אודות", menu: "תפריט", close: "סגירה", home: "בית", discover: "גלו",
       dH: "בא לכם משהו חדש?", dP: "בחרו אחד מתוך שניים, שוב ושוב. כל בחירה מלמדת את הטעם שלכם. עצרו מתי שתרצו וקבלו המלצות בשבילכם.",
       dMovies: "סרטים", dSeries: "סדרות", dContinue: n => `המשיכו (${n} בחירות עד עכשיו)`, dRestart: "התחילו מחדש",
       dQ: "מה הייתם מעדיפים לראות?", dNeither: "אף אחד", dCount: n => `${n} בחירות`, dStop: "הראו לי המלצות",
@@ -980,7 +1020,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const q = searchQ;
     document.body.classList.toggle("ai-mode", view === "ai" && !q);
     clearInterval(heroTimer);
-    document.querySelectorAll(".nav-btn, .about-btn").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
+    document.querySelectorAll(".nav-btn, .dr-item[data-view]").forEach(b => b.setAttribute("aria-current", b.dataset.view === view && !q ? "page" : "false"));
     if (view !== "browse" && !PAGES[view]) viewKey = view;
     if (q) {
       if (sb) { main.innerHTML = `<div class="view-head pad"><h1>“${esc(q)}”</h1><p>${t("searching")}</p></div>`; remoteSearch(q); }
@@ -1212,10 +1252,10 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   function setLang(l, picked) {
     lang = l; if (picked) store.set("langPick", l);
     document.documentElement.lang = l; document.documentElement.dir = l === "he" ? "rtl" : "ltr";
-    $("#lang-en").setAttribute("aria-pressed", l === "en"); $("#lang-he").setAttribute("aria-pressed", l === "he");
+    $("#dr-lang-l").textContent = l === "he" ? "English" : "עברית";
     document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
     document.querySelectorAll("[data-t-label]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.tLabel)); el.title = t(el.dataset.tLabel); });
-    $("#wordmark").innerHTML = t("word");
+    $("#wordmark").innerHTML = t("word"); $("#dr-word").innerHTML = t("word");
     $("#q").placeholder = t("search");
     renderAcct();
     if (browse && browseSort === "az") resetBrowse();   // A–Z order depends on language
@@ -1260,8 +1300,25 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     browseSort = e.target.value;
     resetBrowse(); render();
   });
-  $("#lang-en").onclick = () => setLang("en", true);
-  $("#lang-he").onclick = () => setLang("he", true);
+  $("#dr-lang").onclick = () => { closeDrawer(); setLang(lang === "he" ? "en" : "he", true); };
+  // Side menu: pages, About and language (like the one in Pitron Shetach)
+  function openDrawer() {
+    const d = $("#drawer"); d.inert = false; d.setAttribute("aria-hidden", "false"); $("#drawer-bg").hidden = false;
+    $("#menu-btn").setAttribute("aria-expanded", "true");
+    requestAnimationFrame(() => document.body.classList.add("drawer-open"));
+    setTimeout(() => $("#dr-close").focus(), 50);
+  }
+  function closeDrawer() {
+    if (!document.body.classList.contains("drawer-open")) return;
+    document.body.classList.remove("drawer-open"); $("#menu-btn").setAttribute("aria-expanded", "false");
+    const d = $("#drawer"); d.setAttribute("aria-hidden", "true"); d.inert = true;
+    setTimeout(() => { if (!document.body.classList.contains("drawer-open")) $("#drawer-bg").hidden = true; }, 260);
+  }
+  $("#menu-btn").onclick = openDrawer;
+  $("#dr-close").onclick = closeDrawer;
+  $("#drawer-bg").onclick = closeDrawer;
+  $("#drawer").addEventListener("click", e => { if (e.target.closest("[data-view]")) closeDrawer(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("drawer-open")) { e.stopImmediatePropagation(); closeDrawer(); } }, true);
   // ---------- Search: suggestions while typing, full results on Enter ----------
   let searchQ = "", qT, sgSeq = 0, sgItems = [], sgIndex = -1;
   function clearSearch() { searchQ = ""; $("#q").value = ""; hideSuggest(); }
