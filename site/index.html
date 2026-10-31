@@ -309,6 +309,10 @@ a.score:hover { border-color: var(--muted); }
 html[dir="rtl"] .card.more .poster svg, html[dir="rtl"] [data-close] svg, html[dir="rtl"] [data-back-browse] svg { transform: scaleX(-1); }
 .browse-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin: 8px 0 22px; }
 .browse-head .view-head { margin: 0; }
+.list-sec { display: grid; gap: 14px; margin-bottom: 34px; }
+.list-sec h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.list-sec h2 span, .list-genre span { color: var(--muted); font-weight: 600; font-size: .8em; margin-inline-start: 6px; }
+.list-genre { margin: 10px 0 0; font-size: 17px; font-weight: 700; color: #dad7ea; }
 .sort { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding-inline: 14px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
 .sort label { color: var(--muted); font-size: 13px; font-weight: 600; }
 .sort select { border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; outline: none; cursor: pointer; padding-inline-end: 4px; }
@@ -661,7 +665,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       moviesH: "Movies", moviesP: "The most watched US and Israeli films since 1980.",
       seriesH: "Series", seriesP: "The most watched US and Israeli series since 1980.",
       ilH: "Israeli", ilP: "Israeli movies and series, from Waltz with Bashir to Fauda.",
-      listH: "My list", aiH: "Ask AI", aiP: "Describe what you’re in the mood for. It searches tens of thousands of titles by cast, genre, year and scores.",
+      listH: "My list", sortAdded: "Recently added", listMovies: "Movies", listSeries: "Series", aiH: "Ask AI", aiP: "Describe what you’re in the mood for. It searches tens of thousands of titles by cast, genre, year and scores.",
       aiPh: "What do you feel like watching?", aiSend: "Ask", aiThinking: "Searching the catalog…", aiNew: "New chat",
       aiSignIn: "Sign in to use the AI helper. It’s free.", aiLimit: "You’ve reached today’s limit. Try again tomorrow.",
       aiNotReady: "The AI helper isn’t switched on yet.", aiErr: "That didn’t work. Try again in a moment.", aiNone: "No titles to show for this one.",
@@ -711,7 +715,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       moviesH: "סרטים", moviesP: "הסרטים האמריקאיים והישראליים הנצפים ביותר מאז 1980.",
       seriesH: "סדרות", seriesP: "הסדרות האמריקאיות והישראליות הנצפות ביותר מאז 1980.",
       ilH: "ישראלי", ilP: "סרטים וסדרות ישראליים, מוואלס עם באשיר ועד פאודה.",
-      listH: "הרשימה שלי", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בין עשרות אלפי הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
+      listH: "הרשימה שלי", sortAdded: "נוספו לאחרונה", listMovies: "סרטים", listSeries: "סדרות", aiH: "שאל AI", aiP: "תארו מה בא לכם לראות. הוא מחפש בין עשרות אלפי הכותרים לפי שחקנים, ז׳אנר, שנה וציונים.",
       aiPh: "מה בא לכם לראות?", aiSend: "שאל", aiThinking: "מחפש בקטלוג…", aiNew: "שיחה חדשה",
       aiSignIn: "התחברו כדי להשתמש בעוזר ה-AI. זה בחינם.", aiLimit: "הגעתם למגבלה היומית. נסו שוב מחר.",
       aiNotReady: "עוזר ה-AI עוד לא הופעל.", aiErr: "זה לא עבד. נסו שוב בעוד רגע.", aiNone: "אין כותרים להציג הפעם.",
@@ -1052,7 +1056,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       main.innerHTML = aboutView();
     } else if (view === "list") {
       const ids = [...list].filter(id => C.items[id]);
-      main.innerHTML = head(t("listH"), "") + `<div class="pad">${ids.length ? `<div class="grid">${ids.map(card).join("")}</div>`
+      main.innerHTML = (ids.length ? listHead(ids.length) : head(t("listH"), "")) + `<div class="pad">${ids.length ? listBody(ids)
         : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}
         ${!user && sb ? `<div class="btns" style="margin-top:20px"><button class="btn primary" type="button" data-auth="up">${t("signInToSave")}</button></div>` : ""}</div>` + footer();
     } else if (view === "ai") {
@@ -1062,6 +1066,35 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     }
   }
   const head = (h, p) => `<div class="view-head pad"><h1>${esc(h)}</h1>${p ? `<p>${esc(p)}</p>` : ""}</div>`;
+  // My list: movies and series in separate sections, sorted by the visitor's choice (or grouped by genre)
+  let listSort = store.get("listSort", "added");
+  function listHead(n) {
+    const opts = [["added", t("sortAdded")], ["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")]];
+    return `<div class="pad"><div class="browse-head"><div class="view-head"><h1>${esc(t("listH"))}</h1><p>${t("nTitles")(n)}</p></div>
+      <div class="browse-ctrl"><div class="sort"><label for="list-sort">${t("sortL")}</label><select id="list-sort">
+      ${opts.map(([v, l]) => `<option value="${v}" ${listSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div></div></div></div>`;
+  }
+  function listBody(ids) {
+    const order = xs => {
+      const a = [...xs];
+      if (listSort === "added") return a.reverse();
+      if (listSort === "new") return a.sort((x, y) => (C.items[y].y || 0) - (C.items[x].y || 0));
+      if (listSort === "old") return a.sort((x, y) => (C.items[x].y || 0) - (C.items[y].y || 0));
+      return a.sort((x, y) => title(C.items[x]).localeCompare(title(C.items[y]), lang === "he" ? "he" : "en"));
+    };
+    const grid = xs => `<div class="grid">${xs.map(card).join("")}</div>`;
+    return [["movie", t("listMovies")], ["tv", t("listSeries")]].map(([ty, name]) => {
+      const xs = ids.filter(id => (C.items[id].ty === "tv" ? "tv" : "movie") === ty); if (!xs.length) return "";
+      let body;
+      if (listSort === "genre") {   // each title under its main genre; genres with the most titles first
+        const by = {};
+        for (const id of order(xs)) { const g = (C.items[id].g || [])[0] || ""; (by[g] = by[g] || []).push(id); }
+        body = Object.entries(by).sort((a, b) => b[1].length - a[1].length || genre(a[0]).localeCompare(genre(b[0])))
+          .map(([g, gs]) => `<h3 class="list-genre">${esc(g ? genre(g) : (lang === "he" ? "אחר" : "Other"))} <span>${gs.length}</span></h3>${grid(gs)}`).join("");
+      } else body = grid(order(xs));
+      return `<section class="list-sec"><h2>${esc(name)} <span>${xs.length}</span></h2>${body}</section>`;
+    }).join("");
+  }
   function swapHero() { const h = $("#hero"); if (h) h.outerHTML = hero(); }
 
   const norm = s => (s || "").toLowerCase().normalize("NFKD").replace(/[֑-ׇ]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
@@ -1305,6 +1338,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   });
   document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#auth").hidden) $("#auth").hidden = true; else if (!$("#detail").hidden) closeDetail(); });
   document.addEventListener("change", e => {
+    if (e.target.id === "list-sort") { listSort = e.target.value; store.set("listSort", listSort); render(); return; }
     if (e.target.id !== "sort-sel") return;
     browseSort = e.target.value;
     resetBrowse(); render();
