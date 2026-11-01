@@ -1852,11 +1852,16 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const prof = {};
     const likedRows = pool.filter(r => liked.has(r.id));
     for (const r of likedRows) for (const k of keys(r)) prof[k] = (prof[k] || 0) + idf(k);
-    // people: directors/creators and the top 5 billed actors of the liked titles, and the other titles they made
-    const shared = {};
+    // people: the top 5 billed actors and the directors/creators of the liked titles, and their other titles.
+    // Owner's choice: the cast counts most (an actor 0.45, a director or creator 0.15)
+    const shared = {}, pw = {};
     try {
       const { data: cr } = await sb.from("credits").select("person_id, role, ord").in("title_id", [...liked]);
-      const ppl = [...new Set((cr || []).filter(c => c.role === "director" || c.role === "creator" || (c.role === "cast" && c.ord <= 5)).map(c => c.person_id))].slice(0, 150);
+      for (const c of cr || []) {
+        const v = c.role === "cast" && c.ord <= 5 ? 0.45 : c.role === "director" || c.role === "creator" ? 0.15 : 0;
+        if (v > (pw[c.person_id] || 0)) pw[c.person_id] = v;
+      }
+      const ppl = Object.keys(pw).sort((a, b) => pw[b] - pw[a]).slice(0, 150);
       if (ppl.length) {
         const { data: other } = await sb.from("credits").select("title_id, person_id").in("person_id", ppl).limit(5000);
         for (const c of other || []) (shared[c.title_id] = shared[c.title_id] || new Set()).add(c.person_id);
@@ -1883,7 +1888,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     return rows.map(({ r, sim }) => {
       const q = Math.min(1, Math.max(0, ((r.imdb_rating || 6) - 6) / 3)) * 0.7 + (r.rt_score != null ? r.rt_score / 100 : 0.5) * 0.15 + (r.mc_score != null ? r.mc_score / 100 : 0.5) * 0.15;
       const recent = (r.year || 0) >= Y - 5 ? 1 : (r.year || 0) >= Y - 10 ? 0.5 : 0;
-      const ppl = Math.min(1, (shared[r.id] ? shared[r.id].size : 0) * 0.4);
+      const ppl = Math.min(1, [...(shared[r.id] || [])].reduce((a, p) => a + (pw[p] || 0), 0));
       const co = maxRec ? (rec[r.id] || 0) / maxRec : 0, kw = maxSim ? sim / maxSim : 0;
       // weights (owner's choice): liked-also-liked 55%, keywords 25%, people 10%, recent 10%; reviews only as the 6.5 floor
       // above (without the links file: keywords 50%, people 15%, reviews 25%, recent 10%)
