@@ -223,7 +223,7 @@ html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
 .composer .btn { height: 48px; flex: none; }
 #ai-new .s { display: none; }
 /* phone: "New chat" becomes just "New", so the question box keeps room for its one-line hint */
-@media (max-width: 600px) { #ai-new { padding-inline: 16px; } #ai-new .l { display: none; } #ai-new .s { display: inline; } }
+@media (max-width: 600px) { .composer textarea { padding-inline: 14px; } #ai-new { padding-inline: 16px; } #ai-new .l { display: none; } #ai-new .s { display: inline; } }
 .examples { display: flex; flex-wrap: wrap; gap: 8px; }
 .examples button { border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 9px 14px; cursor: pointer; text-align: start; font-size: 14px; }
 .examples button:hover { border-color: var(--accent); }
