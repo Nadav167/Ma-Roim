@@ -1829,6 +1829,48 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       <div class="lk-bar"><button class="btn primary" type="button" id="lk-go" data-disc-stop ${left ? "disabled" : ""}>${left ? esc(t("dMin")(left)) : t("dStop")}</button>
         <button class="btn" type="button" data-disc-reset="${type}">${t("dRestart")}</button></div></div></div>`;
   }
+  // Well-known titles of one kind with their keywords and scores, loaded once (about 4,000 movies or 2,000 series)
+  const tasteCache = {};
+  function tastePool(type) {
+    if (tasteCache[type]) return tasteCache[type];
+    const minV = type === "movie" ? 40000 : 8000, cols = "id,year,genres,imdb_rating,imdb_votes,rt_score,mc_score,tags";
+    const page = i => sb.from("titles").select(cols).eq("type", type).gte("imdb_votes", minV).order("imdb_votes", { ascending: false }).range(i * 1000, i * 1000 + 999)
+      .then(({ data, error }) => { if (error) throw error; return data || []; });
+    tasteCache[type] = Promise.all([0, 1, 2, 3, 4].map(page)).then(ps => ps.flat()).catch(() => { delete tasteCache[type]; return null; });
+    return tasteCache[type];
+  }
+  async function rankTaste(type, pool) {
+    const liked = new Set(disc.picks[type]), Y = new Date().getFullYear();
+    const df = {};
+    for (const r of pool) for (const k of new Set([...(r.tags || []), ...(r.genres || []).map(g => "g:" + g)])) df[k] = (df[k] || 0) + 1;
+    const keys = r => [...new Set([...(r.tags || []), ...(r.genres || []).map(g => "g:" + g)])];
+    const idf = k => Math.log(pool.length / (df[k] || 1));
+    const prof = {};
+    const likedRows = pool.filter(r => liked.has(r.id));
+    for (const r of likedRows) for (const k of keys(r)) prof[k] = (prof[k] || 0) + idf(k);
+    // people: directors/creators and the top 5 billed actors of the liked titles, and the other titles they made
+    const shared = {};
+    try {
+      const { data: cr } = await sb.from("credits").select("person_id, role, ord").in("title_id", [...liked]);
+      const ppl = [...new Set((cr || []).filter(c => c.role === "director" || c.role === "creator" || (c.role === "cast" && c.ord <= 5)).map(c => c.person_id))].slice(0, 150);
+      if (ppl.length) {
+        const { data: other } = await sb.from("credits").select("title_id, person_id").in("person_id", ppl).limit(5000);
+        for (const c of other || []) (shared[c.title_id] = shared[c.title_id] || new Set()).add(c.person_id);
+      }
+    } catch (e) { /* keywords alone still work */ }
+    let maxSim = 0;
+    const rows = pool.filter(r => !liked.has(r.id) && (r.imdb_rating || 0) >= 6.5).map(r => {
+      const ks = keys(r), sim = ks.reduce((a, k) => a + (prof[k] || 0) * idf(k), 0) / Math.sqrt(ks.length || 1);
+      if (sim > maxSim) maxSim = sim;
+      return { r, sim };
+    });
+    return rows.map(({ r, sim }) => {
+      const q = Math.min(1, Math.max(0, ((r.imdb_rating || 6) - 6) / 3)) * 0.7 + (r.rt_score != null ? r.rt_score / 100 : 0.5) * 0.15 + (r.mc_score != null ? r.mc_score / 100 : 0.5) * 0.15;
+      const rec = (r.year || 0) >= Y - 5 ? 1 : (r.year || 0) >= Y - 10 ? 0.5 : 0;
+      const ppl = Math.min(1, (shared[r.id] ? shared[r.id].size : 0) * 0.4);
+      return { id: r.id, year: r.year, score: 0.5 * (maxSim ? sim / maxSim : 0) + 0.15 * ppl + 0.25 * q + 0.1 * rec };
+    }).sort((a, b) => b.score - a.score);
+  }
   // more = true: ten more picks under the ones already shown ("More picks")
   async function discPicks(more) {
     const type = disc.type;
@@ -1843,26 +1885,33 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const likes = ent.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([f]) => featLabel(f));
     const less = ent.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).slice(0, 4).map(([f]) => featLabel(f));
     const kind = type === "movie" ? (lang === "he" ? "סרטים" : "movies") : (lang === "he" ? "סדרות" : "TV series");
-    // Candidates: well-known titles not shown in the game yet, best taste match first. The AI picks from these
-    // (one quick call); if it fails, the best matches show on their own.
-    const shown = new Set([...topIds(type), ...disc.picks[type], ...already]), minV = type === "movie" ? 100000 : 20000;
-    const cands = Object.keys(C.items).filter(id => { const it = C.items[id]; return it.ty === type && it.p && it.rt && (it.v || 0) >= minV && !shown.has(id); })
-      .map(id => [score(id, w) + Math.log10(C.items[id].v) * 0.01, id]).sort((x, y) => y[0] - x[0]).slice(0, 60).map(([, id]) => id);
-    const fallback = () => ({ message: lang === "he" ? "אלה הכותרים שהכי מתאימים לטעם שלכם:" : "These fit your taste best:", ids: cands.slice(0, 10) });
+    // Candidates, ranked by how close they are to the liked titles (keywords like "psychological thriller" or
+    // "time travel", weighted so rare ones count more; plus shared directors, creators and lead actors), then by
+    // reviews and how recent they are. The AI picks 10 of the best 40 and writes the line; the list is then shown
+    // newest first (last 5 years), each part by score.
+    const pool = await tastePool(type);
+    const shown = new Set([...topIds(type), ...disc.picks[type], ...already]);
+    const ranked = pool ? await rankTaste(type, pool) : [];
+    const cands = ranked.filter(x => !shown.has(x.id)).slice(0, 40).map(x => x.id);
+    const scoreOf = Object.fromEntries(ranked.map(x => [x.id, x]));
+    const order = ids => { const Y = new Date().getFullYear();
+      return [...ids].sort((a, b) => { const A = scoreOf[a] || {}, B = scoreOf[b] || {}, ra = (A.year || 0) >= Y - 5, rb = (B.year || 0) >= Y - 5;
+        return ra !== rb ? (ra ? -1 : 1) : (B.score || 0) - (A.score || 0); }); };
+    const fallback = () => ({ message: lang === "he" ? "אלה הכותרים שהכי מתאימים לטעם שלכם:" : "These fit your taste best:", ids: order(cands.slice(0, 10)) });
     const msg = lang === "he"
-      ? `המלץ לי על 10 ${kind} שיתאימו לטעם שלי. מתוך ה-${kind} הפופולריים ביותר, אהבתי את: ${picks.join(", ")}. אני נמשך ל: ${likes.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת. התחל במשפט קצר שמתאר את הטעם שלי.`
-      : `Recommend 10 ${kind} that fit my taste. Of the most popular ${kind}, I liked: ${picks.join(", ")}. I lean toward: ${likes.join(", ")}. Choose the 10 best fits from the attached list. Start with one short sentence describing my taste.`;
+      ? `המלץ לי על 10 ${kind} שיתאימו לטעם שלי. מתוך ה-${kind} הפופולריים ביותר, אהבתי את: ${picks.join(", ")}. אני נמשך ל: ${likes.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת (היא כבר מסודרת מהמתאים ביותר), והעדף כותרים חדשים וכאלה עם ביקורות טובות. התחל במשפט קצר שמתאר את הטעם שלי.`
+      : `Recommend 10 ${kind} that fit my taste. Of the most popular ${kind}, I liked: ${picks.join(", ")}. I lean toward: ${likes.join(", ")}. Choose the 10 best fits from the attached list (already sorted best match first), preferring recent and well-reviewed titles. Start with one short sentence describing my taste.`;
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
         body: JSON.stringify({ lang, services: [...myServices], pick_from: cands, messages: [{ role: "user", content: msg.slice(0, 1990) }] }) });
       const j = await r.json().catch(() => ({}));
       let res;
-      if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); res = { message: j.message, ids: j.ids }; }
+      if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); res = { message: j.message, ids: order(j.ids) }; }
       else res = j.error === "limit" ? { err: t("aiLimit") } : fallback();
       if (more) { if (res.err) toast(res.err); else disc.result = { message: disc.result.message, ids: [...already, ...res.ids.filter(id => !already.includes(id))] }; }
       else disc.result = res;
-    } catch (e) { if (more) disc.result = { message: disc.result.message, ids: [...already, ...fallback().ids] }; else disc.result = fallback(); }
+    } catch (e) { const f = fallback(); await ensureItems(f.ids).catch(() => {}); if (more) disc.result = { message: disc.result.message, ids: [...already, ...f.ids] }; else disc.result = f; }
     disc.busy = false;
     if (view === "discover") render();
   }
