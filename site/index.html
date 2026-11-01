@@ -1817,7 +1817,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     if (disc.stage === "result") {
       const r = disc.result;
       return `<div class="pad"><div class="disc"><div class="disc-top"><h2>${esc(t("dTaste"))}</h2><span class="count">${t("dCount")(n)}</span></div>
-        ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids, r.why))
+        ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids))   /* no "Like <title>" line: the owner doesn't want the reason shown */
           : user ? `<div class="bubble ai a wait ts">${t("dThinking")}</div>` : ""}
         ${!user && sb ? `<div class="empty"><strong>${t("dSignIn")}</strong><div class="btns"><button class="btn primary" type="button" data-auth="in">${t("signIn")}</button></div></div>` : ""}
         ${r && !r.err ? `<div class="disc-actions"><button class="btn primary" type="button" data-disc-more ${disc.busy ? "disabled" : ""}>${disc.busy ? t("dMoreBusy") : t("dMore")}</button></div>` : ""}
@@ -1932,12 +1932,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       if (more) { if (res.err) toast(res.err); else disc.result = { message: disc.result.message, why: disc.result.why, ids: [...already, ...res.ids.filter(id => !already.includes(id))] }; }
       else disc.result = res;
     } catch (e) { const f = fallback(); await ensureItems(f.ids).catch(() => {}); if (more) disc.result = { message: disc.result.message, why: disc.result.why, ids: [...already, ...f.ids] }; else disc.result = f; }
-    if (disc.result && disc.result.ids) {   // the liked title behind each pick, for the "Like <title>" line
-      const why = disc.result.why || {};
-      for (const id of disc.result.ids) if (!why[id] && scoreOf[id]) { const w = scoreOf[id].why(); if (w) why[id] = w; }
-      disc.result.why = why;
-      await ensureItems([...disc.result.ids, ...Object.values(why)]).catch(() => {});   // also titles not in the search index
-    }
+    if (disc.result && disc.result.ids) await ensureItems(disc.result.ids).catch(() => {});   // also titles not in the search index
     disc.busy = false;
     if (view === "discover") render();
   }
