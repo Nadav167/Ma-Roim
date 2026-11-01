@@ -390,6 +390,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .detail::-webkit-scrollbar, .m
 .watch-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; }
 .watch-row dt { color: var(--muted); font-size: 13px; font-weight: 600; }
 .watch-row dd { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.watch-icons { display: flex; flex-wrap: wrap; gap: 8px; }
 .prov { position: relative; display: block; width: 42px; height: 42px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
 .prov img { width: 100%; height: 100%; display: block; }
 .prov.mine { box-shadow: 0 0 0 2px var(--ok); }
@@ -1547,7 +1548,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   });
   function watchHtml(w) {
     if (w === undefined) return `<div class="watch"><div class="watch-head"><h2>${t("whereH")}</h2></div><span class="watch-note">${t("wLoading")}</span></div>`;
-    const rows = [["s", t("wStream")], ["f", t("wFree")], ["u", t("wUS")], ["r", t("wRent")], ["b", t("wBuy")]].filter(([k]) => w && w[k] && w[k].length);
+    // One row of logos: subscription, free, rent and buy all together (the owner doesn't want them split)
+    const all = w ? [...new Set(["s", "u", "f", "r", "b"].flatMap(k => w[k] || []))] : [];
     const orig = (w && w.o || []).map(([en, he, key]) => {
       const L = key && LOCAL[key], nm = lang === "he" ? he : en;
       return L ? `<a class="chip" href="${L.url}" target="_blank" rel="noopener" style="text-decoration:none">${esc(nm)} · ${esc(L.free ? t("wFreeOn")(L[lang]) : t("wSubOn")(L[lang]))}</a>` : `<span class="chip">${esc(nm)}</span>`;
@@ -1556,13 +1558,13 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const mine = w ? [...new Set([...(w.s || []), ...(w.f || []), ...(w.u || [])])].filter(p => myServices.has(p)).map(provName) : [];
     const usLink = w && w.k ? `https://www.themoviedb.org/${w.k}/watch?locale=US` : "https://www.justwatch.com/us";
     const tile = p => `<a class="prov ${myServices.has(p) ? "mine" : ""}" href="${esc(US_SVC.has(p) ? usLink : link)}" target="_blank" rel="noopener" title="${esc(provName(p))}"><img src="${provLogo(p)}" alt="${esc(provName(p))}" loading="lazy"></a>`;
-    // Phone: one short line ("On your HBO Max ✓", or the first few logos) that opens the full list
-    const peek = [...new Set(rows.flatMap(([k]) => w[k]))].slice(0, 4).map(p => `<img src="${provLogo(p)}" alt="" loading="lazy">`).join("");
+    // Phone: one short line ("On your HBO Max ✓", or the first few logos) that opens the full row
+    const peek = all.slice(0, 4).map(p => `<img src="${provLogo(p)}" alt="" loading="lazy">`).join("");
     const sum = `<button class="watch-sum" type="button" data-watch-toggle aria-expanded="${watchOpen}">
       ${mine.length ? `<span class="watch-mine">✓ ${esc(t("wMine")(mine.map(n => "⁨" + n + "⁩").join(", ")))}</span>` : `<span class="watch-sum-h">${t("wMore")}</span><span class="watch-peek">${peek}</span>`}${icon.down}</button>`;
     return `<section class="watch ${watchOpen ? "" : "collapsed"}">${sum}<div class="watch-head"><h2>${t("whereH")}</h2><button type="button" data-services>${t("wPick")}</button></div>
       ${mine.length ? `<div class="watch-mine">✓ ${esc(t("wMine")(mine.map(n => "\u2068" + n + "\u2069").join(", ")))}</div>` : ""}
-      ${rows.length ? `<dl style="margin:0;display:grid;gap:10px">${rows.map(([k, l]) => `<div class="watch-row"><dt>${l}</dt><dd>${w[k].map(tile).join("")}</dd></div>`).join("")}</dl>`
+      ${all.length ? `<div class="watch-icons">${all.map(tile).join("")}</div>`
         : orig.length ? "" : `<span class="watch-note">${t("wNone")}</span>`}
       ${orig.length ? `<div class="watch-row"><dt>${t("wOrig")}</dt><dd>${orig.join("")}</dd></div>` : ""}
       <div id="reports"></div></section>`;
