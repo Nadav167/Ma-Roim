@@ -221,6 +221,9 @@ html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
   background: var(--surface); padding: 13px 18px; outline: none; line-height: 1.4; font: inherit; color: inherit; }
 .composer textarea:focus { border-color: var(--accent); }
 .composer .btn { height: 48px; flex: none; }
+#ai-new svg { width: 20px; height: 20px; }
+/* phone: "New chat" is just its icon, so the question box keeps room for its one-line hint */
+@media (max-width: 600px) { #ai-new { width: 48px; padding: 0; justify-content: center; } #ai-new span { display: none; } }
 .examples { display: flex; flex-wrap: wrap; gap: 8px; }
 .examples button { border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 9px 14px; cursor: pointer; text-align: start; font-size: 14px; }
 .examples button:hover { border-color: var(--accent); }
@@ -835,6 +838,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     it.ms != null ? `<span class="mini" title="Metacritic">${srcLogo("Metacritic")}${it.ms}</span>` : "",
   ].join("");
   const icon = {
+    newChat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5H6.5l-3 2v-6A8.5 8.5 0 1 1 20.5 12"/><path d="M18.5 15.5v6M15.5 18.5h6"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
     info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
@@ -2016,7 +2020,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ${signedOut ? "" : `<div class="composer pad"><form id="ai-form">
         <textarea id="ai-input" rows="1" placeholder="${esc(t("aiPh"))}" ${signedOut || aiBusy ? "disabled" : ""}></textarea>
         <button class="btn primary" type="submit" ${signedOut || aiBusy ? "disabled" : ""}>${t("aiSend")}</button>
-        ${aiMsgs.length && !aiBusy ? `<button class="btn" type="button" id="ai-new">${t("aiNew")}</button>` : ""}
+        ${aiMsgs.length && !aiBusy ? `<button class="btn" type="button" id="ai-new" aria-label="${esc(t("aiNew"))}" title="${esc(t("aiNew"))}">${icon.newChat}<span>${t("aiNew")}</span></button>` : ""}
       </form></div>`}`;
   }
   function autoGrow(ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
