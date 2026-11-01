@@ -197,6 +197,8 @@ html[dir="rtl"] .bubble.te::after { clip-path: polygon(0 0, 100% 0, 0 100%); }
 .bubble.a .card-title { color: #1c1206; }
 .bubble .card-sub { color: rgba(255,255,255,.78); }
 .bubble.a .card-sub { color: rgba(28,18,6,.72); }
+.card-why { font-size: 12px; font-weight: 700; margin-top: -2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bubble.a .card-why { color: #5a3608; }
 /* Discover start: the logo as a scene over a soft blur of posters */
 .disc-stage { position: relative; overflow: hidden; border-radius: 24px; border: 1px solid var(--line); background: var(--surface);
   min-height: 420px; display: grid; align-content: center; padding: 40px 28px; }
@@ -663,7 +665,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     en: { about: "About", menu: "Menu", close: "Close", home: "Home", discover: "Discover",
       dH: "Want something new?", dP: "Mark the ones you liked among the 50 most popular, and get picks made for you.",
       dMovies: "Movies", dSeries: "Series", dContinue: n => `Continue (${n} marked so far)`, dRestart: "Start over",
-      dQ: "Which of these did you like?", dQSub: "Tap every title you liked. Skip the ones you haven’t seen.", dCount: n => `${n} marked`, dStop: "Show my picks", dMore: "More picks", dMoreBusy: "Finding more…",
+      dQ: "Which of these did you like?", dQSub: "Tap every title you liked. Skip the ones you haven’t seen.", dCount: n => `${n} marked`, dStop: "Show my picks", dMore: "More picks", dLike: x => `Like ${x}`, dMoreBusy: "Finding more…",
       dMin: n => `Mark ${n} more to get picks`, dTaste: "Your taste so far", dLikes: "You lean toward", dLess: "Less your thing",
       dKeep: "Edit my marks", dThinking: "Finding titles for your taste…", dSignIn: "Sign in to get your picks. Your choices are kept.",
       dLoading: "Loading titles…", movies: "Movies", series: "Series", israeli: "Israeli", mylist: "My list", ai: "Ask AI",
@@ -713,7 +715,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     he: { about: "אודות", menu: "תפריט", close: "סגירה", home: "בית", discover: "גלו",
       dH: "בא לכם משהו חדש?", dP: "סמנו מה אהבתם מתוך 50 הפופולריים ביותר, וקבלו המלצות בשבילכם.",
       dMovies: "סרטים", dSeries: "סדרות", dContinue: n => `המשיכו (${n} סומנו עד עכשיו)`, dRestart: "התחילו מחדש",
-      dQ: "מה מאלה אהבתם?", dQSub: "לחצו על כל כותר שאהבתם. על מה שלא ראיתם פשוט דלגו.", dCount: n => `${n} סומנו`, dStop: "הראו לי המלצות", dMore: "המלצות נוספות", dMoreBusy: "מחפש עוד…",
+      dQ: "מה מאלה אהבתם?", dQSub: "לחצו על כל כותר שאהבתם. על מה שלא ראיתם פשוט דלגו.", dCount: n => `${n} סומנו`, dStop: "הראו לי המלצות", dMore: "המלצות נוספות", dLike: x => `כמו ${x}`, dMoreBusy: "מחפש עוד…",
       dMin: n => `סמנו עוד ${n} כדי לקבל המלצות`, dTaste: "הטעם שלכם עד עכשיו", dLikes: "אתם נמשכים ל", dLess: "פחות בשבילכם",
       dKeep: "עדכנו את הסימונים", dThinking: "מחפש כותרים לפי הטעם שלכם…", dSignIn: "התחברו כדי לקבל המלצות. הבחירות שלכם נשמרות.",
       dLoading: "טוען כותרים…", movies: "סרטים", series: "סדרות", israeli: "ישראלי", mylist: "הרשימה שלי", ai: "שאל AI",
@@ -1815,7 +1817,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     if (disc.stage === "result") {
       const r = disc.result;
       return `<div class="pad"><div class="disc"><div class="disc-top"><h2>${esc(t("dTaste"))}</h2><span class="count">${t("dCount")(n)}</span></div>
-        ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids))
+        ${r ? (r.err ? `<div class="bubble ai err ts">${esc(r.err)}</div>` : answerBubble(r.message, r.ids, r.why))
           : user ? `<div class="bubble ai a wait ts">${t("dThinking")}</div>` : ""}
         ${!user && sb ? `<div class="empty"><strong>${t("dSignIn")}</strong><div class="btns"><button class="btn primary" type="button" data-auth="in">${t("signIn")}</button></div></div>` : ""}
         ${r && !r.err ? `<div class="disc-actions"><button class="btn primary" type="button" data-disc-more ${disc.busy ? "disabled" : ""}>${disc.busy ? t("dMoreBusy") : t("dMore")}</button></div>` : ""}
@@ -1836,7 +1838,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const minV = type === "movie" ? 40000 : 8000, cols = "id,year,genres,imdb_rating,imdb_votes,rt_score,mc_score,tags";
     const page = i => sb.from("titles").select(cols).eq("type", type).gte("imdb_votes", minV).order("imdb_votes", { ascending: false }).range(i * 1000, i * 1000 + 999)
       .then(({ data, error }) => { if (error) throw error; return data || []; });
-    tasteCache[type] = Promise.all([0, 1, 2, 3, 4].map(page)).then(ps => ps.flat()).catch(() => { delete tasteCache[type]; return null; });
+    const links = fetch(`taste/${type}.json?v=${BUILD}`).then(r => r.ok ? r.json() : null).catch(() => null);
+    tasteCache[type] = Promise.all([Promise.all([0, 1, 2, 3, 4].map(page)), links])
+      .then(([ps, l]) => { const pool = ps.flat(); pool.links = l; return pool; }).catch(() => { delete tasteCache[type]; return null; });
     return tasteCache[type];
   }
   async function rankTaste(type, pool) {
@@ -1858,17 +1862,32 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
         for (const c of other || []) (shared[c.title_id] = shared[c.title_id] || new Set()).add(c.person_id);
       }
     } catch (e) { /* keywords alone still work */ }
-    let maxSim = 0;
+    // "people who liked X also liked Y" (TMDB, scripts/tmdb_recs.py): a title recommended from a liked one scores by
+    // its place in that list; a title whose own list holds a liked one scores half
+    const rec = {}, recFrom = {};
+    if (pool.links) {
+      const L = pool.links, at = Object.fromEntries(L.ids.map((id, i) => [id, i]));
+      const add = (id, v, from) => { rec[id] = (rec[id] || 0) + v; if (!recFrom[id] || v > recFrom[id][1]) recFrom[id] = [from, v]; };
+      for (const id of liked) { const i = at[id]; if (i == null) continue; L.r[i].forEach((j, k) => add(L.ids[j], 1 - k / 40, id)); }
+      L.r.forEach((list, i) => list.forEach((j, k) => { const lid = L.ids[j]; if (liked.has(lid)) add(L.ids[i], 0.5 * (1 - k / 40), lid); }));
+    }
+    let maxSim = 0, maxRec = 0;
     const rows = pool.filter(r => !liked.has(r.id) && (r.imdb_rating || 0) >= 6.5).map(r => {
       const ks = keys(r), sim = ks.reduce((a, k) => a + (prof[k] || 0) * idf(k), 0) / Math.sqrt(ks.length || 1);
-      if (sim > maxSim) maxSim = sim;
+      if (sim > maxSim) maxSim = sim; if ((rec[r.id] || 0) > maxRec) maxRec = rec[r.id];
       return { r, sim };
     });
+    // the liked title closest by keywords, for the "like X" line when no recommendation links them
+    const closest = r => { let best = null, bv = 0; const ks = new Set(keys(r));
+      for (const l of likedRows) { const v = keys(l).reduce((a, k) => a + (ks.has(k) ? idf(k) : 0), 0); if (v > bv) { bv = v; best = l.id; } } return best; };
     return rows.map(({ r, sim }) => {
       const q = Math.min(1, Math.max(0, ((r.imdb_rating || 6) - 6) / 3)) * 0.7 + (r.rt_score != null ? r.rt_score / 100 : 0.5) * 0.15 + (r.mc_score != null ? r.mc_score / 100 : 0.5) * 0.15;
-      const rec = (r.year || 0) >= Y - 5 ? 1 : (r.year || 0) >= Y - 10 ? 0.5 : 0;
+      const recent = (r.year || 0) >= Y - 5 ? 1 : (r.year || 0) >= Y - 10 ? 0.5 : 0;
       const ppl = Math.min(1, (shared[r.id] ? shared[r.id].size : 0) * 0.4);
-      return { id: r.id, year: r.year, score: 0.5 * (maxSim ? sim / maxSim : 0) + 0.15 * ppl + 0.25 * q + 0.1 * rec };
+      const co = maxRec ? (rec[r.id] || 0) / maxRec : 0, kw = maxSim ? sim / maxSim : 0;
+      // weights: liked-also-liked 40%, keywords 25%, people 10%, reviews 15%, recent 10% (keywords 50% without the links file)
+      const score = pool.links ? 0.4 * co + 0.25 * kw + 0.1 * ppl + 0.15 * q + 0.1 * recent : 0.5 * kw + 0.15 * ppl + 0.25 * q + 0.1 * recent;
+      return { id: r.id, year: r.year, score, why: () => (recFrom[r.id] || [])[0] || closest(r) };
     }).sort((a, b) => b.score - a.score);
   }
   // more = true: ten more picks under the ones already shown ("More picks")
@@ -1909,9 +1928,15 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       let res;
       if (r.ok && (j.ids || []).length) { await ensureItems(j.ids); res = { message: j.message, ids: order(j.ids) }; }
       else res = j.error === "limit" ? { err: t("aiLimit") } : fallback();
-      if (more) { if (res.err) toast(res.err); else disc.result = { message: disc.result.message, ids: [...already, ...res.ids.filter(id => !already.includes(id))] }; }
+      if (more) { if (res.err) toast(res.err); else disc.result = { message: disc.result.message, why: disc.result.why, ids: [...already, ...res.ids.filter(id => !already.includes(id))] }; }
       else disc.result = res;
-    } catch (e) { const f = fallback(); await ensureItems(f.ids).catch(() => {}); if (more) disc.result = { message: disc.result.message, ids: [...already, ...f.ids] }; else disc.result = f; }
+    } catch (e) { const f = fallback(); await ensureItems(f.ids).catch(() => {}); if (more) disc.result = { message: disc.result.message, why: disc.result.why, ids: [...already, ...f.ids] }; else disc.result = f; }
+    if (disc.result && disc.result.ids) {   // the liked title behind each pick, for the "Like <title>" line
+      const why = disc.result.why || {};
+      for (const id of disc.result.ids) if (!why[id] && scoreOf[id]) { const w = scoreOf[id].why(); if (w) why[id] = w; }
+      disc.result.why = why;
+      await ensureItems([...disc.result.ids, ...Object.values(why)]).catch(() => {});   // also titles not in the search index
+    }
     disc.busy = false;
     if (view === "discover") render();
   }
@@ -1966,10 +1991,13 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   // ---------- AI helper ----------
   let aiMsgs = [], aiBusy = false, aiDraft = "";
   // The AI's answer: the bright bubble from the logo, with its posters inside it
-  function answerBubble(text, ids) {
+  // why (Discover): {title id: liked title id} adds a "Like <title>" line under each pick
+  function answerBubble(text, ids, why) {
     const shown = (ids || []).filter(id => C.items[id]);
+    const one = id => { const w = why && why[id] && C.items[why[id]];
+      return w ? card(id).replace('<div class="card-sub">', `<div class="card-why">${esc(t("dLike")(title(w)))}</div><div class="card-sub">`) : card(id); };
     return `<div class="bubble ai a ts ${shown.length ? "wide" : ""}"><p>${esc(text || t("aiNone"))}</p>
-      ${shown.length ? `<div class="grid">${shown.map(card).join("")}</div>` : ""}</div>`;
+      ${shown.length ? `<div class="grid">${shown.map(one).join("")}</div>` : ""}</div>`;
   }
   function aiView() {
     const signedOut = sb && !user;

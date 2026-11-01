@@ -59,7 +59,7 @@ jobs:
         run: |
           git config user.name "Nadav167"
           git config user.email "173299564+Nadav167@users.noreply.github.com"
-          git add site/home.json site/index.json site/watch data
+          git add site/home.json site/index.json site/watch site/taste data
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git commit -m "Weekly catalog update $(date -u +%F)"
           # main may have moved during the run (site changes pushed meanwhile): put this commit on top, then push

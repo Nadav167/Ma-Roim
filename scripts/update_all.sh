@@ -32,6 +32,7 @@ step "Tags and trailers";        python3 scripts/tags.py; python3 scripts/traile
 step "Where to watch";           python3 scripts/providers.py; python3 scripts/networks.py; python3 scripts/us_services.py
 step "Seasons";                  python3 scripts/enwiki_seasons.py; python3 scripts/seasons.py
 step "Versions of the same show"; python3 scripts/versions.py
+step "Liked also liked (Discover)"; python3 scripts/tmdb_recs.py
 step "Site files";               python3 scripts/watch_files.py; python3 scripts/site_catalog.py
 step "Dataset copies"
 gzip -9 -c out/ma_roim_titles.json > data/titles.json.gz
