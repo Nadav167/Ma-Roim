@@ -1885,8 +1885,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       const recent = (r.year || 0) >= Y - 5 ? 1 : (r.year || 0) >= Y - 10 ? 0.5 : 0;
       const ppl = Math.min(1, (shared[r.id] ? shared[r.id].size : 0) * 0.4);
       const co = maxRec ? (rec[r.id] || 0) / maxRec : 0, kw = maxSim ? sim / maxSim : 0;
-      // weights: liked-also-liked 40%, keywords 25%, people 10%, reviews 15%, recent 10% (keywords 50% without the links file)
-      const score = pool.links ? 0.4 * co + 0.25 * kw + 0.1 * ppl + 0.15 * q + 0.1 * recent : 0.5 * kw + 0.15 * ppl + 0.25 * q + 0.1 * recent;
+      // weights (owner's choice): liked-also-liked 55%, keywords 25%, people 10%, recent 10%; reviews only as the 6.5 floor
+      // above (without the links file: keywords 50%, people 15%, reviews 25%, recent 10%)
+      const score = pool.links ? 0.55 * co + 0.25 * kw + 0.1 * ppl + 0.1 * recent : 0.5 * kw + 0.15 * ppl + 0.25 * q + 0.1 * recent;
       return { id: r.id, year: r.year, score, why: () => (recFrom[r.id] || [])[0] || closest(r) };
     }).sort((a, b) => b.score - a.score);
   }
@@ -1918,8 +1919,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
         return ra !== rb ? (ra ? -1 : 1) : (B.score || 0) - (A.score || 0); }); };
     const fallback = () => ({ message: lang === "he" ? "אלה הכותרים שהכי מתאימים לטעם שלכם:" : "These fit your taste best:", ids: order(cands.slice(0, 10)) });
     const msg = lang === "he"
-      ? `המלץ לי על 10 ${kind} שיתאימו לטעם שלי. מתוך ה-${kind} הפופולריים ביותר, אהבתי את: ${picks.join(", ")}. אני נמשך ל: ${likes.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת (היא כבר מסודרת מהמתאים ביותר), והעדף כותרים חדשים וכאלה עם ביקורות טובות. התחל במשפט קצר שמתאר את הטעם שלי.`
-      : `Recommend 10 ${kind} that fit my taste. Of the most popular ${kind}, I liked: ${picks.join(", ")}. I lean toward: ${likes.join(", ")}. Choose the 10 best fits from the attached list (already sorted best match first), preferring recent and well-reviewed titles. Start with one short sentence describing my taste.`;
+      ? `המלץ לי על 10 ${kind} שיתאימו לטעם שלי. מתוך ה-${kind} הפופולריים ביותר, אהבתי את: ${picks.join(", ")}. אני נמשך ל: ${likes.join(", ")}. בחר את 10 המתאימים ביותר מהרשימה המצורפת (היא כבר מסודרת מהמתאים ביותר), והעדף כותרים חדשים. התחל במשפט קצר שמתאר את הטעם שלי.`
+      : `Recommend 10 ${kind} that fit my taste. Of the most popular ${kind}, I liked: ${picks.join(", ")}. I lean toward: ${likes.join(", ")}. Choose the 10 best fits from the attached list (already sorted best match first), preferring recent titles. Start with one short sentence describing my taste.`;
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
