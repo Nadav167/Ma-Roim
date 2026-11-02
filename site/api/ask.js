@@ -1,5 +1,6 @@
 // AI helper: POST /api/ask
-// Body: { messages: [{role: "user"|"assistant", content: string}], lang: "en"|"he", services: [TMDB provider ids the user has] }
+// Body: { messages: [{role: "user"|"assistant", content: string}], lang: "en"|"he", services: [TMDB provider ids the user has],
+//         liked: [title ids the user marked "I liked it"] }
 // Header: Authorization: Bearer <Supabase access token of a signed-in user>
 // Returns: { message: string, ids: [title ids] }
 //
@@ -49,6 +50,12 @@ const TOOLS = [
     input_schema: { type: "object", properties: { name: { type: "string" } }, required: ["name"] },
   },
   {
+    name: "similar_to_my_likes",
+    description: "Titles similar to the ones the user marked as liked (people who liked those also liked these), best match first. " +
+      "Only available when the user has liked titles. Use it for open requests ('what should I watch tonight?') or together with other searches.",
+    input_schema: { type: "object", properties: { title_type: { type: "string", enum: ["movie", "tv"] }, min_year: { type: "integer" }, limit: { type: "integer", description: "default 15, max 30" } } },
+  },
+  {
     name: "present_results",
     description:
       "Give the user your answer. Always finish by calling this exactly once. 'message' is a short reply in the user's language " +
@@ -80,7 +87,33 @@ async function rpc(fn, args, token) {
   return r.json();
 }
 
-async function runTool(name, input, token, myServices) {
+// ---------- "I liked it": titles similar to the liked ones get about a quarter of the weight ----------
+// site/taste/{movie,tv}.json: { ids: [title ids], r: [[indexes of the titles TMDB recommends for ids[i]], ...] } (scripts/tmdb_recs.py)
+const LIKE_WEIGHT = 0.25;
+let tasteCache = null;
+async function taste(host) {
+  if (tasteCache) return tasteCache;
+  const recs = new Map();
+  for (const ty of ["movie", "tv"]) {
+    try {
+      const r = await fetch(`https://${host}/taste/${ty}.json`); if (!r.ok) continue;
+      const d = await r.json();
+      d.ids.forEach((id, i) => recs.set(id, (d.r[i] || []).map(k => d.ids[k])));
+    } catch (e) { /* no taste data: likes still go to the model by name */ }
+  }
+  return (tasteCache = recs);
+}
+// How close each title is to the liked ones, 0..1: in a liked title's recommendations (higher = nearer the top), or the other way round
+function likeScores(recs, liked) {
+  const raw = new Map(), add = (id, v) => raw.set(id, (raw.get(id) || 0) + v);
+  const likedSet = new Set(liked);
+  for (const L of liked) (recs.get(L) || []).forEach((id, r) => { if (!likedSet.has(id)) add(id, 1 - r / 40); });
+  for (const [id, rs] of recs) if (!likedSet.has(id)) for (const L of rs) if (likedSet.has(L)) add(id, .5);
+  const max = Math.max(1, ...raw.values()), out = new Map(); for (const [id, v] of raw) out.set(id, v / max);
+  return out;
+}
+
+async function runTool(name, input, token, myServices, likeCtx) {
   if (name === "find_titles") {
     const args = {};
     for (const k of ["person", "person_role", "genre", "tag", "title_type", "min_year", "max_year", "min_imdb", "min_rt", "min_mc", "israeli", "min_votes"])
@@ -91,15 +124,32 @@ async function runTool(name, input, token, myServices) {
     if (svc.length) args.on_services = [...new Set(svc)];
     else if (input.on_my_services) return { count: 0, results: [], note: "The user hasn't picked their services. Search without this filter and tell them they can pick services under Where to watch on any title." };
     args.lim = Math.min(Math.max(Number(input.limit) || 15, 1), 40);
-    const rows = (await rpc("find_titles", args, token)).filter(t => t.poster_en || t.poster_he);   // the site doesn't show titles without a poster
-    return { count: rows.length, results: rows.map(slim) };
+    let rows = (await rpc("find_titles", args, token)).filter(t => t.poster_en || t.poster_he);   // the site doesn't show titles without a poster
+    if (likeCtx && likeCtx.scores.size) {   // re-rank: 75% the search's own order (popularity), 25% closeness to the user's likes
+      const n = rows.length || 1, sc = t => (1 - LIKE_WEIGHT) * (1 - rows.indexOf(t) / n) + LIKE_WEIGHT * (likeCtx.scores.get(t.id) || 0);
+      rows = [...rows].sort((a, b) => sc(b) - sc(a));
+    }
+    return { count: rows.length, results: rows.map(t => withLike(slim(t), likeCtx)) };
   }
   if (name === "search_by_name") {
     const rows = (await rpc("search_titles", { q: String(input.name || ""), lim: 8 }, token)).filter(t => t.poster_en || t.poster_he);
-    return { count: rows.length, results: rows.map(slim) };
+    return { count: rows.length, results: rows.map(t => withLike(slim(t), likeCtx)) };
+  }
+  if (name === "similar_to_my_likes") {
+    if (!likeCtx || !likeCtx.scores.size) return { count: 0, results: [], note: "The user hasn't liked any titles yet (or none we have data for)." };
+    const lim = Math.min(Math.max(Number(input.limit) || 15, 1), 30);
+    const top = [...likeCtx.scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, 120).map(([id]) => id);
+    const r = await fetch(`${SB_URL}/rest/v1/titles?select=*&id=in.(${top.join(",")})`, { headers: sbHeaders(token) });
+    let rows = (r.ok ? await r.json() : []).filter(t => (t.poster_en || t.poster_he) && t.listed !== false && !likeCtx.liked.has(t.id));
+    if (input.title_type) rows = rows.filter(t => t.type === input.title_type);
+    if (input.min_year) rows = rows.filter(t => (t.year || 0) >= input.min_year);
+    rows.sort((a, b) => likeCtx.scores.get(b.id) - likeCtx.scores.get(a.id));
+    return { count: Math.min(rows.length, lim), results: rows.slice(0, lim).map(t => withLike(slim(t), likeCtx)) };
   }
   return { error: "unknown tool" };
 }
+
+const withLike = (o, likeCtx) => { const v = likeCtx && likeCtx.scores.get(o.id); if (v) o.like_match = Math.round(v * 100) / 100; return o; };
 
 async function getUser(token) {
   if (!token) return null;
@@ -125,7 +175,7 @@ async function callClaude(body) {
   return r.json();
 }
 
-function system(lang, myServices) {
+function system(lang, myServices, likedNames) {
   const names = myServices.map(id => SERVICE_NAME[id]).filter(Boolean);
   const today = new Date().toISOString().slice(0, 10);
   return `You are the recommendation helper on "Ma Roim" (Hebrew for "what are we watching?"), a site listing US and Israeli movies and TV series from 1980 to today. Today is ${today}.
@@ -137,7 +187,8 @@ Find titles that fit what the user asks for, using only the catalog tools. Never
 - If the strict search finds nothing, loosen one condition at a time and say clearly which condition the suggestions don't meet.
 - For "something like X", look X up with search_by_name, then search by its genres and similar filters.
 - Streaming in Israel: the user's services are ${names.length ? names.join(", ") : myServices.length ? "set (smaller services)" : "not picked yet"}. When they ask for something they can watch now, on their services, or on a named service, use on_my_services or service. That data covers about 13,000 popular titles (Disney+ from its US catalog), so if it finds too little, also search without it and say which picks aren't on their services.
-- Prefer well-known titles (use min_votes around 2000+) unless the user wants hidden gems.
+${likedNames && likedNames.length ? `- The user marked these titles as liked: ${likedNames.join("; ")}. Give closeness to them about a quarter of the weight when choosing: the request itself comes first, but among titles that fit it, prefer ones like these. Search results are already ranked with this in mind, and 'like_match' (0–1) shows how close a title is. For open requests ("what should I watch?") also call similar_to_my_likes. Don't recommend titles the user already liked.
+` : ""}- Prefer well-known titles (use min_votes around 2000+) unless the user wants hidden gems.
 - Reply in ${lang === "he" ? "Hebrew" : "English"} (or in the language the user writes in). Use Hebrew titles when replying in Hebrew if they exist.
 - Keep the message short and concrete. No markdown headings or tables.
 - Don't comment on what you left out, e.g. don't note that a title the user mentioned isn't in the list.
@@ -157,6 +208,14 @@ module.exports = async function handler(req, res) {
 
     const lang = body.lang === "he" ? "he" : "en";
     const myServices = (Array.isArray(body.services) ? body.services : []).map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 30);
+    const liked = (Array.isArray(body.liked) ? body.liked : []).map(String).filter(id => /^[QMS]\d+$/.test(id)).slice(-60);
+    let likeCtx = null, likedNames = [];
+    if (liked.length) {
+      const [recs, lr] = await Promise.all([taste(req.headers.host),
+        fetch(`${SB_URL}/rest/v1/titles?select=id,title,title_he,year&id=in.(${liked.join(",")})`, { headers: sbHeaders(token) }).then(r => r.ok ? r.json() : []).catch(() => [])]);
+      likeCtx = { liked: new Set(liked), scores: likeScores(recs, liked) };
+      likedNames = lr.map(t => `${t.title}${t.year ? ` (${t.year})` : ""}`);
+    }
     const history = (Array.isArray(body.messages) ? body.messages : [])
       .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
       .slice(-10).map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
@@ -187,7 +246,7 @@ module.exports = async function handler(req, res) {
     for (let round = 0; round < MAX_ROUNDS && !result; round++) {
       const lastRound = round === MAX_ROUNDS - 1;
       const resp = await callClaude({
-        model: MODEL, max_tokens: 1000, system: system(lang, myServices), tools: TOOLS, messages,
+        model: MODEL, max_tokens: 1000, system: system(lang, myServices, likedNames), tools: likeCtx ? TOOLS : TOOLS.filter(t => t.name !== "similar_to_my_likes"), messages,
         tool_choice: lastRound ? { type: "tool", name: "present_results" } : { type: "auto" },
       });
       messages.push({ role: "assistant", content: resp.content });
@@ -205,7 +264,7 @@ module.exports = async function handler(req, res) {
       // Run all searches from this turn at the same time
       const outputs = await Promise.all(uses.map(async u => {
         let out;
-        try { out = await runTool(u.name, u.input || {}, token, myServices); }
+        try { out = await runTool(u.name, u.input || {}, token, myServices, likeCtx); }
         catch (e) { out = { error: String(e.message || e) }; }
         return { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(out) };
       }));

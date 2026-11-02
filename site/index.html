@@ -298,6 +298,10 @@ a.score:hover { border-color: var(--muted); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.on { border-color: var(--ok); color: var(--ok); }
+.btn.like { width: 44px; padding: 0; justify-content: center; flex: none; }
+.btn.like svg { width: 20px; height: 20px; }
+.btn.liked { border-color: var(--accent); color: var(--accent); }
+.btn.liked svg path { fill: rgba(255,181,71,.25); }
 .btn svg { width: 18px; height: 18px; }
 
 .shelf { margin-top: 30px; }
@@ -340,6 +344,8 @@ html[dir="rtl"] .card.more .poster svg, html[dir="rtl"] [data-close] svg, html[d
 .list-sec h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
 .list-sec h2 span, .list-genre span { color: var(--muted); font-weight: 600; font-size: .8em; margin-inline-start: 6px; }
 .list-genre { margin: 10px 0 0; font-size: 17px; font-weight: 700; color: #e2d9cc; }
+.list-svc { display: flex; align-items: center; gap: 8px; }
+.list-svc img { width: 24px; height: 24px; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
 .sort { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding-inline: 14px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
 .sort label { color: var(--muted); font-size: 13px; font-weight: 600; }
 .sort select { border: 0; background: transparent; color: var(--fg); font: inherit; font-weight: 700; outline: none; cursor: pointer; padding-inline-end: 4px; }
@@ -531,6 +537,8 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   .scores { grid-area: scores; }
   .detail-grid .btns { grid-area: btns; width: auto; display: flex; flex-wrap: nowrap; gap: 8px; }
   .detail-grid .btns .btn { flex: 1 1 auto; min-width: 0; padding-inline: 12px; gap: 6px; font-size: 14px; white-space: nowrap; justify-content: center; }
+  .detail-grid .btns .btn.like, .detail-grid .btns:has(.like) [data-share] { flex: none; width: 44px; padding: 0; }   /* with the like button, Share shows just its icon */
+  .detail-grid .btns:has(.like) [data-share] .lbl { display: none; }
   .d-rest { grid-area: rest; }
   .watch { padding: 12px 14px; }
   .watch > .watch-mine, .watch-sum ~ .watch-head h2 { display: none; }
@@ -686,11 +694,11 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ssAll: n => `Show all ${n} seasons`, ssLess: "Show fewer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
-      sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", loadingMore: "Loading…", loadMore: "Load more",
+      sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", sortSvc: "By streaming service", svcOther: "Not streaming in Israel", svcLoading: "Checking where each title streams…", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
       share: "Share", linkCopied: "Link copied", copyLink: "Copy link", wMore: "Where to watch", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} on Ma Roim:`,
-      markWatched: "Mark watched", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
+      markWatched: "Mark watched", like: "I liked it", liked: "Liked", toastLike: "Marked as liked. Ask AI will suggest more like it", toastUnlike: "Like removed", back: "Back", movie: "Movie", tv: "Series", seasons: n => n === 1 ? "1 season" : `${n} seasons`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + "h " : ""}${m % 60}m`, results: n => `${n} results`, noResults: "Nothing found",
       noResultsHint: "Try the English or the Hebrew title, or fewer words.", year: "Year", runtime: "Runtime", rating: "IMDb rating",
       votes: "Votes", country: "Country", us: "United States", il: "Israel", seasonsL: "Seasons",
@@ -736,11 +744,11 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ssAll: n => `הצג את כל ${n} העונות`, ssLess: "הצג פחות",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
-      sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", loadingMore: "טוען…", loadMore: "טען עוד",
+      sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", sortSvc: "לפי שירות סטרימינג", svcOther: "לא זמין בסטרימינג בישראל", svcLoading: "בודק איפה כל כותר זמין…", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
       share: "שיתוף", linkCopied: "הקישור הועתק", copyLink: "העתקת קישור", wMore: "איפה לצפות", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} ב"מה רואים":`,
-      markWatched: "סמן כנצפה", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
+      markWatched: "סמן כנצפה", like: "אהבתי", liked: "אהבתי", toastLike: "סומן שאהבת. שאל AI ימליץ על עוד דומים", toastUnlike: "הלייק הוסר", back: "חזרה", movie: "סרט", tv: "סדרה", seasons: n => n === 1 ? "עונה אחת" : `${n} עונות`,
       min: m => `${Math.floor(m / 60) ? Math.floor(m / 60) + " ש׳ " : ""}${m % 60} ד׳`, results: n => `${n} תוצאות`, noResults: "לא נמצא כלום",
       noResultsHint: "נסו את השם בעברית או באנגלית, או פחות מילים.", year: "שנה", runtime: "אורך", rating: "דירוג IMDb",
       votes: "מדרגים", country: "מדינה", us: "ארצות הברית", il: "ישראל", seasonsL: "עונות",
@@ -774,6 +782,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   let lang = store.get("langPick", "he");   // Hebrew unless the visitor picked English
   let list = new Set(store.get("list", []));
   let watched = new Set(store.get("watched", []));
+  let likes = new Set(), likesOn = false;   // "I liked it": signed-in users only, once the likes table exists (supabase/012_likes.sql)
   const BUILD = "2026-10-31.2040";
   let view = "home", heroIdx = 0, heroTimer = null, C = null;
   const SB_URL = "https://prnfnqvjirwuyafvsulk.supabase.co";
@@ -842,6 +851,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
     info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    like: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3zM7 10l4-7a2.5 2.5 0 0 1 3 2.6L13.4 9H19a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 17.7 21H7"/></svg>',
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>',
@@ -1104,7 +1114,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   // My list: movies and series in separate sections, sorted by the visitor's choice (or grouped by genre)
   let listSort = store.get("listSort", "added");
   function listHead(n) {
-    const opts = [["added", t("sortAdded")], ["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")]];
+    const opts = [["added", t("sortAdded")], ["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")], ["svc", t("sortSvc")]];
     return `<div class="pad"><div class="browse-head"><div class="view-head"><h1>${esc(t("listH"))}</h1><p>${t("nTitles")(n)}</p></div>
       <div class="browse-ctrl"><div class="sort"><label for="list-sort">${t("sortL")}</label><select id="list-sort">
       ${opts.map(([v, l]) => `<option value="${v}" ${listSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div></div></div></div>`;
@@ -1118,6 +1128,13 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       return a.sort((x, y) => title(C.items[x]).localeCompare(title(C.items[y]), lang === "he" ? "he" : "en"));
     };
     const grid = xs => `<div class="grid">${xs.map(cardNT).join("")}</div>`;
+    if (listSort === "svc") {   // where each title streams: load the where-to-watch data first, then draw again
+      const missing = ids.filter(id => C.items[id].wa === undefined);
+      if (missing.length || !PROV) {
+        Promise.all([loadProv(), ...missing.map(id => getWatch(id).catch(() => null).then(() => { if (C.items[id].wa === undefined) C.items[id].wa = null; }))]).then(() => { if (view === "list" && listSort === "svc" && $("#detail").hidden) render(); });
+        return `<p class="watch-note" style="font-size:14px">${t("svcLoading")}</p>`;
+      }
+    }
     return [["movie", t("listMovies")], ["tv", t("listSeries")]].map(([ty, name]) => {
       const xs = ids.filter(id => (C.items[id].ty === "tv" ? "tv" : "movie") === ty); if (!xs.length) return "";
       let body;
@@ -1126,6 +1143,18 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
         for (const id of order(xs)) { const g = (C.items[id].g || [])[0] || ""; (by[g] = by[g] || []).push(id); }
         body = Object.entries(by).sort((a, b) => b[1].length - a[1].length || genre(a[0]).localeCompare(genre(b[0])))
           .map(([g, gs]) => `<h3 class="list-genre">${esc(g ? genre(g) : (lang === "he" ? "אחר" : "Other"))} <span>${gs.length}</span></h3>${grid(gs)}`).join("");
+      } else if (listSort === "svc") {   // a title shows under every service it's on; the visitor's own services first
+        const by = new Map(), none = [];
+        for (const id of order(xs)) {
+          const w = C.items[id].wa, ps = w && typeof w === "object" ? [...new Set(["s", "u", "f", "r", "b"].flatMap(k => w[k] || []))] : [];
+          const names = [...new Set(ps.map(provName).filter(Boolean))];
+          if (!names.length) none.push(id);
+          for (const p of ps) { const n = provName(p); if (!n) continue; if (!by.has(n)) by.set(n, { p, ids: [] }); if (!by.get(n).ids.includes(id)) by.get(n).ids.push(id); }
+        }
+        const rank = g => (myServices.has(g.p) ? 0 : 2) + (PICK.includes(g.p) ? 0 : 1);
+        body = [...by.entries()].sort((a, b) => rank(a[1]) - rank(b[1]) || b[1].ids.length - a[1].ids.length || a[0].localeCompare(b[0]))
+          .map(([n, g]) => `<h3 class="list-genre list-svc"><img src="${provLogo(g.p)}" alt=""><bdi>${esc(n)}</bdi> <span>${g.ids.length}</span></h3>${grid(g.ids)}`).join("")
+          + (none.length ? `<h3 class="list-genre">${esc(t("svcOther"))} <span>${none.length}</span></h3>${grid(none)}` : "");
       } else body = grid(order(xs));
       return `<section class="list-sec"><h2>${esc(name)} <span>${xs.length}</span></h2>${body}</section>`;
     }).join("");
@@ -1203,8 +1232,9 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
           ${scoreTiles(it)}
           <div class="btns">
             <button class="btn ${list.has(id) ? "on" : "primary"}" type="button" data-list="${id}">${list.has(id) ? icon.check + t("added") : icon.plus + t("add")}</button>
+            ${user && likesOn ? `<button class="btn like ${likes.has(id) ? "liked" : ""}" type="button" data-thumb="${id}" aria-pressed="${likes.has(id)}" aria-label="${esc(t("like"))}" title="${esc(t("like"))}">${icon.like}</button>` : ""}
             <button class="btn ${watched.has(id) ? "on" : ""}" type="button" data-watch="${id}">${icon.check}${watched.has(id) ? t("watched") : t("markWatched")}</button>
-            <button class="btn" type="button" data-share="${id}">${icon.share}${t("share")}</button>
+            <button class="btn" type="button" data-share="${id}">${icon.share}<span class="lbl">${t("share")}</span></button>
           </div>
           <div class="d-rest">
             ${overview(it) ? `<p class="overview">${esc(overview(it))}</p>` : ""}
@@ -1367,6 +1397,10 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       saveMark("watchlist", id, list.has(id));
       toast(list.has(id) ? t("toastAdd") : t("toastRem"));
       if (!$("#detail").hidden) reopen(); else if (view === "home") swapHero(); else render();
+    } else if (el.dataset.thumb) {
+      const id = el.dataset.thumb; likes.has(id) ? likes.delete(id) : likes.add(id);
+      saveMark("likes", id, likes.has(id));
+      toast(likes.has(id) ? t("toastLike") : t("toastUnlike")); reopen();
     } else if (el.dataset.watch) {
       const id = el.dataset.watch; watched.has(id) ? watched.delete(id) : watched.add(id);
       saveMark("watched", id, watched.has(id));
@@ -2031,7 +2065,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     try {
       const { data } = await sb.auth.getSession();
       const r = await fetch("api/ask", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session ? data.session.access_token : ""}` },
-        body: JSON.stringify({ lang, services: [...myServices], messages: aiMsgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.role === "assistant" ? (m.content + (m.ids && m.ids.length ? "\n[Recommended: " + m.ids.map(id => C.items[id] ? C.items[id].t : id).join(", ") + "]" : "")) : m.content })) }) });
+        body: JSON.stringify({ lang, services: [...myServices], liked: [...likes].slice(-60), messages: aiMsgs.filter(m => !m.err).map(m => ({ role: m.role, content: m.role === "assistant" ? (m.content + (m.ids && m.ids.length ? "\n[Recommended: " + m.ids.map(id => C.items[id] ? C.items[id].t : id).join(", ") + "]" : "")) : m.content })) }) });
       const j = await r.json().catch(() => ({}));
       if (r.ok) { await ensureItems(j.ids || []); reply = { role: "assistant", content: j.message || "", ids: j.ids || [] }; }
       else reply = { role: "assistant", err: true, content: j.error === "limit" ? t("aiLimit") : j.error === "not_configured" ? t("aiNotReady") : j.error === "sign_in" ? t("aiSignIn") : t("aiErr") };
@@ -2063,13 +2097,15 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       if (localList.length) await sb.from("watchlist").upsert(localList.map(id => ({ user_id: user.id, title_id: id })), { ignoreDuplicates: true });
       if (localW.length) await sb.from("watched").upsert(localW.map(id => ({ user_id: user.id, title_id: id })), { ignoreDuplicates: true });
       store.set("list", []); store.set("watched", []);
-      const [a, b, pr] = await Promise.all([
+      const [a, b, lk, pr] = await Promise.all([
         sb.from("watchlist").select("title_id, added_at").order("added_at", { ascending: false }),
         sb.from("watched").select("title_id"),
+        sb.from("likes").select("title_id"),
         sb.from("profiles").select("services").eq("id", user.id).maybeSingle(),
       ]);
       list = new Set((a.data || []).map(r => r.title_id));
       watched = new Set((b.data || []).map(r => r.title_id));
+      likesOn = !lk.error; likes = new Set((lk.data || []).map(r => r.title_id));   // no table yet: the button stays hidden
       const sv = pr.data && pr.data.services;
       if (sv && sv.length) { myServices = new Set(sv.filter(p => PICK.includes(p))); store.set("services", sv); savedServices = [...sv].sort((a, b) => a - b).join(); }
       else if (myServices.size) { savedServices = null; saveServices(); }   // first sign-in on this device: keep what was picked here
@@ -2139,7 +2175,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     const was = user && user.id; user = session ? session.user : null;
     renderAcct();
     if (user && user.id !== was) { setTimeout(syncFromServer, 0); if (view === "discover" && disc.stage === "result" && !disc.result) setTimeout(discPicks, 0); }
-    if (!user && was) { list = new Set(); watched = new Set(); if (C) refresh(); }
+    if (!user && was) { list = new Set(); watched = new Set(); likes = new Set(); if (C) refresh(); }
   });
 
   const topBar = document.querySelector(".top");
