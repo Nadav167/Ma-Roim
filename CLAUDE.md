@@ -50,7 +50,8 @@ Title ids: `Q…` = Wikidata titles; `M…`/`S…` = Israeli movies/series added
 - **Likes** ("אהבתי", signed-in users only, table `likes`, `supabase/012_likes.sql`): Ask AI gives about 25% weight to titles
   similar to the liked ones (TMDB co-recommendations from `site/taste/*.json`, `site/api/ask.js` LIKE_WEIGHT). The button stays
   hidden until the table exists.
-- **My list** can be sorted by streaming service (a title shows under every service it's on; the visitor's services first).
+- **My list** can be sorted by streaming service (a title shows under every service it's on; the visitor's services first)
+  and filtered by Netflix / Apple TV (subscription + store) / Disney+ / HBO Max (chips under the sort).
 - **Phone layout**: no sideways page scrolling, no visible scrollbars, solid top bar, bottom bar flush to the bottom.
 - Design direction: "Marquee" palette (chosen 2026-10-31 to get away from the Stremio look): warm cinema black `#100d0a`, one amber accent `#ffb547` for actions only, white rating stars, IMDb yellow kept. Speech bubbles (from the logo) only in Discover and Ask AI. Design reviews: Claude docs "מה רואים: תוכנית עיצוב" and "מה רואים: בדיקת עיצוב 2".
 

@@ -352,6 +352,11 @@ html[dir="rtl"] .card.more .poster svg, html[dir="rtl"] [data-close] svg, html[d
 .sort select option { background: var(--surface); color: var(--fg); }
 .sort:focus-within { border-color: var(--accent); }
 .browse-ctrl { display: flex; flex-wrap: wrap; gap: 8px; }
+.svc-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip-btn { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding-inline: 14px; border-radius: 18px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.chip-btn img { width: 22px; height: 22px; border-radius: 6px; margin-inline-start: -6px; }
+.chip-btn[aria-pressed="true"] { border-color: var(--accent); background: rgba(255,181,71,.12); color: var(--accent); }
 .mine-tog { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding-inline: 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); color: var(--fg); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .mine-tog svg { width: 15px; height: 15px; opacity: .35; }
 .mine-tog[aria-pressed="true"] { border-color: #2fbf71; background: rgba(47,191,113,.14); }
@@ -694,7 +699,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ssAll: n => `Show all ${n} seasons`, ssLess: "Show fewer",
       sgTitles: "Titles", sgPeople: "People", sgAll: q => `All results for “${q}”`, knownFor: x => `Known for ${x}`,
       roleRows: { cast: "Acting", director: "Directing", creator: "Created", writer: "Writing", composer: "Music" },
-      sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", sortSvc: "By streaming service", svcOther: "Not streaming in Israel", svcLoading: "Checking where each title streams…", loadingMore: "Loading…", loadMore: "Load more",
+      sortNew: "Newest first", sortOld: "Oldest first", sortAz: "A–Z", sortGenre: "By genre", sortSvc: "By streaming service", fAll: "All", fNone: n => `Nothing in your list is on ${n} right now.`, svcOther: "Not streaming in Israel", svcLoading: "Checking where each title streams…", loadingMore: "Loading…", loadMore: "Load more",
       nTitles: n => `${n.toLocaleString("en-US")} titles`, listErr: "The list didn’t load. Check your connection and try again.",
       search: "Search movies and series", details: "Details", add: "My list", added: "In my list", watched: "Watched",
       share: "Share", linkCopied: "Link copied", copyLink: "Copy link", wMore: "Where to watch", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} on Ma Roim:`,
@@ -744,7 +749,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
       ssAll: n => `הצג את כל ${n} העונות`, ssLess: "הצג פחות",
       sgTitles: "כותרים", sgPeople: "אנשים", sgAll: q => `כל התוצאות עבור „${q}”`, knownFor: x => `מוכר/ת מ${x}`,
       roleRows: { cast: "משחק", director: "בימוי", creator: "יצירה", writer: "כתיבה", composer: "מוזיקה" },
-      sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", sortSvc: "לפי שירות סטרימינג", svcOther: "לא זמין בסטרימינג בישראל", svcLoading: "בודק איפה כל כותר זמין…", loadingMore: "טוען…", loadMore: "טען עוד",
+      sortNew: "מהחדש לישן", sortOld: "מהישן לחדש", sortAz: "א–ת", sortGenre: "לפי ז׳אנר", sortSvc: "לפי שירות סטרימינג", fAll: "הכל", fNone: n => `אין כרגע ברשימה שלך כותרים שזמינים ב-${n}.`, svcOther: "לא זמין בסטרימינג בישראל", svcLoading: "בודק איפה כל כותר זמין…", loadingMore: "טוען…", loadMore: "טען עוד",
       nTitles: n => `${n.toLocaleString("he-IL")} כותרים`, listErr: "הרשימה לא נטענה. בדקו את החיבור ונסו שוב.",
       search: "חיפוש סרטים וסדרות", details: "פרטים", add: "לרשימה", added: "ברשימה", watched: "נצפה",
       share: "שיתוף", linkCopied: "הקישור הועתק", copyLink: "העתקת קישור", wMore: "איפה לצפות", shareText: (name, y) => `${name}${y ? ` (${y})` : ""} ב"מה רואים":`,
@@ -1100,9 +1105,14 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
     } else if (view === "about") {
       main.innerHTML = aboutView();
     } else if (view === "list") {
-      const ids = [...list].filter(id => C.items[id]);
-      main.innerHTML = (ids.length ? listHead(ids.length) : head(t("listH"), "")) + `<div class="pad">${ids.length ? listBody(ids)
-        : `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`}
+      const all = [...list].filter(id => C.items[id]);
+      if (!PROV) loadProv().then(() => { if (view === "list" && $("#detail").hidden) render(); });   // logos for the service filter
+      const f = LIST_SVC.find(x => x.key === listSvc), wait = f && needWatch(all);
+      const ids = f && !wait ? all.filter(id => onSvc(id, f.ids)) : all;
+      main.innerHTML = (all.length ? listHead(f && !wait ? ids.length : all.length) : head(t("listH"), "")) + `<div class="pad">${!all.length
+        ? `<div class="empty"><strong>${t("listEmpty")}</strong><span>${t("listHint")}</span></div>`
+        : wait ? `<p class="watch-note" style="font-size:14px">${t("svcLoading")}</p>`
+        : ids.length ? listBody(ids) : `<p class="watch-note" style="font-size:14px">${esc(t("fNone")(f.name))}</p>`}
         ${!user && sb ? `<div class="btns" style="margin-top:20px"><button class="btn primary" type="button" data-auth="up">${t("signInToSave")}</button></div>` : ""}</div>` + footer();
     } else if (view === "ai") {
       main.innerHTML = aiView();
@@ -1113,11 +1123,26 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
   const head = (h, p) => `<div class="view-head pad"><h1>${esc(h)}</h1>${p ? `<p>${esc(p)}</p>` : ""}</div>`;
   // My list: movies and series in separate sections, sorted by the visitor's choice (or grouped by genre)
   let listSort = store.get("listSort", "added");
+  // Filter my list by service: Netflix, Apple TV (subscription and store), Disney+, HBO Max
+  const LIST_SVC = [{ key: "8", ids: [8], name: "Netflix" }, { key: "350", ids: [350, 2], name: "Apple TV" }, { key: "337", ids: [337], name: "Disney+" }, { key: "1899", ids: [1899], name: "HBO Max" }];
+  let listSvc = store.get("listSvc", "");
+  const onSvc = (id, ps) => { const w = C.items[id].wa; return !!w && typeof w === "object" && ["s", "u", "f", "r", "b"].some(k => (w[k] || []).some(p => ps.includes(p))); };
+  function needWatch(ids) {   // where-to-watch data not loaded yet for some titles: load it, then draw again
+    const missing = ids.filter(id => C.items[id].wa === undefined);
+    if (!missing.length && PROV) return false;
+    Promise.all([loadProv(), ...missing.map(id => getWatch(id).catch(() => null).then(() => { if (C.items[id].wa === undefined) C.items[id].wa = null; }))])
+      .then(() => { if (view === "list" && $("#detail").hidden) render(); });
+    return true;
+  }
   function listHead(n) {
     const opts = [["added", t("sortAdded")], ["new", t("sortNew")], ["old", t("sortOld")], ["az", t("sortAz")], ["genre", t("sortGenre")], ["svc", t("sortSvc")]];
     return `<div class="pad"><div class="browse-head"><div class="view-head"><h1>${esc(t("listH"))}</h1><p>${t("nTitles")(n)}</p></div>
       <div class="browse-ctrl"><div class="sort"><label for="list-sort">${t("sortL")}</label><select id="list-sort">
-      ${opts.map(([v, l]) => `<option value="${v}" ${listSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div></div></div></div>`;
+      ${opts.map(([v, l]) => `<option value="${v}" ${listSort === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div></div></div>
+      <div class="svc-filter" role="group">
+        <button type="button" class="chip-btn" data-list-svc="" aria-pressed="${!listSvc}">${t("fAll")}</button>
+        ${LIST_SVC.map(x => `<button type="button" class="chip-btn" data-list-svc="${x.key}" aria-pressed="${listSvc === x.key}">${PROV ? `<img src="${provLogo(x.ids[0])}" alt="">` : ""}<bdi>${x.name}</bdi></button>`).join("")}
+      </div></div>`;
   }
   function listBody(ids) {
     const order = xs => {
@@ -1376,6 +1401,7 @@ html[dir="rtl"] .trailer .play svg { transform: scaleX(-1); margin-inline-start:
 
   document.addEventListener("click", e => {
     const el = e.target.closest("button, a"); if (!el) return;
+    if (el.dataset.listSvc !== undefined) { listSvc = el.dataset.listSvc; store.set("listSvc", listSvc); render(); return; }
     if (el.dataset.view) { view = el.dataset.view; clearSearch(); if (!$("#detail").hidden) closeDetail(); render(); window.scrollTo(0, 0); }
     else if (el.dataset.shelf) { const sh = C.shelves.find(x => x.key === el.dataset.shelf); openBrowse(() => shelfName(sh), SHELF_FILTERS[sh.key], view === "browse" ? prevView : view); }
     else if (el.dataset.more) { const m = moreTargets[+el.dataset.more]; browseSort = "new"; openBrowse(m.name, m.f, PAGES[view] ? view : prevView); }
