@@ -1,8 +1,43 @@
 # Ma Roim · מה רואים
 
-A bilingual (English / Hebrew) catalog of US and Israeli movies and TV series from 1980 to today, with links to Wikipedia, IMDb and Metacritic, and an AI chat that recommends what to watch.
+A bilingual (Hebrew / English) catalog of about 58,000 US and Israeli movies and TV series from 1980 to today, with ratings, where to watch in Israel, and an AI assistant that recommends what to watch.
 
-Live at **https://ma-roim-site.vercel.app**
+**Live:** https://ma-roim-site.vercel.app
+
+## Features
+
+- **Catalog** with posters, synopses, cast, trailers, IMDb / Rotten Tomatoes / Metacritic scores, season tables and links to IMDb, Wikipedia and Metacritic — in Hebrew first, English on request.
+- **Where to watch:** pick your streaming services (Netflix, HBO Max, Prime Video, Apple TV, Disney+) and filter by them.
+- **Search** in both languages, including by actor or director, and across US/Israeli versions of the same show (Survivor finds הישרדות).
+- **Accounts:** "My list" and likes, stored per user in Supabase with Row Level Security.
+- **Ask AI:** a chat that recommends titles by searching the real database through tools, so it can only suggest titles that exist on the site. It weighs in the user's services and liked titles, and has a per-user daily limit.
+
+## Architecture
+
+```
+ Wikidata · IMDb datasets · TMDB · Wikipedia (EN/HE) · OMDb
+                │  scripts/*.py   (weekly, GitHub Actions; API answers cached on the pipeline-cache branch)
+                ▼
+ data/titles.json.gz  ──►  Supabase (PostgreSQL: titles, cast, tags, where to watch, users' lists)
+                │                         ▲
+                ▼                         │ SQL functions (search, browse)
+ site/  (static site on Vercel)  ─────────┘
+   index.html  — vanilla JS single-page app
+   api/ask.js  — serverless AI endpoint: Claude API tool-use loop over database search tools
+   api/t.js    — link previews for shared titles
+```
+
+| Layer | Choice |
+|---|---|
+| Data pipeline | Python, run weekly by GitHub Actions |
+| Database | Supabase (PostgreSQL), SQL migrations in `supabase/` |
+| Website | Vanilla JavaScript single-page app, PWA |
+| Hosting & API | Vercel (static site + serverless functions) |
+| AI | Anthropic Claude API with tool use |
+
+Hard parts worth noting: matching the same title across five sources with different IDs and languages; deciding which
+titles count as Israeli (`scripts/languages.py`); never borrowing a poster or Hebrew name from a different title
+that shares its name (ambiguous cases go to a manual-review file); and keeping the AI grounded in the catalog.
 
 ## Data
 
